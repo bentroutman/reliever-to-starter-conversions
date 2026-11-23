@@ -1,6 +1,6 @@
 # Statcast changes from the relief season to the starter season: platoon, velo within outings, and times through
 # the order
-# Run after pull_relief_pitches.py, pull_starter_pitches.py, and conversion_changes.R
+# Run after pull_relief_pitches.R, pull_starter_pitches.R, and conversion_changes.R
 # Outputs: data/statcast_changes.csv, results/statcast_changes.txt, charts/tto_by_outcome.png
 
 library(dplyr)

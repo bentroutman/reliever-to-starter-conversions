@@ -1,12 +1,12 @@
 Overall
-   n rp_SIERA sp_SIERA sp_SIERA_vs_lg    rp_KBB   sp_KBB   KBB_change
-1 79 3.874392 4.414765      0.1140713 0.1320172 0.125987 -0.006030253
+   n rp_SIERA sp_SIERA sp_SIERA_vs_lg    rp_KBB    sp_KBB   KBB_change
+1 79 3.874392 4.414764      0.1140706 0.1320176 0.1259865 -0.006031105
   Velo_change    sp_IP     stuck
 1   -1.205464 97.91561 0.4722222
 
  ArsenalGroup 
   ArsenalGroup  n rp_SIERA_vs_lg sp_SIERA_vs_lg KBB_change Velo_change sp_IP
-1    2 pitches 12        -0.0786        -0.0368  -1.67e-05       -1.30 119.4
+1    2 pitches 12        -0.0786        -0.0368  -1.73e-05       -1.30 119.4
 2    3 pitches 34        -0.0527         0.1030  -1.08e-02       -1.17  96.3
 3   4+ pitches 33         0.0843         0.1804  -3.33e-03       -1.21  91.8
   sp_WAR_per_150 stuck
@@ -47,7 +47,7 @@ Overall
  PlusPitchGroup 
               PlusPitchGroup  n rp_SIERA_vs_lg sp_SIERA_vs_lg KBB_change
 1 0 or 1 pitches Stuff+ 100+ 12         0.0274         0.0307    0.00203
-2                          2 15        -0.3385        -0.2041   -0.00215
+2                          2 15        -0.3385        -0.2041   -0.00216
 3                         3+ 11        -0.6081        -0.1503   -0.04150
   Velo_change sp_IP sp_WAR_per_150 stuck
 1       -0.71  80.6           1.65 0.333
@@ -68,7 +68,7 @@ Overall
       AgeGroup  n rp_SIERA_vs_lg sp_SIERA_vs_lg KBB_change Velo_change sp_IP
 1 25 and under 27       -0.00133        -0.0438    0.00702      -0.877 101.4
 2     26 to 28 37        0.09066         0.2041   -0.00521      -1.244  93.2
-3          29+ 15       -0.21809         0.1763   -0.03154      -1.700 103.3
+3          29+ 15       -0.21809         0.1763   -0.03155      -1.700 103.3
   sp_WAR_per_150 stuck
 1           2.01 0.667
 2           1.33 0.353
@@ -78,7 +78,7 @@ Overall
        PlatoonGroup  n rp_SIERA_vs_lg sp_SIERA_vs_lg KBB_change Velo_change
 1 big gap (10+ pts) 18        -0.0520        -0.0162  -3.63e-03       -1.63
 2   reverse or none 21        -0.2589         0.1095  -2.51e-02       -1.38
-3         small gap 34         0.0695         0.1449  -2.18e-05       -0.95
+3         small gap 34         0.0695         0.1449  -2.19e-05       -0.95
   sp_IP sp_WAR_per_150 stuck
 1  94.0           1.98 0.333
 2 109.2           2.01 0.500

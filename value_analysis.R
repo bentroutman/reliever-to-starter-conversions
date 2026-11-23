@@ -1,6 +1,6 @@
 # Checks whether moving to the rotation added value, using WAR (FanGraphs) and WPA (Baseball-Reference)
 # The comparison is each pitcher's next season vs what a similar reliever who stayed in the pen did the next season
-# Run after build_sample.R and pull_win_probability.py
+# Run after build_sample.R and pull_win_probability.R
 # Outputs: results/value_overall.txt, results/value_by_archetype.csv, data/value_attempts.csv, and two charts
 
 library(dplyr)

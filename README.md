@@ -48,18 +48,18 @@ AUC is averaged over the five test years. A calibration slope of 1 is perfect, a
 
 ## Technologies Used
 
-R (dplyr, readr, tidyr, ggplot2, gridExtra, glmnet, and splines) and Python (pandas)
+R (dplyr, readr, tidyr, ggplot2, gridExtra, glmnet, splines, rvest, chromote, processx, and jsonlite)
 
 ## Data
 
-FanGraphs (role splits and minor league lines), Baseball Savant (Statcast pitches), Baseball-Reference (WPA and WAA), and the Chadwick Bureau register (player IDs). The data is not included since it belongs to those sites.
+FanGraphs (role splits and minor league lines), Baseball Savant (Statcast pitches), Baseball-Reference (WPA and WAA), and the Chadwick Bureau register (player IDs). FanGraphs gave permission to scrape their data for this project. The data is not included since it belongs to those sites.
 
 ## Running the Code
 
-Create the `data/raw` and `data/savant` folders first, then run in this order:
+Create the `data/savant` folder first, then run in this order:
 
-1. `pull_fangraphs.js` (browser console), `json_to_csv.py`, `pull_win_probability.py`, `pull_bref_value.py`
-2. `build_sample.R`, `pull_relief_pitches.py`, `pull_starter_pitches.py`, `pitch_features.R`
+1. `pull_fangraphs.R` (opens Chrome, see the note at the top), `pull_win_probability.R`, `pull_bref_value.R`
+2. `build_sample.R`, `pull_relief_pitches.R`, `pull_starter_pitches.R`, `pitch_features.R`
 3. `indicator_analysis.R`, `value_analysis.R`, `cushion_thresholds.R`, `conversion_changes.R`, `statcast_changes.R`, `predictor_comparison.R`, `definition_sensitivity.R`
 4. `swingman_proxy.R`, `conversion_traits.R`, `selection_model.R`, `waa_analysis.R`
 5. `baseline_validation.R`, `success_validation.R`

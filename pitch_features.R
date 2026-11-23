@@ -1,5 +1,5 @@
 # Turns the relief season Statcast pitches into platoon, arsenal, and workload measures
-# Run after pull_relief_pitches.py
+# Run after pull_relief_pitches.R
 # Output: data/savant_features.csv (one row per pitcher relief season)
 
 library(dplyr)

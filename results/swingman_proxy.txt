@@ -10,7 +10,7 @@ Average swingman: starter IP 57.6  relief IP 28.3
 4   FStrike        656        0.000882         79         0.00768
 5        GB        656       -0.017844         79        -0.03045
 6    FBVelo        654       -0.589931         79        -1.20546
-7 StuffPlus        338       -3.048465         38        -5.67127
+7 StuffPlus        338       -3.048464         38        -5.67127
 8   LocPlus        338        0.571650         38         1.12426
 
 Swingman SIERA change (starter minus relief) by relief traits
@@ -28,7 +28,7 @@ full model R2: 0.094  n = 550
                 Estimate Std. Error t value Pr(>|t|)
 (Intercept)       -0.708      1.523  -0.465    0.642
 rp_SIERA_vs_lg     0.313      0.115   2.732    0.007
-rp_KBB             1.914      1.458   1.313    0.190
+rp_KBB             1.915      1.458   1.314    0.190
 rp_SwStr          -4.514      1.397  -3.231    0.001
 rp_FBVelo          0.014      0.015   0.936    0.350
 rp_Age             0.004      0.009   0.412    0.681

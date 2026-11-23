@@ -2,34 +2,34 @@ Relief vs starter lines for 79 conversions
 
 Average change from relief to starter (usage in percentage points, velo in mph)
       type      measure  n   relief  starter share_up median_change    change
-1  process     Changeup 79   0.1132   0.1401    0.646       0.02288  0.026935
+1  process     Changeup 79   0.1132   0.1401    0.646       0.02288  0.026936
 2  process        Curve 79   0.1124   0.1152    0.430       0.00000  0.002841
-3  process       Cutter 79   0.0560   0.0809    0.316       0.00000  0.024853
+3  process       Cutter 79   0.0560   0.0809    0.316       0.00000  0.024852
 4  process    F-Strike% 79   0.6013   0.6090    0.544       0.00472  0.007680
 5  process       FBVelo 79  93.7544  92.5489    0.152      -1.20659 -1.205464
-6  process     FB_Stuff 38 100.3078  94.1296    0.289      -7.54022 -5.397893
-7  process     FourSeam 79   0.3555   0.2858    0.342      -0.04578 -0.069722
+6  process     FB_Stuff 38 100.3078  94.1296    0.289      -7.54022 -5.397894
+7  process     FourSeam 79   0.3555   0.2858    0.342      -0.04578 -0.069721
 8  process NumPitches10 79   3.2278   3.6203    0.468       0.00000  0.392405
 9  process       Sinker 79   0.1785   0.2164    0.519       0.00247  0.037891
 10 process       Slider 79   0.2279   0.2118    0.380       0.00000 -0.016070
 11 process        Zone% 79   0.4289   0.4296    0.532       0.00285  0.000736
 12 process       pfxvCH 66  85.6739  84.8480    0.197      -1.06871 -1.050906
-13 process       pfxvSL 56  85.1778  83.9954    0.196      -0.97235 -1.143889
-14 process  sp_location 38 102.2385 102.6622    0.579       0.80249  1.124260
-15 process  sp_pitching 38 104.9096 100.1268    0.368      -3.17002 -3.958303
-16 process      sp_s_CH 30  92.4035  91.5355    0.533       1.84304 -0.299802
+13 process       pfxvSL 56  85.1778  83.9954    0.196      -0.97235 -1.143890
+14 process  sp_location 38 102.2385 102.6622    0.579       0.80249  1.124259
+15 process  sp_pitching 38 104.9096 100.1268    0.368      -3.17002 -3.958302
+16 process      sp_s_CH 30  92.4035  91.5355    0.533       1.84304 -0.299801
 17 process      sp_s_CU 22 105.8945  97.6182    0.136      -7.06316 -9.663246
 18 process      sp_s_SL 34 110.4173 103.9859    0.206      -6.14183 -8.419978
-19 process     sp_stuff 38 103.3494  97.4676    0.263      -4.81931 -5.671270
-20  result          BB% 79   0.0899   0.0793    0.367      -0.00658 -0.010612
+19 process     sp_stuff 38 103.3494  97.4676    0.263      -4.81931 -5.671269
+20  result          BB% 79   0.0899   0.0793    0.367      -0.00657 -0.010611
 21  result          GB% 79   0.4646   0.4342    0.304      -0.02587 -0.030445
-22  result     HardHit% 73   0.3575   0.3794    0.740       0.02156  0.024769
+22  result     HardHit% 73   0.3575   0.3794    0.740       0.02156  0.024768
 23  result           K% 79   0.2220   0.2053    0.354      -0.01348 -0.016642
-24  result        K-BB% 79   0.1320   0.1260    0.468      -0.01451 -0.006030
+24  result        K-BB% 79   0.1320   0.1260    0.468      -0.01451 -0.006031
 25  result     O-Swing% 79   0.3142   0.3091    0.443      -0.00461 -0.005069
-26  result        SIERA 79   3.8744   4.4148    0.785       0.57745  0.540373
-27  result       SwStr% 79   0.1093   0.0992    0.253      -0.01163 -0.010119
-28  result   Z-Contact% 79   0.8589   0.8699    0.646       0.01084  0.011018
+26  result        SIERA 79   3.8744   4.4148    0.785       0.57745  0.540372
+27  result       SwStr% 79   0.1093   0.0992    0.253      -0.01163 -0.010118
+28  result   Z-Contact% 79   0.8589   0.8699    0.646       0.01084  0.011017
 
 Pitches added (under 5% to 8%+) and dropped (8%+ to under 5%), number of conversions
    measure added dropped
@@ -164,7 +164,7 @@ Average change by outcome (starter SIERA vs league at or below 0 = success)
 8                          0.40000                  3.86e-01
 9                          0.03002                  4.42e-02
 10                        -0.02617                 -8.03e-03
-11                         0.00682                 -4.10e-03
+11                         0.00682                 -4.11e-03
 12                        -0.96443                 -1.12e+00
 13                        -0.93102                 -1.36e+00
 14                         2.88358                 -1.05e+00

@@ -40,7 +40,7 @@ SIERA columns use the 79 conversions, WAR and WPA columns use all 114 attempts
 Cushion bins, 79 conversions
   CushionBin  n rp_SIERA sp_SIERA SIERA_change_se SIERA_change
 1    under 0 22     4.71     4.68           0.140      -0.0294
-2   0 to 0.5 22     4.10     4.56           0.159       0.4677
+2   0 to 0.5 22     4.09     4.56           0.159       0.4677
 3   0.5 to 1 19     3.56     4.33           0.133       0.7723
 4   1 to 1.5 11     3.02     4.02           0.185       0.9926
 5       1.5+  5     2.33     3.82           0.181       1.4913

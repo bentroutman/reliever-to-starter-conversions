@@ -1,5 +1,5 @@
 # Builds the reliever to starter conversion sample from the FanGraphs role splits
-# Run after json_to_csv.py
+# Run after pull_fangraphs.R
 # Outputs: data/conversions.csv (one row per conversion) and data/short_attempts.csv
 
 library(dplyr)

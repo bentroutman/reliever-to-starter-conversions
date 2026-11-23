@@ -1,6 +1,6 @@
 # Compares WAR, WAA, and WPA on how well they repeat for relievers, and on the conversion gain
 # WAA_fg is FanGraphs WAR minus the average pace for the same role and season. WAA_br is from Baseball-Reference
-# Run after value_analysis.R and pull_bref_value.py
+# Run after value_analysis.R and pull_bref_value.R
 # Outputs: results/waa_analysis.txt and results/waa_gains.csv
 
 library(dplyr)
