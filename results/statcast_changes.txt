@@ -1,0 +1,68 @@
+Conversions with Statcast in both seasons: 73 
+
+Averages, relief season vs starter season (starts only)
+                    name   value
+1                 n_fade 69.0000
+2                  n_tto 59.0000
+3    rp_PitchesPerOuting 27.3146
+4    sp_PitchesPerOuting 83.7393
+5            rp_OppShare  0.4967
+6            sp_OppShare  0.5763
+7             rp_Opp_KBB  0.1043
+8             sp_Opp_KBB  0.1091
+9            rp_Same_KBB  0.1562
+10           sp_Same_KBB  0.1329
+11       rp_Opp_Offspeed  0.1684
+12       sp_Opp_Offspeed  0.1880
+13       rp_Opp_Breaking  0.2530
+14       sp_Opp_Breaking  0.2449
+15       rp_Velo_first15 94.0000
+16       sp_Velo_first15 92.8357
+17 sp_Velo_fade_in_start -0.4847
+18           sp_wOBA_1st  0.3254
+19           sp_wOBA_2nd  0.3443
+20           sp_wOBA_3rd  0.3479
+21        sp_TTO_penalty  0.0186
+
+Average by outcome
+                    name n_league average or better n_worse than average
+1         Opp_KBB_change                         33                   40
+2        Same_KBB_change                         33                   40
+3       Opp_Whiff_change                         33                   40
+4    Opp_Offspeed_change                         33                   40
+5    Opp_Breaking_change                         33                   40
+6    Opp_Fastball_change                         33                   40
+7        OppShare_change                         33                   40
+8    Velo_first15_change                         33                   40
+9  sp_Velo_fade_in_start                         33                   40
+10        sp_TTO_penalty                         33                   40
+11    rp_Platoon_KBB_gap                         33                   40
+12    sp_Platoon_KBB_gap                         33                   40
+   value_league average or better value_worse than average
+1                         0.03133                 -0.01707
+2                        -0.00365                 -0.03953
+3                        -0.00693                 -0.01792
+4                         0.01427                  0.02394
+5                        -0.01187                 -0.00491
+6                        -0.07356                 -0.03185
+7                         0.08429                  0.07570
+8                        -0.83347                 -1.43719
+9                        -0.44131                 -0.52214
+10                        0.01347                  0.02355
+11                        0.05227                  0.05173
+12                        0.01729                  0.02926
+
+Each measure vs starter SIERA vs league (Spearman), and its effect after relief SIERA (SD units)
+                 measure  n spearman_SIERA beta_after_rp_SIERA     p
+1         Opp_KBB_change 73         -0.350              -0.476 0.000
+2        Same_KBB_change 73         -0.230              -0.379 0.000
+3       Opp_Whiff_change 73         -0.139              -0.240 0.001
+4    Opp_Offspeed_change 73         -0.094               0.039 0.602
+5    Opp_Breaking_change 73         -0.020              -0.016 0.830
+6    Opp_Fastball_change 73          0.218               0.148 0.039
+7        OppShare_change 73         -0.115              -0.030 0.678
+8    Velo_first15_change 73         -0.294              -0.248 0.000
+9  sp_Velo_fade_in_start 69          0.028              -0.017 0.822
+10        sp_TTO_penalty 59          0.082               0.093 0.235
+11    rp_Platoon_KBB_gap 73         -0.104              -0.139 0.053
+12    sp_Platoon_KBB_gap 73         -0.007              -0.044 0.542

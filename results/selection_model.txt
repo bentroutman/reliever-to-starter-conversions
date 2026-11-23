@@ -1,0 +1,43 @@
+Test seasons 2021 to 2025: 1398  converts: 37 
+
+Calibration
+       model expected actual slope log_loss   brier
+   base_rate     37.9     37    NA   0.1223 0.02577
+    logistic     32.8     37  0.79   0.1042 0.02487
+       ridge     38.8     37  0.97   0.1033 0.02471
+       lasso     40.6     37  0.95   0.1029 0.02481
+ four_traits     39.0     37  0.83   0.1029 0.02525
+
+Ranking, with 95% pitcher bootstrap intervals on AUC
+        score mean_AUC worst_year_AUC top_20 lower upper
+     logistic    0.841          0.654     16 0.789 0.887
+        ridge    0.845          0.687     15 0.795 0.890
+        lasso    0.848          0.717     15 0.801 0.890
+  four_traits    0.845          0.715     14 0.793 0.889
+ simple_score    0.855          0.765     14 0.804 0.899
+    TBF_per_G    0.778          0.725     13 0.697 0.854
+Random picks would find about 2.6 converts in the top 20s
+Ridge minus the simple score in AUC: -0.01  95% interval -0.032 0.013 
+
+2026 relievers scored: 274  expected conversions: 7.4 
+        PlayerName  Team Age TBF_per_G SIERA_vs_lg prior_MLB_GS MiLB_GS ProbPct
+   Jesse Scholtens   TBR  32      16.2        0.34           11     128    35.7
+      José Urquidy 3 Tms  31      11.9       -0.52           70      74    34.7
+      Bryse Wilson 3 Tms  28       9.4       -0.68           57      99    25.3
+         Brad Lord   WSN  26       8.7       -0.37           19      42    23.7
+   Trevor Williams 2 Tms  34       8.4       -0.81          178      89    18.5
+ Jordan Montgomery   TEX  33       8.0       -0.52          161      62    17.5
+         Ty Madden   DET  26       9.2       -0.55            1      73    17.1
+   Mitchell Parker   WSN  26       8.1        0.12           59      72    14.2
+      Tobias Myers   NYM  27       7.1        0.09           31     135    12.8
+      Wilber Dotel   PIT  23       8.1       -0.27            0      81    11.9
+      Beau Brieske   DET  28       5.7       -0.54           29      28    11.6
+      Mitch Farris   LAA  25       7.8       -0.09            5      43    11.6
+     Jake Woodford 3 Tms  29       7.1       -0.12           25     156    10.5
+       Luis Medina   ATH  27       5.3       -0.45           25      93     9.9
+        Dax Fulton   MIA  24       7.6       -0.20            0      70     9.6
+      Chad Patrick   MIL  27       6.3        0.05           23      68     9.4
+    Didier Fuentes   ATL  21       4.9       -1.21            4      48     9.3
+    Paul Blackburn   NYY  32       5.4       -0.09           86     158     8.8
+      Grant Taylor   CHW  24       5.7       -1.13            2      11     8.4
+      Blas Castaño   COL  27       7.4        0.12            0     107     7.4

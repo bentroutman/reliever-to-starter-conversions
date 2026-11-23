@@ -1,0 +1,20 @@
+Stay-in-pen models fit on 1793 reliever seasons followed by another relief season (20+ IP)
+WAR model R^2: 0.137  WPA model R^2: 0.08 
+
+Stayers, average change from season N to N+1
+     n N_IP next_IP N_WAR next_WAR N_WPA next_WPA
+1 1793 53.9      51 0.594    0.471  0.53    0.397
+
+Attempts, actual next season vs expected if they had stayed in the pen
+        attempt  n N_IP next_IP N_aLI next_aLI N_WAR next_WAR pen_WAR
+1 1 to 4 starts 35 54.4    41.8 0.766    0.782 0.067   0.0379   0.319
+2     5+ starts 79 55.8   106.1 0.913    0.929 0.364   1.2409   0.426
+  share_WAR_gain WAR_gain_se WAR_gain WPA_gain
+1          0.229       0.102   -0.281   -0.372
+2          0.734       0.127    0.815   -0.177
+
+All attempts together
+    n next_WAR pen_WAR share_WAR_gain share_WPA_gain WAR_gain_se WPA_gain_se
+1 114    0.872   0.393          0.579          0.377       0.104       0.103
+  WAR_gain WPA_gain
+1    0.478   -0.237

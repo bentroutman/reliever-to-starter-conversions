@@ -1,0 +1,7 @@
+# Pulled and derived data (see Data in the README)
+data/
+
+# R and macOS files
+Rplots.pdf
+.Rhistory
+.DS_Store

@@ -1,0 +1,41 @@
+Train on conversions with a starter season through 2021 (n = 42 ), test on 2022 to 2026 (n = 37 )
+
+1. Out of time test of relief SIERA vs league predicting starter SIERA vs league
+Test conversions with the features the proxy needs: 37 
+                                                        model  n  RMSE
+                     train mean of the conversions (no model) 37 0.692
+           linear on relief SIERA, fit on earlier conversions 37 0.617
+                           swingman proxy (relief SIERA only) 37 0.728
+ swingman proxy plus intercept shift from earlier conversions 37 0.621
+                                          swingman full proxy 37 0.705
+                     swingman full proxy plus intercept shift 37 0.610
+ bias_actual_minus_pred spearman AUC_success
+                 -0.390       NA       0.500
+                 -0.151     0.25       0.659
+                 -0.463     0.25       0.659
+                 -0.265     0.25       0.659
+                 -0.443     0.30       0.691
+                 -0.267     0.30       0.691
+Intercept shift estimated on the earlier conversions (the swingman proxy runs this much too pessimistic): -0.197 
+Slope of starter SIERA on relief SIERA: earlier conversions 0.48  later conversions 0.17  swingmen through 2021 0.25 
+Mean starter SIERA vs league: conversions through 2021 0.3  2022 to 2026 -0.09 
+
+Leave one out over all 79 conversions: no model RMSE 0.685   linear on relief SIERA RMSE 0.626 
+
+2. Calibration of the predicted probability of success (starter SIERA at or below league average)
+Leave one out: AUC 0.691  Brier 0.2214  Brier of the base rate 0.2468  log loss 0.6405  base rate log loss 0.6866 
+Calibration slope of the leave one out probabilities: 0.79  (95% interval 0.2 to 1.38 )
+ quarter  n predicted_pct observed_pct
+       1 20            22           20
+       2 20            36           45
+       3 20            50           50
+       4 19            70           63
+Out of time (fit through 2021, test 2022 to 2026): AUC 0.659  Brier 0.2339  Brier of the earlier base rate 0.282  expected successes 17.6 vs actual 20 
+
+3. Were the cushion and Stuff+ thresholds chosen after looking at all the data? Pick the cutoff on the earlier conversions, test on the later ones
+Success rate gap (at or above the cutoff minus below), earlier conversions: 0.25=0.37  0.5=0.33  0.75=0.32  1=0.43  1.25=0.5  1.5=NA 
+Cutoff that looks best on the earlier conversions: 1.25 
+Test on 2022 to 2026: success rate at or above 1.25 : 0.83 (n 6 ) vs below 0.48 (n 31 )
+Cutoff of 1: earlier conversions 0.71 (n 7 ) vs 0.29  later conversions 0.78 (n 9 ) vs 0.46 
+Stuff+ 100 or more (relief seasons 2020 on): through 2021 starter seasons n = 1 (too few to evaluate), 2022 to 2026: 0.64 (n 22 ) vs 0.4 (n 15 )
+Success rate gap for cushion 1 or more vs less in 2022 to 2026: 0.31  bootstrap 95% interval -0.05 to 0.63 

@@ -1,0 +1,37 @@
+Stayers: 1808 reliever seasons followed by another relief season of 20+ IP. Attempts: 114 
+
+1. Calibration of the stay-in-the-pen baseline for next season WAR. Cross-fitted by pitcher (10 folds) so every stayer is predicted by a model that never saw him.
+Cross-fitted RMSE of next season WAR: linear 0.691  flexible 0.687  no model 0.742 
+Cross-fitted R^2: linear 0.131  flexible 0.143 
+
+Actual minus predicted next season WAR by tenth of the linear prediction (a calibrated baseline is near 0 in every tenth, and the top tenth is where the elite relievers sit)
+ bin   n mean_predicted mean_actual bias_linear bias_flex se_bias
+   1 181           0.03        0.18       0.148     0.026   0.045
+   2 181           0.20        0.24       0.041     0.018   0.048
+   3 181           0.29        0.30       0.012     0.032   0.049
+   4 181           0.35        0.35       0.004     0.022   0.047
+   5 181           0.41        0.36      -0.055    -0.012   0.047
+   6 181           0.48        0.40      -0.072    -0.006   0.047
+   7 181           0.55        0.39      -0.160    -0.111   0.049
+   8 181           0.63        0.55      -0.083    -0.034   0.046
+   9 180           0.75        0.78       0.024     0.029   0.063
+  10 180           1.00        1.15       0.152     0.050   0.065
+
+Bias by cushion group among stayers (these are the groups the archetype results use)
+             group   n bias_linear bias_flex    se
+  cushion 0.5 to 1 529      -0.077    -0.030 0.029
+        cushion 1+ 547       0.049     0.025 0.033
+ cushion under 0.5 732       0.022     0.006 0.023
+
+Conversion WAR gain under three baselines (mean, standard error). Linear is the one in value_analysis.R.
+             group   n       linear     flexible matched_controls
+  all 114 attempts 114  0.48 (0.10)  0.45 (0.10)      0.52 (0.11)
+         5+ starts  79  0.82 (0.13)  0.79 (0.12)      0.87 (0.13)
+     1 to 4 starts  35 -0.28 (0.10) -0.30 (0.10)     -0.27 (0.10)
+ cushion under 0.5  64  0.41 (0.12)  0.36 (0.12)      0.39 (0.13)
+  cushion 0.5 to 1  28  0.24 (0.21)  0.23 (0.19)      0.33 (0.21)
+        cushion 1+  22  1.00 (0.29)  1.00 (0.29)      1.13 (0.29)
+       Stuff+ 100+  29  1.13 (0.25)  1.12 (0.24)      1.24 (0.25)
+  Stuff+ under 100  23  0.20 (0.21)  0.21 (0.21)      0.26 (0.21)
+Correlation of the attempt level gains: linear vs flexible 0.989  linear vs matched 0.99 
+Placebo (all 1808 stayers against their matched controls): mean gain 0.015  standard error 0.016 
