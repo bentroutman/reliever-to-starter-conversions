@@ -153,8 +153,7 @@ minors <- read_csv("../data/fg_minors.csv", show_col_types = FALSE) |>
 league_sp <- role_seasons |>
   filter(role == "sta") |>
   group_by(Season) |>
-  summarize(lg_sp_siera = weighted.mean(SIERA, TBF, na.rm = TRUE),
-            lg_sp_kbb = weighted.mean(`K-BB%`, TBF, na.rm = TRUE))
+  summarize(lg_sp_siera = weighted.mean(SIERA, TBF, na.rm = TRUE))
 
 league_rp <- role_seasons |>
   filter(role == "rel") |>
@@ -171,7 +170,6 @@ long_starts <- game_logs |>
   summarize(LongStarts = n(), .groups = "drop")
 starter_seasons <- role_seasons |>
   filter(role == "sta") |>
-  left_join(season_totals, by = c("playerid", "Season")) |>
   inner_join(long_starts, by = c("xMLBAMID", "Season")) |>
   filter(LongStarts >= 2)
 
@@ -248,7 +246,7 @@ starter_seasons <- starter_seasons |>
 
 relief_side <- relief_seasons |>
   left_join(league_rp, by = "Season") |>
-  transmute(playerid, rp_season = Season, rp_age = Age, rp_G = G, rp_IP = IP, rp_TBF = TBF,
+  transmute(playerid, rp_season = Season, rp_age = Age, rp_IP = IP, rp_TBF = TBF,
             rp_SIERA = SIERA, rp_SIERA_vs_lg = SIERA - lg_rp_siera,
             rp_K = `K%`, rp_BB = `BB%`, rp_KBB = `K-BB%`, rp_GB = `GB%`,
             rp_Zone = `Zone%`, rp_FStrike = `F-Strike%`, rp_SwStr = `SwStr%`, rp_CStr = `CStr%`,
@@ -259,7 +257,7 @@ relief_side <- relief_seasons |>
             rp_TopTwoUsage = TopTwoUsage, rp_ThirdPitchUsage = ThirdPitchUsage,
             rp_OffspeedUsage = OffspeedUsage, rp_FastballUsage = FastballUsage,
             rp_PitchesPerG = PitchesPerG, rp_TBFPerG = TBFPerG,
-            rp_StuffPlus = sp_stuff, rp_LocationPlus = sp_location, rp_PitchingPlus = sp_pitching,
+            rp_StuffPlus = sp_stuff, rp_LocationPlus = sp_location,
             rp_botStf = pb_stuff, rp_botCmd = pb_command,
             rp_FB_Stuff = FB_Stuff, rp_BestSecondary_Stuff = BestSecondary_Stuff,
             rp_SecondSecondary_Stuff = SecondSecondary_Stuff, rp_Offspeed_Stuff = Offspeed_Stuff,
@@ -267,12 +265,9 @@ relief_side <- relief_seasons |>
 
 starter_side <- starter_seasons |>
   left_join(league_sp, by = "Season") |>
-  transmute(playerid, xMLBAMID, PlayerName, Throws, sp_season = Season, sp_team = TeamNameAbb,
-            sp_GS = GS, sp_LongStarts = LongStarts, sp_start_share = GS_total / G_total, sp_IP = IP, sp_TBF = TBF,
-            sp_WAR = WAR,
-            sp_SIERA = SIERA, sp_SIERA_vs_lg = SIERA - lg_sp_siera,
-            sp_K = `K%`, sp_BB = `BB%`, sp_KBB = `K-BB%`, sp_KBB_vs_lg = `K-BB%` - lg_sp_kbb,
-            sp_FBVelo = FBVelo, sp_StuffPlus = sp_stuff, sp_LocationPlus = sp_location)
+  transmute(playerid, xMLBAMID, PlayerName, Throws, sp_season = Season,
+            sp_GS = GS, sp_LongStarts = LongStarts, sp_IP = IP, sp_TBF = TBF, sp_WAR = WAR,
+            sp_SIERA = SIERA, sp_SIERA_vs_lg = SIERA - lg_sp_siera, sp_KBB = `K-BB%`, sp_FBVelo = FBVelo)
 ```
 
 ``` r
@@ -325,7 +320,7 @@ for (i in 1:nrow(pairs)) {
 pairs$MiLB_GS_share <- ifelse(pairs$MiLB_G > 0, pairs$MiLB_GS / pairs$MiLB_G, NA)
 
 conversions <- pairs |>
-  filter(GS_between <= 3, sp_season >= 2015) |>
+  filter(GS_between <= 3) |>
   mutate(KBB_change = sp_KBB - rp_KBB,
          SIERA_change = sp_SIERA - rp_SIERA,
          Velo_change = sp_FBVelo - rp_FBVelo,
@@ -375,7 +370,7 @@ appearances <- game_logs |>
   mutate(FirstLongStart = ifelse(any(GS == 1 & Pitches >= 70), min(date[GS == 1 & Pitches >= 70]), NA),
          LongStarts = sum(GS == 1 & Pitches >= 70)) |>
   ungroup() |>
-  filter(Season >= 2015, LongStarts >= 2)
+  filter(LongStarts >= 2)
 before_move <- appearances |>
   filter(date < FirstLongStart) |>
   group_by(xMLBAMID, Season) |>
@@ -385,8 +380,7 @@ before_move <- appearances |>
 after_move <- appearances |>
   filter(date >= FirstLongStart, GS == 1) |>
   group_by(xMLBAMID, Season) |>
-  summarize(after_GS = n(), LongStarts = first(LongStarts), after_TBF = sum(TBF),
-            after_KBB = sum(SO - BB) / after_TBF, .groups = "drop")
+  summarize(after_GS = n(), after_KBB = sum(SO - BB) / sum(TBF), .groups = "drop")
 last_year <- season_totals |>
   transmute(playerid, Season = Season + 1, GS_last_year = GS_total)
 midseason_attempts <- before_move |>
@@ -394,18 +388,13 @@ midseason_attempts <- before_move |>
   inner_join(role_seasons |> distinct(xMLBAMID, playerid, Season, PlayerName), by = c("xMLBAMID", "Season")) |>
   left_join(last_year, by = c("playerid", "Season")) |>
   mutate(GS_last_year = coalesce(GS_last_year, 0)) |>
-  anti_join(conversions, by = c("xMLBAMID", "Season" = "sp_season"))
+  anti_join(conversions, by = c("xMLBAMID", "Season" = "sp_season")) |>
+  select(xMLBAMID, playerid, PlayerName, Season, before_KBB, after_GS, after_KBB, GS_last_year)
 write_csv(midseason_attempts, "../data/midseason_attempts.csv")
 cat("Mid-season attempts not already in the sample:", nrow(midseason_attempts), "\n")
 ```
 
     ## Mid-season attempts not already in the sample: 133
-
-``` r
-cat("Qualifying relief seasons, 2014 to 2025:", sum(relief_side$rp_season <= 2025), "\n")
-```
-
-    ## Qualifying relief seasons, 2014 to 2025: 3024
 
 ## Pull relief season pitches
 
@@ -413,10 +402,9 @@ Every Statcast pitch from the relief season of each pitcher in the
 sample (about 8 seconds per pitcher season).
 
 ``` r
-keep_columns <- c("pitcher", "player_name", "game_year", "game_date", "game_pk", "pitch_type", "release_speed",
-                  "stand", "p_throws", "description", "events", "zone", "balls", "strikes", "inning",
-                  "at_bat_number", "pitch_number", "n_thruorder_pitcher", "woba_value", "woba_denom",
-                  "estimated_woba_using_speedangle", "delta_run_exp", "pfx_x", "pfx_z")
+keep_columns <- c("pitcher", "game_year", "game_pk", "pitch_type", "release_speed", "stand", "p_throws",
+                  "description", "events", "inning", "at_bat_number", "pitch_number", "n_thruorder_pitcher",
+                  "woba_value", "woba_denom", "estimated_woba_using_speedangle")
 
 # Statcast starts in 2015
 pitcher_seasons <- read_csv("../data/conversions.csv", show_col_types = FALSE) |>
@@ -446,10 +434,9 @@ cat("Saved", nrow(all_pitches), "pitches\n")
 The same pull for the starter season.
 
 ``` r
-keep_columns <- c("pitcher", "player_name", "game_year", "game_date", "game_pk", "pitch_type", "release_speed",
-                  "stand", "p_throws", "description", "events", "zone", "balls", "strikes", "inning",
-                  "at_bat_number", "pitch_number", "n_thruorder_pitcher", "woba_value", "woba_denom",
-                  "estimated_woba_using_speedangle", "delta_run_exp", "pfx_x", "pfx_z")
+keep_columns <- c("pitcher", "game_year", "game_pk", "pitch_type", "release_speed", "stand", "p_throws",
+                  "description", "events", "inning", "at_bat_number", "pitch_number", "n_thruorder_pitcher",
+                  "woba_value", "woba_denom", "estimated_woba_using_speedangle")
 
 pitcher_seasons <- read_csv("../data/conversions.csv", show_col_types = FALSE) |>
   distinct(xMLBAMID, sp_season, PlayerName)
@@ -478,8 +465,7 @@ WPA and average leverage from Baseball-Reference, plus the Chadwick
 register to join player IDs.
 
 ``` r
-stat_columns <- c("player", "age", "team_ID", "IP", "apWins", "wpa_def", "leverage_index_avg", "wpa_li_def",
-                  "re24_def", "rew_def")
+stat_columns <- c("age", "team_ID", "IP", "wpa_def", "leverage_index_avg")
 
 win_probability <- NULL
 for (season in 2014:2026) {
@@ -508,7 +494,7 @@ for (letter in c(0:9, "a", "b", "c", "d", "e", "f")) {
   url <- paste0("https://raw.githubusercontent.com/chadwickbureau/register/master/data/people-", letter, ".csv")
   people <- read_csv(url, col_types = cols(.default = "c")) |>
     filter(!is.na(key_mlbam), !is.na(key_bbref)) |>
-    select(xMLBAMID = key_mlbam, bref_id = key_bbref, fg_id = key_fangraphs)
+    select(xMLBAMID = key_mlbam, bref_id = key_bbref)
   id_map <- bind_rows(id_map, people)
 }
 write_csv(id_map, "../data/id_map.csv", na = "")
@@ -520,8 +506,7 @@ cat("ID map:", nrow(id_map), "people\n")
 WAA and its role and leverage adjustments from Baseball-Reference.
 
 ``` r
-stat_columns <- c("p_ip", "p_g", "p_gs", "p_ra9", "p_ra9_role", "p_ra9_avg_pitcher", "p_raa", "p_waa",
-                  "p_leverage_index_avg_rp", "p_waa_adj", "p_war", "p_rar")
+stat_columns <- c("p_ip", "p_g", "p_gs", "p_ra9_role", "p_raa", "p_waa", "p_waa_adj", "p_war")
 
 value_pitching <- NULL
 for (season in 2014:2026) {
@@ -577,17 +562,15 @@ pitches <- pitches |>
 # Results against same-handed and opposite-handed hitters
 platoon <- pitches |>
   group_by(pitcher, game_year) |>
-  summarize(OppShare = mean(OppHand),
-            Opp_PA = sum(PA & OppHand),
-            Opp_KBB = (sum(K & OppHand) - sum(BB & OppHand)) / sum(PA & OppHand),
+  summarize(Opp_KBB = (sum(K & OppHand) - sum(BB & OppHand)) / sum(PA & OppHand),
             Same_KBB = (sum(K & !OppHand) - sum(BB & !OppHand)) / sum(PA & !OppHand),
             Opp_Whiff = sum(Whiff & OppHand) / sum(Swing & OppHand),
-            Same_Whiff = sum(Whiff & !OppHand) / sum(Swing & !OppHand),
             Opp_wOBA = sum(woba_value[OppHand], na.rm = TRUE) / sum(woba_denom[OppHand], na.rm = TRUE),
             Same_wOBA = sum(woba_value[!OppHand], na.rm = TRUE) / sum(woba_denom[!OppHand], na.rm = TRUE),
             .groups = "drop") |>
   mutate(Platoon_KBB_gap = Same_KBB - Opp_KBB,
-         Platoon_wOBA_gap = Opp_wOBA - Same_wOBA)
+         Platoon_wOBA_gap = Opp_wOBA - Same_wOBA) |>
+  select(-Same_wOBA)
 ```
 
 ``` r
@@ -620,7 +603,6 @@ outings <- pitches |>
   summarize(Outings = n(),
             Share25Plus = mean(outing_pitches >= 25),
             Share40Plus = mean(outing_pitches >= 40),
-            MaxOutingPitches = max(outing_pitches),
             .groups = "drop")
 ```
 
@@ -644,7 +626,8 @@ velo_fade <- pitches |>
             Velo_mean = mean(release_speed),
             .groups = "drop") |>
   mutate(Velo_fade = ifelse(FB_after25 >= 20, Velo_after25 - Velo_first15, NA),
-         Velo_max_gap = Velo_p95 - Velo_mean)
+         Velo_max_gap = Velo_p95 - Velo_mean) |>
+  select(pitcher, game_year, Velo_first15, Velo_fade, Velo_max_gap)
 ```
 
     ## Warning in inner_join(pitches, primary_fb, by = c("pitcher", "game_year")): Detected an unexpected many-to-many relationship between `x` and `y`.
