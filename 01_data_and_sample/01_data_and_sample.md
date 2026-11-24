@@ -44,6 +44,7 @@ If a security check shows up in the Chrome window, complete it, then run
 the next code block.
 
 ``` r
+# Takes about 5 minutes
 role_seasons <- NULL
 for (season in 2014:2026) {
   for (role_name in c("sta", "rel")) {
@@ -90,6 +91,7 @@ the MLB Stats API. Includes each season since 2015 with at least one
 start.
 
 ``` r
+# Takes about 30 minutes
 role_seasons <- read_csv("../data/fg_role_seasons.csv", guess_max = 20000)
 log_seasons <- role_seasons |>
   group_by(xMLBAMID, Season) |>
@@ -105,6 +107,7 @@ for (i in 1:nrow(log_seasons)) {
     transmute(xMLBAMID = log_seasons$xMLBAMID[i], Season = log_seasons$Season[i], date, game_pk = game.gamePk,
               GS = stat.gamesStarted, Pitches = stat.numberOfPitches, TBF = stat.battersFaced,
               SO = stat.strikeOuts, BB = stat.baseOnBalls))
+  if (i %% 100 == 0) cat(i, "of", nrow(log_seasons), "seasons\n")
   Sys.sleep(0.2)
 }
 write_csv(game_logs, "../data/game_logs.csv")
@@ -406,6 +409,7 @@ Every Statcast pitch from the relief season of each pitcher in the
 sample.
 
 ``` r
+# Takes about 8 minutes
 keep_columns <- c("pitcher", "game_year", "game_pk", "pitch_type", "release_speed", "stand", "p_throws",
                   "description", "events", "inning", "at_bat_number", "pitch_number", "n_thruorder_pitcher",
                   "woba_value", "woba_denom", "estimated_woba_using_speedangle")
@@ -438,6 +442,7 @@ cat("Saved", nrow(all_pitches), "pitches\n")
 The same pull for the starter season.
 
 ``` r
+# Takes about 11 minutes
 keep_columns <- c("pitcher", "game_year", "game_pk", "pitch_type", "release_speed", "stand", "p_throws",
                   "description", "events", "inning", "at_bat_number", "pitch_number", "n_thruorder_pitcher",
                   "woba_value", "woba_denom", "estimated_woba_using_speedangle")
@@ -468,6 +473,7 @@ WPA and average leverage from Baseball-Reference, plus the Chadwick
 register to match player IDs.
 
 ``` r
+# Takes about 2 minutes
 stat_columns <- c("age", "team_ID", "IP", "wpa_def", "leverage_index_avg")
 
 win_probability <- NULL
@@ -509,6 +515,7 @@ cat("ID map:", nrow(id_map), "people\n")
 WAA and its role and leverage adjustments from Baseball-Reference.
 
 ``` r
+# Takes about 1 minute
 stat_columns <- c("p_ip", "p_g", "p_gs", "p_ra9_role", "p_raa", "p_waa", "p_waa_adj", "p_war")
 
 value_pitching <- NULL
