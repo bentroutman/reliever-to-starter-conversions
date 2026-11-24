@@ -1,4 +1,4 @@
-# Pulls starter and reliever lines (2014 to 2026) and minor league lines (2006 to 2025) from FanGraphs, with permission
+# Pulls starter and reliever lines (2014 to 2026) and minor league lines (2006 to 2026) from FanGraphs, with permission
 # Opens a Chrome window. If a security check shows up, complete it, then press Enter in R
 # Run with source("pull_fangraphs.R") from the project folder (about 5 minutes)
 # Outputs: data/fg_role_seasons.csv and data/fg_minors.csv
@@ -53,7 +53,7 @@ missing_columns <- setdiff(columns, names(role_seasons))
 if (length(missing_columns) > 0) stop("Missing columns: ", paste(missing_columns, collapse = ", "))
 
 minors <- NULL
-for (season in setdiff(2006:2025, 2020)) {
+for (season in setdiff(2006:2026, 2020)) {
   url <- paste0(site, "/api/leaders/minor-league/data?pos=all&level=0&lg=2,4,5,6,7,8,9,10,11,14,12,13,15,16,17,18,30,32",
                 "&stats=pit&qual=0&type=0&team=&season=", season, "&seasonEnd=", season,
                 "&org=&ind=0&splitTeam=false")
