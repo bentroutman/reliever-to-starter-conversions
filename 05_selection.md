@@ -113,14 +113,14 @@ auc_rank <- function(x, y) {
 cat("Qualifying relief seasons 2016 to 2025 (100+ TBF, starts in 20% or less of games):", nrow(population), "\n")
 ```
 
-    ## Qualifying relief seasons 2016 to 2025 (100+ TBF, starts in 20% or less of games): 2475
+    ## Qualifying relief seasons 2016 to 2025 (100+ TBF, starts in 20% or less of games): 2415
 
 ``` r
 cat("Converted the next season:", sum(population$converted), " (", round(mean(population$converted) * 100, 1),
     "%), pitchers dropped as other seasons of converts excluded:", sum(other_convert_seasons), "\n\n")
 ```
 
-    ## Converted the next season: 68  ( 2.7 %), pitchers dropped as other seasons of converts excluded: 61
+    ## Converted the next season: 125  ( 5.2 %), pitchers dropped as other seasons of converts excluded: 121
 
 ``` r
 cat("1. Converts vs every other reliever season, one trait at a time\n")
@@ -154,65 +154,65 @@ print(univariate, digits = 3)
 ```
 
     ##             trait n_converts convert_mean other_mean diff_in_SD
-    ## 1       TBF_per_G         68       6.5128      4.619    1.44753
-    ## 2   MiLB_GS_share         67      77.5327     39.263    1.10129
-    ## 3  GS_same_season         68       1.6618      0.417    1.05242
-    ## 4             Age         68      26.7353     29.079   -0.68167
-    ## 5    prior_MLB_GS         68      18.5000      6.883    0.60342
-    ## 6         MiLB_GS         68      74.9559     47.890    0.61636
-    ## 7         LocPlus         38     102.2385     98.385    0.60682
-    ## 8    NumPitches10         68       3.2500      2.838    0.51886
-    ## 9           Curve         68      10.5144      7.561    0.24195
-    ## 10       Changeup         68      11.7983     10.116    0.13614
-    ## 11           gmLI         68       0.9808      1.126   -0.39973
-    ## 12             GB         68      46.0679     43.341    0.29405
-    ## 13          SwStr         68      11.1190     11.826   -0.26172
-    ## 14              K         68      22.8340     24.118   -0.21375
-    ## 15            KBB         68      13.9547     14.784   -0.12617
-    ## 16             BB         68       8.8793      9.334   -0.15021
-    ## 17        FStrike         68      60.8187     60.222    0.11883
-    ## 18         Sinker         68      17.8346     17.729    0.00489
-    ## 19         Cutter         68       5.8132      6.589   -0.05366
-    ## 20         Slider         68      24.6795     26.699   -0.08907
-    ## 21       FB_Stuff         38     100.3078     99.486    0.06618
-    ## 22      StuffPlus         38     103.3494    103.745   -0.04271
-    ## 23    SIERA_vs_lg         68      -0.0793     -0.102    0.02996
-    ## 24        HardHit         68      35.9656     36.285   -0.05374
-    ## 25            TBF         68     212.6618    207.228    0.08487
-    ## 26           Zone         68      42.7156     42.729   -0.00344
-    ## 27         FBVelo         68      93.8736     93.972   -0.03700
-    ## 28        ThrowsL         68       0.2500      0.263   -0.02948
-    ## 29       FourSeam         68      34.4075     34.767   -0.01613
+    ## 1       TBF_per_G        125       6.2933      4.556    1.42369
+    ## 2   MiLB_GS_share        124      75.4898     37.453    1.11159
+    ## 3    prior_MLB_GS        125      22.7200      5.714    0.98128
+    ## 4         MiLB_GS        125      75.3120     45.970    0.67459
+    ## 5  GS_same_season        125       1.5600      0.352    1.15401
+    ## 6             Age        125      26.9920     29.100   -0.60955
+    ## 7           Curve        125      11.0676      7.459    0.29464
+    ## 8    NumPitches10        125       3.2240      2.822    0.51037
+    ## 9            gmLI        125       0.9715      1.134   -0.44617
+    ## 10        LocPlus         67     100.8774     98.310    0.40702
+    ## 11          SwStr        125      10.9463     11.868   -0.33991
+    ## 12       Changeup        125      11.3200     10.035    0.10337
+    ## 13              K        125      22.6322     24.195   -0.25934
+    ## 14         Cutter        125       7.5440      6.481    0.07311
+    ## 15      StuffPlus         67     102.0204    103.934   -0.20668
+    ## 16             BB        125       8.7185      9.377   -0.21783
+    ## 17         Slider        125      22.4868     26.699   -0.18648
+    ## 18            KBB        125      13.9136     14.818   -0.13721
+    ## 19             GB        125      44.8563     43.408    0.15476
+    ## 20         FBVelo        125      93.7708     94.008   -0.08849
+    ## 21    SIERA_vs_lg        125      -0.0454     -0.106    0.08235
+    ## 22           Zone        125      43.0464     42.720    0.08619
+    ## 23            TBF        125     215.7120    207.159    0.13415
+    ## 24        ThrowsL        125       0.3040      0.257    0.10704
+    ## 25         Sinker        125      17.1307     17.991   -0.03965
+    ## 26       FB_Stuff         67      98.6234     99.636   -0.08192
+    ## 27        FStrike        125      60.5001     60.199    0.05994
+    ## 28       FourSeam        125      34.0644     34.792   -0.03242
+    ## 29        HardHit        125      36.2541     36.281   -0.00452
     ##    convert_percentile_of_others   AUC  p_value
-    ## 1                          90.2 0.816 0.00e+00
-    ## 2                          85.4 0.806 0.00e+00
-    ## 3                          90.9 0.717 0.00e+00
-    ## 4                          24.6 0.293 5.00e-09
-    ## 5                          82.7 0.699 9.56e-11
-    ## 6                          66.8 0.687 1.30e-07
-    ## 7                          71.7 0.664 5.52e-04
-    ## 8                          81.4 0.642 1.54e-05
-    ## 9                          67.1 0.629 9.02e-05
-    ## 10                         64.3 0.599 4.90e-03
-    ## 11                         37.8 0.401 5.34e-03
-    ## 12                         58.6 0.586 1.49e-02
-    ## 13                         40.2 0.422 2.81e-02
-    ## 14                         42.0 0.437 7.76e-02
-    ## 15                         40.8 0.454 1.94e-01
-    ## 16                         41.2 0.458 2.32e-01
-    ## 17                         57.8 0.536 3.10e-01
-    ## 18                         55.3 0.533 3.49e-01
-    ## 19                         68.6 0.528 3.42e-01
-    ## 20                         51.0 0.474 4.65e-01
-    ## 21                         56.1 0.523 6.24e-01
-    ## 22                         47.0 0.480 6.74e-01
-    ## 23                         55.7 0.520 5.76e-01
-    ## 24                         48.4 0.484 6.47e-01
-    ## 25                         45.9 0.513 7.13e-01
-    ## 26                         52.0 0.507 8.47e-01
-    ## 27                         53.8 0.493 8.55e-01
-    ## 28                         73.7 0.494 8.11e-01
-    ## 29                         45.0 0.494 8.60e-01
+    ## 1                          89.3 0.809 0.00e+00
+    ## 2                          87.0 0.807 0.00e+00
+    ## 3                          85.7 0.736 0.00e+00
+    ## 4                          70.4 0.704 1.35e-14
+    ## 5                          92.2 0.690 0.00e+00
+    ## 6                          24.4 0.318 5.61e-12
+    ## 7                          69.8 0.641 8.38e-09
+    ## 8                          82.2 0.637 2.78e-08
+    ## 9                          36.0 0.380 5.68e-06
+    ## 10                         69.0 0.611 2.12e-03
+    ## 11                         40.2 0.402 2.04e-04
+    ## 12                         61.1 0.597 2.42e-04
+    ## 13                         40.9 0.425 4.48e-03
+    ## 14                         69.6 0.570 1.23e-03
+    ## 15                         43.4 0.439 9.04e-02
+    ## 16                         39.1 0.439 2.18e-02
+    ## 17                         43.6 0.443 3.17e-02
+    ## 18                         41.0 0.455 8.73e-02
+    ## 19                         55.5 0.544 9.41e-02
+    ## 20                         48.0 0.464 1.76e-01
+    ## 21                         56.0 0.528 2.89e-01
+    ## 22                         56.1 0.527 3.11e-01
+    ## 23                         47.0 0.527 3.12e-01
+    ## 24                         74.3 0.523 2.45e-01
+    ## 25                         54.5 0.518 4.86e-01
+    ## 26                         48.2 0.482 6.26e-01
+    ## 27                         53.3 0.513 6.26e-01
+    ## 28                         48.7 0.491 7.20e-01
+    ## 29                         48.3 0.491 7.27e-01
 
 ``` r
 # Multivariate: which traits matter once the others are held fixed
@@ -236,24 +236,24 @@ print(data.frame(trait = rownames(coefs), odds_ratio_per_SD = round(exp(coefs[, 
 ```
 
     ##             trait odds_ratio_per_SD     p
-    ##       (Intercept)              0.01 0.000
-    ##       SIERA_vs_lg              0.76 0.078
-    ##               Age              0.34 0.000
-    ##           ThrowsL              0.57 0.084
-    ##              gmLI              0.94 0.714
-    ##         TBF_per_G              1.45 0.000
-    ##            FBVelo              0.83 0.298
-    ##                GB              1.37 0.032
-    ##      NumPitches10              1.28 0.075
-    ##          Changeup              0.93 0.664
-    ##  log_prior_MLB_GS              1.88 0.000
-    ##       log_MiLB_GS              1.71 0.037
+    ##       (Intercept)              0.02 0.000
+    ##       SIERA_vs_lg              0.78 0.041
+    ##               Age              0.36 0.000
+    ##           ThrowsL              0.86 0.546
+    ##              gmLI              0.89 0.367
+    ##         TBF_per_G              1.47 0.000
+    ##            FBVelo              0.84 0.192
+    ##                GB              1.18 0.151
+    ##      NumPitches10              1.26 0.032
+    ##          Changeup              0.86 0.243
+    ##  log_prior_MLB_GS              2.19 0.000
+    ##       log_MiLB_GS              1.62 0.010
 
 ``` r
 cat("n =", nrow(model_data), " converts =", sum(model_data$converted), "\n")
 ```
 
-    ## n = 2469  converts = 68
+    ## n = 2409  converts = 125
 
 ``` r
 # Cross validated AUC by type of trait
@@ -292,13 +292,13 @@ print(cv_table, row.names = FALSE)
 ```
 
     ##                                                          traits cv_AUC
-    ##                   skills only (SIERA, K-BB%, SwStr%, velo, GB%)  0.562
-    ##            arsenal (pitches, changeup, sinker, four-seam usage)  0.639
+    ##                   skills only (SIERA, K-BB%, SwStr%, velo, GB%)  0.592
+    ##            arsenal (pitches, changeup, sinker, four-seam usage)  0.627
     ##  role and context (leverage, batters per game, age, handedness)  0.794
-    ##                  starting history (MLB and minor league starts)  0.755
-    ##                                                skills + arsenal  0.644
-    ##                                         skills + role + history  0.867
-    ##                                                      everything  0.864
+    ##                  starting history (MLB and minor league starts)  0.790
+    ##                                                skills + arsenal  0.657
+    ##                                         skills + role + history  0.878
+    ##                                                      everything  0.874
 
 ``` r
 # The 2020 and later seasons add Stuff+
@@ -322,23 +322,23 @@ print(data.frame(trait = rownames(coefs_stuff), odds_ratio_per_SD = round(exp(co
 ```
 
     ##             trait odds_ratio_per_SD     p
-    ##       (Intercept)              0.01 0.000
-    ##       SIERA_vs_lg              0.84 0.477
-    ##         StuffPlus              1.09 0.808
-    ##          FB_Stuff              1.24 0.431
-    ##           LocPlus              1.81 0.005
-    ##            FBVelo              0.96 0.876
-    ##               Age              0.25 0.000
-    ##              gmLI              0.90 0.659
-    ##         TBF_per_G              1.40 0.007
-    ##  log_prior_MLB_GS              1.70 0.006
-    ##       log_MiLB_GS              1.88 0.061
+    ##       (Intercept)              0.02 0.000
+    ##       SIERA_vs_lg              0.74 0.114
+    ##         StuffPlus              0.94 0.833
+    ##          FB_Stuff              1.21 0.407
+    ##           LocPlus              1.35 0.056
+    ##            FBVelo              0.83 0.340
+    ##               Age              0.31 0.000
+    ##              gmLI              0.87 0.443
+    ##         TBF_per_G              1.37 0.002
+    ##  log_prior_MLB_GS              2.10 0.000
+    ##       log_MiLB_GS              1.74 0.030
 
 ``` r
 cat("n =", nrow(stuff_data), " converts =", sum(stuff_data$converted), "\n")
 ```
 
-    ## n = 1416  converts = 38
+    ## n = 1377  converts = 67
 
 ``` r
 # Teams and years
@@ -359,16 +359,16 @@ population |>
 ```
 
     ##    Team seasons converts per_100
-    ## 1   STL      69        7    10.1
-    ## 2   NYY      60        5     8.3
-    ## 3   CHC      60        4     6.7
-    ## 4   TBR      71        4     5.6
-    ## 5   KCR      76        4     5.3
-    ## 6   COL      82        4     4.9
-    ## 7   SDP      66        3     4.5
-    ## 8   LAD      71        3     4.2
-    ## 9   PHI      72        3     4.2
-    ## 10  OAK      60        2     3.3
+    ## 1   STL      67        9    13.4
+    ## 2   NYY      59        6    10.2
+    ## 3   TBR      66        6     9.1
+    ## 4   COL      82        7     8.5
+    ## 5   DET      71        6     8.5
+    ## 6   CHC      60        5     8.3
+    ## 7   SDP      65        5     7.7
+    ## 8   LAA      67        5     7.5
+    ## 9   KCR      74        5     6.8
+    ## 10  BOS      75        5     6.7
 
 ``` r
 cat("\nBy relief season year\n")
@@ -385,16 +385,16 @@ population |>
 ```
 
     ##    Season seasons converts per_100
-    ## 1    2016     252        9     3.6
-    ## 2    2017     257        6     2.3
-    ## 3    2018     269        6     2.2
-    ## 4    2019     273        9     3.3
-    ## 5    2020      62        1     1.6
-    ## 6    2021     288        9     3.1
-    ## 7    2022     275        9     3.3
-    ## 8    2023     268        7     2.6
-    ## 9    2024     259        6     2.3
-    ## 10   2025     272        6     2.2
+    ## 1    2016     249       16     6.4
+    ## 2    2017     252       11     4.4
+    ## 3    2018     267       14     5.2
+    ## 4    2019     262       17     6.5
+    ## 5    2020      60        3     5.0
+    ## 6    2021     281       15     5.3
+    ## 7    2022     267       16     6.0
+    ## 8    2023     259       14     5.4
+    ## 9    2024     254       10     3.9
+    ## 10   2025     264        9     3.4
 
 ``` r
 cat("\nShares\n")
@@ -408,7 +408,7 @@ cat("Lefty: converts", round(mean(population$ThrowsL[population$converted == 1])
     round(mean(population$ThrowsL[population$converted == 0]) * 100), "%\n")
 ```
 
-    ## Lefty: converts 25 % vs others 26 %
+    ## Lefty: converts 30 % vs others 26 %
 
 ``` r
 cat("Prior MLB start (any): converts", round(mean(population$prior_MLB_GS[population$converted == 1] > 0) * 100),
@@ -416,7 +416,7 @@ cat("Prior MLB start (any): converts", round(mean(population$prior_MLB_GS[popula
     round(mean(population$prior_MLB_GS[population$converted == 0] > 0) * 100), "%\n")
 ```
 
-    ## Prior MLB start (any): converts 69 % vs others 36 %
+    ## Prior MLB start (any): converts 72 % vs others 34 %
 
 ``` r
 cat("20+ minor league starts: converts", round(mean(population$MiLB_GS[population$converted == 1] >= 20) * 100),
@@ -424,7 +424,7 @@ cat("20+ minor league starts: converts", round(mean(population$MiLB_GS[populatio
     round(mean(population$MiLB_GS[population$converted == 0] >= 20) * 100), "%\n")
 ```
 
-    ## 20+ minor league starts: converts 97 % vs others 61 %
+    ## 20+ minor league starts: converts 98 % vs others 59 %
 
 ``` r
 cat("Made a start in the relief season: converts",
@@ -432,7 +432,7 @@ cat("Made a start in the relief season: converts",
     round(mean(population$GS_same_season[population$converted == 0] > 0) * 100), "%\n")
 ```
 
-    ## Made a start in the relief season: converts 60 % vs others 18 %
+    ## Made a start in the relief season: converts 53 % vs others 17 %
 
 ``` r
 # how the converts differ from other relievers, in SD units
@@ -580,7 +580,7 @@ auc_rank <- function(score, outcome) {
 cat("Test seasons 2021 to 2025:", nrow(test_rows), " converts:", sum(test_rows$Converted), "\n\n")
 ```
 
-    ## Test seasons 2021 to 2025: 1398  converts: 37
+    ## Test seasons 2021 to 2025: 1398  converts: 64
 
 ``` r
 # Calibration slope is the coefficient on the predicted log odds (1 is perfect, below 1 is overconfident)
@@ -608,11 +608,11 @@ print(calibration, row.names = FALSE)
 ```
 
     ##        model expected actual slope log_loss   brier
-    ##    base_rate     37.9     37    NA   0.1223 0.02577
-    ##     logistic     32.8     37  0.79   0.1042 0.02487
-    ##        ridge     38.8     37  0.97   0.1033 0.02471
-    ##        lasso     40.6     37  0.95   0.1029 0.02481
-    ##  four_traits     39.0     37  0.83   0.1029 0.02525
+    ##    base_rate     72.3     64    NA   0.1862 0.04372
+    ##     logistic     72.2     64  0.82   0.1521 0.04049
+    ##        ridge     75.6     64  0.93   0.1531 0.04069
+    ##        lasso     77.0     64  0.93   0.1536 0.04107
+    ##  four_traits     73.5     64  0.83   0.1532 0.04153
 
 ``` r
 # AUC averaged over the test years, and converts found in each year's top 20
@@ -662,25 +662,25 @@ print(ranking, row.names = FALSE)
 ```
 
     ##         score mean_AUC worst_year_AUC top_20 lower upper
-    ##      logistic    0.841          0.654     16 0.789 0.887
-    ##         ridge    0.845          0.687     15 0.795 0.890
-    ##         lasso    0.848          0.717     15 0.801 0.890
-    ##   four_traits    0.845          0.715     14 0.793 0.889
-    ##  simple_score    0.855          0.765     14 0.804 0.899
-    ##     TBF_per_G    0.778          0.725     13 0.697 0.854
+    ##      logistic    0.841          0.727     23 0.794 0.886
+    ##         ridge    0.840          0.725     23 0.794 0.884
+    ##         lasso    0.845          0.755     23 0.802 0.887
+    ##   four_traits    0.844          0.740     23 0.801 0.883
+    ##  simple_score    0.850          0.760     22 0.809 0.887
+    ##     TBF_per_G    0.790          0.753     18 0.739 0.845
 
 ``` r
 cat("Random picks would find about", round(20 * 5 * mean(test_rows$Converted), 1), "converts in the top 20s\n")
 ```
 
-    ## Random picks would find about 2.6 converts in the top 20s
+    ## Random picks would find about 4.6 converts in the top 20s
 
 ``` r
 cat("Ridge minus the simple score in AUC:", round(ranking$mean_AUC[2] - ranking$mean_AUC[5], 3),
     " 95% interval", round(quantile(boot_auc[, "ridge"] - boot_auc[, "simple_score"], c(0.025, 0.975)), 3), "\n")
 ```
 
-    ## Ridge minus the simple score in AUC: -0.01  95% interval -0.032 0.013
+    ## Ridge minus the simple score in AUC: -0.01  95% interval -0.03 0.007
 
 ``` r
 # Final ridge model on every relief season through 2025
@@ -701,30 +701,30 @@ cat("\n2026 relievers scored:", nrow(current), " expected conversions:", round(s
 ```
 
     ## 
-    ## 2026 relievers scored: 274  expected conversions: 7.5
+    ## 2026 relievers scored: 274  expected conversions: 14
 
 ``` r
 print(as.data.frame(head(likelihood, 20)), row.names = FALSE)
 ```
 
     ##         PlayerName  Team Age TBF_per_G SIERA_vs_lg prior_MLB_GS MiLB_GS ProbPct
-    ##    Jesse Scholtens   TBR  32      16.2        0.34           11     140    36.1
-    ##       José Urquidy 3 Tms  31      11.9       -0.52           70      94    35.9
-    ##       Bryse Wilson 3 Tms  28       9.4       -0.68           57     111    25.7
-    ##          Brad Lord   WSN  26       8.7       -0.37           19      42    23.7
-    ##    Trevor Williams 2 Tms  34       8.4       -0.81          178      95    18.7
-    ##  Jordan Montgomery   TEX  33       8.0       -0.52          161      70    17.9
-    ##          Ty Madden   DET  26       9.2       -0.55            1      84    17.5
-    ##    Mitchell Parker   WSN  26       8.1        0.12           59      75    14.3
-    ##       Tobias Myers   NYM  27       7.1        0.09           31     140    12.9
-    ##       Wilber Dotel   PIT  23       8.1       -0.27            0      86    12.0
-    ##       Beau Brieske   DET  28       5.7       -0.54           29      33    12.0
-    ##       Mitch Farris   LAA  25       7.8       -0.09            5      46    11.8
-    ##      Jake Woodford 3 Tms  29       7.1       -0.12           25     163    10.6
-    ##         Dax Fulton   MIA  24       7.6       -0.20            0      81     9.9
-    ##        Luis Medina   ATH  27       5.3       -0.45           25      93     9.9
-    ##     Didier Fuentes   ATL  21       4.9       -1.21            4      51     9.5
-    ##       Chad Patrick   MIL  27       6.3        0.05           23      68     9.4
-    ##     Paul Blackburn   NYY  32       5.4       -0.09           86     158     8.8
-    ##       Grant Taylor   CHW  24       5.7       -1.13            2      11     8.4
-    ##       Blas Castaño   COL  27       7.4        0.12            0     107     7.4
+    ##       José Urquidy 3 Tms  31      11.9       -0.52           70      94    52.5
+    ##       Bryse Wilson 3 Tms  28       9.4       -0.68           57     111    51.6
+    ##    Jesse Scholtens   TBR  32      16.2        0.34           11     140    47.0
+    ##          Brad Lord   WSN  26       8.7       -0.37           19      42    38.2
+    ##  Jordan Montgomery   TEX  33       8.0       -0.52          161      70    38.1
+    ##    Mitchell Parker   WSN  26       8.1        0.12           59      75    37.3
+    ##    Trevor Williams 2 Tms  34       8.4       -0.81          178      95    32.5
+    ##       Tobias Myers   NYM  27       7.1        0.09           31     140    27.9
+    ##          Ty Madden   DET  26       9.2       -0.55            1      84    27.8
+    ##       Mitch Farris   LAA  25       7.8       -0.09            5      46    26.0
+    ##      Jake Woodford 3 Tms  29       7.1       -0.12           25     163    25.1
+    ##       Beau Brieske   DET  28       5.7       -0.54           29      33    22.8
+    ##       Chad Patrick   MIL  27       6.3        0.05           23      68    20.1
+    ##       Wilber Dotel   PIT  23       8.1       -0.27            0      86    19.3
+    ##        Luis Medina   ATH  27       5.3       -0.45           25      93    19.1
+    ##         Dax Fulton   MIA  24       7.6       -0.20            0      81    18.6
+    ##     Didier Fuentes   ATL  21       4.9       -1.21            4      51    18.5
+    ##        José Suarez 3 Tms  28       5.9        0.11           62      95    18.4
+    ##        Mason Black   KCR  26       8.4        1.85            8     102    17.7
+    ##     Paul Blackburn   NYY  32       5.4       -0.09           86     158    16.8

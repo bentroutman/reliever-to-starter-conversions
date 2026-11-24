@@ -71,9 +71,11 @@ relief_seasons <- role_seasons |>
   inner_join(season_N, by = c("playerid", "rp_season")) |>
   filter(N_GS / N_G <= 0.2)
 
-# Baseline group: relievers who stayed relievers the next season and threw 20+ IP
+# Baseline group: relievers who stayed relievers the next season and threw 20+ IP (not counting attempts)
 stayers <- relief_seasons |>
   mutate(next_season = rp_season + 1) |>
+  anti_join(read_csv("data/conversions.csv", show_col_types = FALSE),
+            by = c("playerid", "next_season" = "sp_season")) |>
   inner_join(season_next, by = c("playerid", "next_season")) |>
   filter(next_GS / next_G <= 0.2, next_IP >= 20)
 cat("Stay-in-pen baseline seasons:", nrow(stayers), "\n")
@@ -84,18 +86,15 @@ cat("Stay-in-pen baseline seasons:", nrow(stayers), "\n")
 war_model <- lm(next_WAR ~ N_WAR + rp_SIERA_vs_lg + N_IP + rp_age, data = stayers)
 wpa_model <- lm(next_WPA ~ N_WPA + rp_SIERA_vs_lg + N_IP + rp_age, data = stayers)
 
-# All attempts: 5+ starts (the main sample) and 1 to 4 starts (short attempts)
+# Split by how many starts the attempt lasted
 archetype_cols <- c("playerid", "PlayerName", "rp_season", "sp_season", "sp_GS", "sp_IP",
                     "rp_FBVelo", "rp_NumPitches10", "rp_gmLI", "rp_TBFPerG", "rp_StuffPlus",
                     "rp_NumPlusPitches", "rp_KBB")
 conversions <- read_csv("data/conversions.csv", show_col_types = FALSE) |>
   select(all_of(archetype_cols)) |>
-  mutate(attempt = "5+ starts")
-short_attempts <- read_csv("data/short_attempts.csv", show_col_types = FALSE) |>
-  select(all_of(archetype_cols)) |>
-  mutate(attempt = "1 to 4 starts")
+  mutate(attempt = ifelse(sp_GS >= 5, "5+ starts", "2 to 4 starts"))
 
-attempts <- bind_rows(conversions, short_attempts) |>
+attempts <- conversions |>
   inner_join(relief_seasons, by = c("playerid", "rp_season")) |>
   inner_join(season_next, by = c("playerid", "sp_season" = "next_season")) |>
   left_join(lg_sp, by = c("sp_season" = "Season")) |>
@@ -196,7 +195,7 @@ ggplot(attempts, aes(pen_WAR, next_WAR, color = attempt)) +
   geom_point(alpha = 0.7, size = 2) +
   geom_text(data = attempts |> filter(PlayerName %in% known), aes(label = PlayerName),
             size = 3, vjust = -1, show.legend = FALSE) +
-  scale_color_manual(values = c("5+ starts" = "steelblue", "1 to 4 starts" = "red")) +
+  scale_color_manual(values = c("5+ starts" = "steelblue", "2 to 4 starts" = "red")) +
   labs(title = "Next season WAR after a move to the rotation vs expected WAR in the pen",
        subtitle = "Expected WAR comes from relievers who stayed relievers. Points above the line gained value",
        x = "Expected WAR if he stayed in the pen", y = "Actual WAR the next season (all roles)",
@@ -307,6 +306,8 @@ next_year <- seasons |>
             next_WAA_br = WAA_br, next_WAA_br_adj = WAA_br_adj, next_WPA = WPA)
 stayers <- relievers |>
   mutate(next_season = Season + 1) |>
+  anti_join(read_csv("data/conversions.csv", show_col_types = FALSE),
+            by = c("playerid", "next_season" = "sp_season")) |>
   inner_join(next_year, by = c("playerid", "next_season" = "Season")) |>
   filter(next_GS / next_G <= 0.2, next_IP >= 20)
 
@@ -331,7 +332,7 @@ cat("(r_with_skill_wins_same_season shows how much of each measure is the SIERA 
 
 ```{r}
 # Conversion gains: actual next season minus the stay-in-the-pen projection, same method as 02_value.Rmd
-cat("3. Conversion gain by measure (actual starter season minus the stay-in-the-pen projection), 114 attempts\n")
+cat("3. Conversion gain by measure (actual starter season minus the stay-in-the-pen projection)\n")
 lg_rp <- league_rp
 relief_info <- role_seasons |>
   filter(role == "rel") |>
@@ -386,9 +387,9 @@ attempts <- attempts |>
       TRUE ~ "cushion 1+"),
          StuffGroup = case_when(is.na(rp_StuffPlus) ~ NA_character_, rp_StuffPlus >= 100 ~ "Stuff+ 100+",
            TRUE ~ "Stuff+ under 100"))
-gain_table <- gain_summary(attempts, "all 114 attempts")
+gain_table <- gain_summary(attempts, "all attempts")
 gain_table <- bind_rows(gain_table, gain_summary(attempts |> filter(attempt == "5+ starts"), "5+ starts"))
-gain_table <- bind_rows(gain_table, gain_summary(attempts |> filter(attempt == "1 to 4 starts"), "1 to 4 starts"))
+gain_table <- bind_rows(gain_table, gain_summary(attempts |> filter(attempt == "2 to 4 starts"), "2 to 4 starts"))
 for (g in c("cushion under 0.5", "cushion 0.5 to 1", "cushion 1+")) {
   gain_table <- bind_rows(gain_table, gain_summary(attempts |> filter(CushionGroup == g), g))
 }
@@ -405,7 +406,7 @@ print(as.data.frame(gain_table |> filter(measure %in% c("WAR", "WAA_fg", "WAA_br
                       tidyr::pivot_wider(id_cols = c(group, n), names_from = measure, values_from = c(se,
                         share_gaining))), row.names = FALSE)
 
-cat("\n4. Do the measures agree on who gained? Spearman correlation of conversion gains, 114 attempts\n")
+cat("\n4. Do the measures agree on who gained? Spearman correlation of conversion gains\n")
 gain_matrix <- attempts[, paste0(gain_measures, "_gain")]
 print(round(cor(gain_matrix, method = "spearman"), 2))
 ```
@@ -452,6 +453,8 @@ stayers <- fg_season |>
   filter(GS / G <= 0.2, TBF >= 100) |>
   left_join(relief_info, by = c("playerid", "Season")) |>
   mutate(next_season = Season + 1) |>
+  anti_join(read_csv("data/conversions.csv", show_col_types = FALSE),
+            by = c("playerid", "next_season" = "sp_season")) |>
   inner_join(next_year, by = c("playerid", "next_season" = "Season")) |>
   filter(next_GS / next_G <= 0.2, next_IP >= 20) |>
   left_join(league_sp, by = "Season") |>
@@ -553,9 +556,9 @@ gain_summary <- function(data, label) {
              matched_controls = sprintf("%.2f (%.2f)", mean(data$gain_matched),
                sd(data$gain_matched) / sqrt(nrow(data))))
 }
-gains <- bind_rows(gain_summary(attempts, "all 114 attempts"), gain_summary(attempts |>
+gains <- bind_rows(gain_summary(attempts, "all attempts"), gain_summary(attempts |>
     filter(attempt == "5+ starts"), "5+ starts"),
-                   gain_summary(attempts |> filter(attempt == "1 to 4 starts"), "1 to 4 starts"),
+                   gain_summary(attempts |> filter(attempt == "2 to 4 starts"), "2 to 4 starts"),
                    gain_summary(attempts |> filter(CushionGroup == "cushion under 0.5"), "cushion under 0.5"),
                    gain_summary(attempts |> filter(CushionGroup == "cushion 0.5 to 1"), "cushion 0.5 to 1"),
                    gain_summary(attempts |> filter(CushionGroup == "cushion 1+"), "cushion 1+"),

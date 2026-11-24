@@ -1,6 +1,6 @@
 # Reliever to Starter Conversions
 
-Across 79 MLB reliever to starter conversions from 2015 to 2026, SIERA rose by 0.54 on average and 78% of pitchers got worse. Counting 35 shorter attempts as well, converting gained about 0.48 WAR over staying in the bullpen, but lost 0.24 WPA and 0.20 wins above average. This is a Bruin Sports Analytics (BSA) project.
+Across 145 MLB reliever to starter conversion attempts from 2015 to 2026, SIERA rose by 0.61 on average (0.56 weighted by batters faced) and 77% of pitchers got worse. Converting gained about 0.48 WAR over staying in the bullpen, but lost 0.23 WPA and 0.22 wins above average. This is a Bruin Sports Analytics (BSA) project.
 
 ---
 
@@ -16,61 +16,63 @@ Each step is one R Markdown notebook, and the links below open the knitted versi
 
 ## 1. Building the Sample ([01_data](01_data.md))
 
-A conversion is a season with 5+ starts, at least half of games as starts, and 3.5+ innings per start, within three years of a season with 100+ batters faced in relief and starts in 20% or less of games. Shorter attempts had 1 to 4 starts of the same length the year after. SIERA is compared to the league average for that role and season.
+A conversion attempt is a season with at least 2 starts of 70+ pitches, within three years of a season with 100+ batters faced in relief and starts in 20% or less of games. There is no minimum number of innings or share of games started, since those rules drop attempts that went badly. All of a pitcher's starts that season count toward his results. Pitchers who moved to the rotation during a season are a separate group (133 moves).
 
 ## 2. How Conversions Went ([02_value](02_value.md))
 
 Each attempt is compared to the expected next season of a similar reliever who stayed in the bullpen. WAR went up because starters throw more innings. Measures compared to an average pitcher (WPA and WAA) went down.
 
-| Measure | Average gain (114 attempts) | Standard error |
+| Measure | Average gain (145 attempts) | Standard error |
 |---|---|---|
-| WAR | +0.48 | 0.10 |
-| WPA | -0.24 | 0.10 |
-| WAA (role adjusted) | -0.20 | 0.07 |
+| WAR | +0.48 | 0.09 |
+| WPA | -0.23 | 0.09 |
+| WAA (role adjusted) | -0.22 | 0.07 |
 
-A flexible baseline and matched controls gave similar WAR gains (0.45 and 0.52).
+A flexible baseline and matched controls gave similar WAR gains (0.45 and 0.51). Attempts with 5+ starts gained 0.65 WAR, and the 23 attempts with 2 to 4 starts lost 0.46.
 
 ## 3. What Changed ([03_changes](03_changes.md))
 
-Fastball velocity fell 1.2 mph. For the 38 conversions with Stuff+ (2020 on), Stuff+ fell 5.7 points while Location+ rose 1.1 points. Pitchers also threw more sinkers, changeups, and cutters and fewer four-seamers.
+Fastball velocity fell 1.1 mph. For the 67 attempts with Stuff+ (2020 on), Stuff+ fell 5.1 points while Location+ rose 2.1 points. Pitchers also threw more changeups, sinkers, and cutters and fewer four-seamers.
 
 ## 4. What Predicts Success ([04_success](04_success.md))
 
-- Relief SIERA was the strongest single predictor of starter SIERA, both relative to the league (Spearman correlation of 0.48). No model I tested clearly improved on it, and it held in all 14 versions of the sample I tried.
-- Pitchers with a cushion of at least 1 run (league starter SIERA minus relief SIERA) were league average or better as starters 75% of the time, compared to 37% for the rest.
+- Relief K-BB% and relief SIERA were the strongest predictors of starter SIERA, relative to the league (Spearman correlations of -0.43 and 0.42). No model I tested clearly improved on them, and the relief SIERA relationship held in all 15 versions of the sample I tried (0.34 to 0.59).
+- Pitchers with a cushion of at least 1 run (league starter SIERA minus relief SIERA) were league average or better as starters 70% of the time, compared to 33% for the rest.
+- For mid-season moves, K-BB% before and after the move had a correlation of 0.20.
 
 ![SIERA, WAR, and WPA by cushion](charts/04_cushion_bins.png)
 
 ## 5. Who Gets Converted ([05_selection](05_selection.md))
 
-Teams mostly chose relievers by role and starting history. Those traits separated converts much better than skill did (cross-validated AUC of 0.79 and 0.76, compared to 0.56).
+Teams mostly chose relievers by role and starting history. Those traits separated converts much better than skill did (cross-validated AUC of 0.79 for both, compared to 0.59).
 
 ![How converts differ from other relievers](charts/05_convert_profile.png)
 
-To predict conversions, I tested each model on 1,398 relief seasons from 2021 to 2025 (37 conversions). Each test year only uses earlier relief seasons and conversions that had already happened.
+To predict conversions, I tested each model on 1,398 relief seasons from 2021 to 2025 (64 conversions). Each test year only uses earlier relief seasons and conversions that had already happened.
 
 | Model | Expected conversions | Calibration slope | Log loss | AUC |
 |---|---|---|---|---|
-| Base rate | 37.9 | | 0.1223 | |
-| Logistic regression (15 traits) | 32.8 | 0.79 | 0.1042 | 0.841 |
-| Ridge | 38.8 | 0.97 | 0.1033 | 0.845 |
-| Lasso | 40.6 | 0.95 | 0.1029 | 0.848 |
-| Logistic regression (4 traits) | 39.0 | 0.83 | 0.1029 | 0.845 |
-| Simple unfitted score | | | | 0.855 |
+| Base rate | 72.3 | | 0.1862 | |
+| Logistic regression (15 traits) | 72.2 | 0.82 | 0.1521 | 0.841 |
+| Ridge | 75.6 | 0.93 | 0.1531 | 0.840 |
+| Lasso | 77.0 | 0.93 | 0.1536 | 0.845 |
+| Logistic regression (4 traits) | 73.5 | 0.83 | 0.1532 | 0.844 |
+| Simple unfitted score | | | | 0.850 |
 
-AUC is averaged over the five test years. A calibration slope of 1 is perfect, and below 1 is overconfident. I used ridge for the final probabilities because of its calibration. It did not beat the simple score at ranking pitchers (the 95% interval on the AUC difference is -0.032 to 0.013).
+AUC is averaged over the five test years. A calibration slope of 1 is perfect, and below 1 is overconfident. I used ridge for the final probabilities because its calibration slope was close to 1, but every model expected too many conversions. Ridge did not beat the simple score at ranking pitchers (the 95% interval on the AUC difference is -0.030 to 0.007).
 
 ## Limitations
 
 - The traits and cutoffs were chosen after seeing all of the data, and ridge was chosen on the same test years it is reported on, so the test results are slightly optimistic.
-- The relief SIERA slope fell from 0.48 for conversions through 2021 to 0.17 after, which could be noise (p = 0.11).
-- The success gap for a 1 run cushion from 2022 to 2026 has a 95% interval of -0.05 to 0.63.
+- The weighted relief SIERA slope fell from 0.46 for attempts through 2021 to 0.21 after, which could be noise (p = 0.06).
+- The 70 pitch cutoff, the 2 start rule, and the cushion and Stuff+ cutoffs were my choices. Some attempts only have a few starts, so their results are noisy.
+- A pitcher who was pulled before 70 pitches in every start is not in the sample.
 - Recent relief seasons could still become conversions, since the sample allows a three-year gap.
-- Only pitchers teams chose to convert and who reached the majors as starters are in the sample.
+- Only pitchers teams chose to convert and who made starts in the majors are in the sample.
 
 ## Data
 
-FanGraphs (role splits and minor league lines), Baseball Savant (Statcast pitches), Baseball-Reference (WPA and WAA), and the Chadwick Bureau register (player IDs). FanGraphs gave permission to scrape their data for this project. The data is not included since it belongs to those sites.
+FanGraphs (role splits and minor league lines), Baseball Savant (Statcast pitches), Baseball-Reference (WPA and WAA), the MLB Stats API (game logs), and the Chadwick Bureau register (player IDs). FanGraphs gave permission to scrape their data for this project. The data is not included since it belongs to those sites.
 
 ## Running the Code
 

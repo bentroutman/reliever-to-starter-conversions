@@ -74,33 +74,32 @@ relief_seasons <- role_seasons |>
   inner_join(season_N, by = c("playerid", "rp_season")) |>
   filter(N_GS / N_G <= 0.2)
 
-# Baseline group: relievers who stayed relievers the next season and threw 20+ IP
+# Baseline group: relievers who stayed relievers the next season and threw 20+ IP (not counting attempts)
 stayers <- relief_seasons |>
   mutate(next_season = rp_season + 1) |>
+  anti_join(read_csv("data/conversions.csv", show_col_types = FALSE),
+            by = c("playerid", "next_season" = "sp_season")) |>
   inner_join(season_next, by = c("playerid", "next_season")) |>
   filter(next_GS / next_G <= 0.2, next_IP >= 20)
 cat("Stay-in-pen baseline seasons:", nrow(stayers), "\n")
 ```
 
-    ## Stay-in-pen baseline seasons: 1793
+    ## Stay-in-pen baseline seasons: 1775
 
 ``` r
 # Expected next season value if the pitcher had stayed in the pen
 war_model <- lm(next_WAR ~ N_WAR + rp_SIERA_vs_lg + N_IP + rp_age, data = stayers)
 wpa_model <- lm(next_WPA ~ N_WPA + rp_SIERA_vs_lg + N_IP + rp_age, data = stayers)
 
-# All attempts: 5+ starts (the main sample) and 1 to 4 starts (short attempts)
+# Split by how many starts the attempt lasted
 archetype_cols <- c("playerid", "PlayerName", "rp_season", "sp_season", "sp_GS", "sp_IP",
                     "rp_FBVelo", "rp_NumPitches10", "rp_gmLI", "rp_TBFPerG", "rp_StuffPlus",
                     "rp_NumPlusPitches", "rp_KBB")
 conversions <- read_csv("data/conversions.csv", show_col_types = FALSE) |>
   select(all_of(archetype_cols)) |>
-  mutate(attempt = "5+ starts")
-short_attempts <- read_csv("data/short_attempts.csv", show_col_types = FALSE) |>
-  select(all_of(archetype_cols)) |>
-  mutate(attempt = "1 to 4 starts")
+  mutate(attempt = ifelse(sp_GS >= 5, "5+ starts", "2 to 4 starts"))
 
-attempts <- bind_rows(conversions, short_attempts) |>
+attempts <- conversions |>
   inner_join(relief_seasons, by = c("playerid", "rp_season")) |>
   inner_join(season_next, by = c("playerid", "sp_season" = "next_season")) |>
   left_join(lg_sp, by = c("sp_season" = "Season")) |>
@@ -131,14 +130,14 @@ write_csv(attempts, "data/value_attempts.csv")
 cat("Stay-in-pen models fit on", nrow(stayers), "reliever seasons followed by another relief season (20+ IP)\n")
 ```
 
-    ## Stay-in-pen models fit on 1793 reliever seasons followed by another relief season (20+ IP)
+    ## Stay-in-pen models fit on 1775 reliever seasons followed by another relief season (20+ IP)
 
 ``` r
 cat("WAR model R^2:", round(summary(war_model)$r.squared, 3),
     " WPA model R^2:", round(summary(wpa_model)$r.squared, 3), "\n\n")
 ```
 
-    ## WAR model R^2: 0.137  WPA model R^2: 0.08
+    ## WAR model R^2: 0.136  WPA model R^2: 0.08
 
 ``` r
 cat("Stayers, average change from season N to N+1\n")
@@ -154,7 +153,7 @@ stayers |>
 ```
 
     ##      n N_IP next_IP N_WAR next_WAR N_WPA next_WPA
-    ## 1 1793 53.9      51 0.594    0.471  0.53    0.397
+    ## 1 1775 53.9    50.9 0.596    0.472 0.533    0.403
 
 ``` r
 cat("\nAttempts, actual next season vs expected if they had stayed in the pen\n")
@@ -173,12 +172,12 @@ attempts |>
   as.data.frame() |> print(digits = 3)
 ```
 
-    ##         attempt  n N_IP next_IP N_aLI next_aLI N_WAR next_WAR pen_WAR
-    ## 1 1 to 4 starts 35 54.4    41.8 0.766    0.782 0.067   0.0379   0.319
-    ## 2     5+ starts 79 55.8   106.1 0.913    0.929 0.364   1.2409   0.426
+    ##         attempt   n N_IP next_IP N_aLI next_aLI N_WAR next_WAR pen_WAR
+    ## 1 2 to 4 starts  23 50.4    37.9 0.854    0.840 0.169  -0.0702   0.386
+    ## 2     5+ starts 122 57.2    99.6 0.914    0.917 0.378   1.0764   0.423
     ##   share_WAR_gain WAR_gain_se WAR_gain WPA_gain
-    ## 1          0.229       0.102   -0.281   -0.372
-    ## 2          0.734       0.127    0.815   -0.177
+    ## 1          0.130      0.1072   -0.456   -0.761
+    ## 2          0.705      0.0978    0.654   -0.134
 
 ``` r
 cat("\nAll attempts together\n")
@@ -198,9 +197,9 @@ attempts |>
 ```
 
     ##     n next_WAR pen_WAR share_WAR_gain share_WPA_gain WAR_gain_se WPA_gain_se
-    ## 1 114    0.872   0.393          0.579          0.377       0.104       0.103
+    ## 1 145    0.895   0.417          0.614          0.407      0.0905        0.09
     ##   WAR_gain WPA_gain
-    ## 1    0.478   -0.237
+    ## 1    0.478   -0.233
 
 ``` r
 # Archetypes, measured in the relief season
@@ -240,46 +239,46 @@ write_csv(archetype_table, "results/02_value_by_archetype.csv")
 print(as.data.frame(archetype_table))
 ```
 
-    ##          archetype                           group  n share_5plus_GS next_IP
-    ## 1             Velo                         95+ mph 36          0.778  95.852
-    ## 2             Velo                    under 95 mph 78          0.654  81.974
-    ## 3          Arsenal                       2 pitches 19          0.632  88.614
-    ## 4          Arsenal               3+ pitches at 10% 95          0.705  85.905
-    ## 5         Leverage       high leverage (gmLI 1.3+) 22          0.864 115.909
-    ## 6         Leverage                  lower leverage 92          0.652  79.290
-    ## 7           Length      long relief (6+ TBF per G) 58          0.724  78.080
-    ## 8           Length                    short relief 56          0.661  94.929
-    ## 9              Age                    25 and under 38          0.711  90.202
-    ## 10             Age                    26 and older 76          0.684  84.434
-    ## 11   ReliefQuality     SIERA better than league RP 50          0.700  92.607
-    ## 12   ReliefQuality      SIERA worse than league RP 64          0.688  81.474
-    ## 13 StartingHistory           MiLB starter (50+ GS) 63          0.714  84.254
-    ## 14 StartingHistory     former MLB starter (20+ GS) 30          0.733  87.656
-    ## 15 StartingHistory         little starting history 21          0.571  90.810
-    ## 16       StuffPlus                     Stuff+ 100+ 29          0.793 106.920
-    ## 17       StuffPlus                Stuff+ under 100 23          0.652  74.188
-    ## 18     PlusPitches 0 or 1 pitches with Stuff+ 100+ 20          0.600  66.617
-    ## 19     PlusPitches     2+ pitches with Stuff+ 100+ 32          0.812 108.583
+    ##          archetype                           group   n share_5plus_GS next_IP
+    ## 1             Velo                         95+ mph  40          0.825  94.842
+    ## 2             Velo                    under 95 mph 105          0.848  87.940
+    ## 3          Arsenal                       2 pitches  27          0.778  86.370
+    ## 4          Arsenal               3+ pitches at 10% 118          0.856  90.638
+    ## 5         Leverage       high leverage (gmLI 1.3+)  30          0.900 109.489
+    ## 6         Leverage                  lower leverage 115          0.826  84.719
+    ## 7           Length      long relief (6+ TBF per G)  63          0.873  87.159
+    ## 8           Length                    short relief  82          0.817  91.907
+    ## 9              Age                    25 and under  46          0.826  90.123
+    ## 10             Age                    26 and older  99          0.848  89.714
+    ## 11   ReliefQuality     SIERA better than league RP  69          0.812  93.918
+    ## 12   ReliefQuality      SIERA worse than league RP  76          0.868  86.145
+    ## 13 StartingHistory           MiLB starter (50+ GS)  73          0.849  90.589
+    ## 14 StartingHistory     former MLB starter (20+ GS)  47          0.894  88.709
+    ## 15 StartingHistory         little starting history  25          0.720  89.800
+    ## 16       StuffPlus                     Stuff+ 100+  37          0.946 112.550
+    ## 17       StuffPlus                Stuff+ under 100  30          0.833  81.778
+    ## 18     PlusPitches 0 or 1 pitches with Stuff+ 100+  26          0.808  76.115
+    ## 19     PlusPitches     2+ pitches with Stuff+ 100+  41          0.951 113.138
     ##    next_WAR pen_WAR share_WAR_gain WAR_gain_se WPA_gain_se WAR_gain WPA_gain
-    ## 1     1.181   0.513          0.694       0.204       0.196    0.669   -0.127
-    ## 2     0.729   0.338          0.526       0.120       0.121    0.390   -0.288
-    ## 3     0.941   0.402          0.579       0.302       0.325    0.540   -0.414
-    ## 4     0.858   0.392          0.579       0.111       0.106    0.466   -0.202
-    ## 5     1.619   0.551          0.727       0.286       0.272    1.068    0.179
-    ## 6     0.693   0.356          0.543       0.105       0.108    0.337   -0.336
-    ## 7     0.683   0.326          0.552       0.128       0.137    0.357   -0.371
-    ## 8     1.067   0.463          0.607       0.166       0.154    0.604   -0.099
-    ## 9     1.084   0.449          0.684       0.204       0.168    0.636   -0.058
-    ## 10    0.765   0.366          0.526       0.119       0.130    0.399   -0.327
-    ## 11    1.290   0.616          0.560       0.199       0.168    0.674   -0.191
-    ## 12    0.544   0.219          0.594       0.099       0.130    0.325   -0.273
-    ## 13    0.829   0.394          0.587       0.128       0.122    0.434   -0.320
-    ## 14    1.008   0.390          0.533       0.237       0.239    0.618   -0.174
-    ## 15    0.805   0.395          0.619       0.253       0.257    0.410   -0.080
-    ## 16    1.696   0.569          0.759       0.249       0.187    1.127    0.040
-    ## 17    0.558   0.363          0.565       0.214       0.214    0.195   -0.441
-    ## 18    0.658   0.356          0.550       0.256       0.227    0.303   -0.543
-    ## 19    1.527   0.554          0.750       0.233       0.175    0.973    0.058
+    ## 1     1.232   0.577          0.700       0.191       0.180    0.655   -0.128
+    ## 2     0.766   0.356          0.581       0.101       0.104    0.410   -0.273
+    ## 3     0.805   0.402          0.556       0.237       0.261    0.402   -0.483
+    ## 4     0.915   0.420          0.627       0.098       0.093    0.495   -0.176
+    ## 5     1.535   0.621          0.700       0.230       0.220    0.914    0.075
+    ## 6     0.728   0.364          0.591       0.095       0.097    0.364   -0.314
+    ## 7     0.762   0.351          0.635       0.117       0.131    0.411   -0.363
+    ## 8     0.996   0.467          0.598       0.133       0.123    0.529   -0.134
+    ## 9     0.973   0.475          0.609       0.190       0.151    0.498   -0.127
+    ## 10    0.858   0.390          0.616       0.100       0.112    0.468   -0.282
+    ## 11    1.271   0.631          0.609       0.157       0.135    0.640   -0.186
+    ## 12    0.553   0.223          0.618       0.095       0.121    0.331   -0.276
+    ## 13    0.880   0.416          0.630       0.119       0.118    0.464   -0.235
+    ## 14    0.875   0.383          0.553       0.178       0.185    0.491   -0.300
+    ## 15    0.973   0.481          0.680       0.214       0.188    0.492   -0.102
+    ## 16    1.794   0.573          0.865       0.195       0.163    1.222    0.262
+    ## 17    0.567   0.373          0.567       0.174       0.185    0.194   -0.413
+    ## 18    0.701   0.367          0.538       0.218       0.220    0.334   -0.356
+    ## 19    1.589   0.557          0.854       0.184       0.150    1.032    0.160
 
 ``` r
 # actual next season WAR vs expected WAR in the pen
@@ -290,7 +289,7 @@ ggplot(attempts, aes(pen_WAR, next_WAR, color = attempt)) +
   geom_point(alpha = 0.7, size = 2) +
   geom_text(data = attempts |> filter(PlayerName %in% known), aes(label = PlayerName),
             size = 3, vjust = -1, show.legend = FALSE) +
-  scale_color_manual(values = c("5+ starts" = "steelblue", "1 to 4 starts" = "red")) +
+  scale_color_manual(values = c("5+ starts" = "steelblue", "2 to 4 starts" = "red")) +
   labs(title = "Next season WAR after a move to the rotation vs expected WAR in the pen",
        subtitle = "Expected WAR comes from relievers who stayed relievers. Points above the line gained value",
        x = "Expected WAR if he stayed in the pen", y = "Actual WAR the next season (all roles)",
@@ -427,6 +426,8 @@ next_year <- seasons |>
             next_WAA_br = WAA_br, next_WAA_br_adj = WAA_br_adj, next_WPA = WPA)
 stayers <- relievers |>
   mutate(next_season = Season + 1) |>
+  anti_join(read_csv("data/conversions.csv", show_col_types = FALSE),
+            by = c("playerid", "next_season" = "sp_season")) |>
   inner_join(next_year, by = c("playerid", "next_season" = "Season")) |>
   filter(next_GS / next_G <= 0.2, next_IP >= 20)
 
@@ -434,7 +435,7 @@ measures <- c("WAR", "WAA_fg", "WAA_br", "WAA_br_adj", "WPA")
 cat("2. How well each measure repeats for", nrow(stayers), "relievers who stayed relievers\n")
 ```
 
-    ## 2. How well each measure repeats for 1808 relievers who stayed relievers
+    ## 2. How well each measure repeats for 1790 relievers who stayed relievers
 
 ``` r
 cat("Correlation of this season with next season. Totals include innings pitched, rates are per 65 IP. Standard error is about",
@@ -459,11 +460,11 @@ print(stability, row.names = FALSE)
 ```
 
     ##     measure r_total r_rate_per_65_IP r_with_skill_wins_same_season
-    ##         WAR   0.322            0.289                         0.779
-    ##      WAA_fg   0.319            0.293                         0.767
-    ##      WAA_br   0.116            0.079                         0.523
-    ##  WAA_br_adj   0.130            0.094                         0.539
-    ##         WPA   0.166            0.120                         0.544
+    ##         WAR   0.320            0.287                         0.780
+    ##      WAA_fg   0.316            0.290                         0.766
+    ##      WAA_br   0.113            0.076                         0.521
+    ##  WAA_br_adj   0.127            0.092                         0.537
+    ##         WPA   0.165            0.119                         0.545
 
 ``` r
 cat("(r_with_skill_wins_same_season shows how much of each measure is the SIERA based skill signal)\n\n")
@@ -473,10 +474,10 @@ cat("(r_with_skill_wins_same_season shows how much of each measure is the SIERA 
 
 ``` r
 # Conversion gains: actual next season minus the stay-in-the-pen projection, same method as 02_value.Rmd
-cat("3. Conversion gain by measure (actual starter season minus the stay-in-the-pen projection), 114 attempts\n")
+cat("3. Conversion gain by measure (actual starter season minus the stay-in-the-pen projection)\n")
 ```
 
-    ## 3. Conversion gain by measure (actual starter season minus the stay-in-the-pen projection), 114 attempts
+    ## 3. Conversion gain by measure (actual starter season minus the stay-in-the-pen projection)
 
 ``` r
 lg_rp <- league_rp
@@ -515,7 +516,7 @@ cat("Check against 02_value.Rmd: mean WAR gain here", round(mean(attempts$WAR_ga
     " (n =", nrow(attempts), ")\n\n")
 ```
 
-    ## Check against 02_value.Rmd: mean WAR gain here 0.479  there 0.478  (n = 114 )
+    ## Check against 02_value.Rmd: mean WAR gain here 0.479  there 0.478  (n = 145 )
 
 ``` r
 # Summary of gains for a group of attempts
@@ -535,9 +536,9 @@ attempts <- attempts |>
       TRUE ~ "cushion 1+"),
          StuffGroup = case_when(is.na(rp_StuffPlus) ~ NA_character_, rp_StuffPlus >= 100 ~ "Stuff+ 100+",
            TRUE ~ "Stuff+ under 100"))
-gain_table <- gain_summary(attempts, "all 114 attempts")
+gain_table <- gain_summary(attempts, "all attempts")
 gain_table <- bind_rows(gain_table, gain_summary(attempts |> filter(attempt == "5+ starts"), "5+ starts"))
-gain_table <- bind_rows(gain_table, gain_summary(attempts |> filter(attempt == "1 to 4 starts"), "1 to 4 starts"))
+gain_table <- bind_rows(gain_table, gain_summary(attempts |> filter(attempt == "2 to 4 starts"), "2 to 4 starts"))
 for (g in c("cushion under 0.5", "cushion 0.5 to 1", "cushion 1+")) {
   gain_table <- bind_rows(gain_table, gain_summary(attempts |> filter(CushionGroup == g), g))
 }
@@ -551,23 +552,23 @@ print(as.data.frame(gain_table |> tidyr::pivot_wider(names_from = measure, value
 ```
 
     ##              group   n mean_gain_WAR mean_gain_WAA_fg mean_gain_WAA_br
-    ##   all 114 attempts 114         0.479           -0.200            0.074
-    ##          5+ starts  79         0.816           -0.161            0.248
-    ##      1 to 4 starts  35        -0.280           -0.288           -0.320
-    ##  cushion under 0.5  64         0.408           -0.186            0.015
-    ##   cushion 0.5 to 1  28         0.237           -0.453           -0.189
-    ##         cushion 1+  22         0.996            0.081            0.581
-    ##        Stuff+ 100+  29         1.129            0.119            0.611
-    ##   Stuff+ under 100  23         0.197           -0.338           -0.195
+    ##       all attempts 145         0.479           -0.217            0.044
+    ##          5+ starts 122         0.655           -0.171            0.170
+    ##      2 to 4 starts  23        -0.454           -0.459           -0.621
+    ##  cushion under 0.5  76         0.383           -0.257           -0.112
+    ##   cushion 0.5 to 1  36         0.339           -0.353            0.023
+    ##         cushion 1+  33         0.853            0.026            0.428
+    ##        Stuff+ 100+  37         1.223            0.233            0.769
+    ##   Stuff+ under 100  30         0.196           -0.407           -0.227
     ##  mean_gain_WAA_br_adj mean_gain_WPA
-    ##                 0.060        -0.234
-    ##                 0.218        -0.174
-    ##                -0.294        -0.370
-    ##                 0.027        -0.161
-    ##                -0.220        -0.654
-    ##                 0.514         0.086
-    ##                 0.559         0.046
-    ##                -0.172        -0.437
+    ##                 0.018        -0.231
+    ##                 0.137        -0.132
+    ##                -0.611        -0.755
+    ##                -0.108        -0.212
+    ##                -0.022        -0.401
+    ##                 0.353        -0.088
+    ##                 0.704         0.266
+    ##                -0.227        -0.408
 
 ``` r
 cat("\nStandard errors and shares gaining\n")
@@ -584,39 +585,39 @@ print(as.data.frame(gain_table |> filter(measure %in% c("WAR", "WAA_fg", "WAA_br
 ```
 
     ##              group   n se_WAR se_WAA_fg se_WAA_br se_WAA_br_adj
-    ##   all 114 attempts 114  0.104     0.072     0.103         0.100
-    ##          5+ starts  79  0.127     0.095     0.131         0.127
-    ##      1 to 4 starts  35  0.102     0.096     0.143         0.142
-    ##  cushion under 0.5  64  0.121     0.085     0.125         0.120
-    ##   cushion 0.5 to 1  28  0.213     0.146     0.207         0.197
-    ##         cushion 1+  22  0.293     0.197     0.275         0.274
-    ##        Stuff+ 100+  29  0.249     0.169     0.219         0.213
-    ##   Stuff+ under 100  23  0.214     0.143     0.220         0.213
+    ##       all attempts 145  0.090     0.067     0.098         0.096
+    ##          5+ starts 122  0.098     0.076     0.109         0.107
+    ##      2 to 4 starts  23  0.107     0.103     0.154         0.157
+    ##  cushion under 0.5  76  0.112     0.085     0.123         0.119
+    ##   cushion 0.5 to 1  36  0.195     0.144     0.222         0.219
+    ##         cushion 1+  33  0.208     0.145     0.204         0.207
+    ##        Stuff+ 100+  37  0.195     0.153     0.181         0.178
+    ##   Stuff+ under 100  30  0.174     0.127     0.186         0.180
     ##  share_gaining_WAR share_gaining_WAA_fg share_gaining_WAA_br
-    ##               0.58                 0.32                 0.43
-    ##               0.73                 0.37                 0.48
-    ##               0.23                 0.20                 0.31
-    ##               0.58                 0.30                 0.38
-    ##               0.46                 0.29                 0.39
-    ##               0.73                 0.41                 0.64
-    ##               0.76                 0.41                 0.66
-    ##               0.57                 0.30                 0.39
+    ##               0.61                 0.34                 0.43
+    ##               0.70                 0.39                 0.48
+    ##               0.13                 0.09                 0.17
+    ##               0.59                 0.30                 0.36
+    ##               0.53                 0.33                 0.44
+    ##               0.76                 0.42                 0.58
+    ##               0.86                 0.51                 0.76
+    ##               0.57                 0.30                 0.40
     ##  share_gaining_WAA_br_adj
-    ##                      0.44
-    ##                      0.48
+    ##                      0.41
+    ##                      0.47
+    ##                      0.13
     ##                      0.34
-    ##                      0.38
-    ##                      0.39
-    ##                      0.68
-    ##                      0.66
-    ##                      0.39
+    ##                      0.42
+    ##                      0.58
+    ##                      0.76
+    ##                      0.37
 
 ``` r
-cat("\n4. Do the measures agree on who gained? Spearman correlation of conversion gains, 114 attempts\n")
+cat("\n4. Do the measures agree on who gained? Spearman correlation of conversion gains\n")
 ```
 
     ## 
-    ## 4. Do the measures agree on who gained? Spearman correlation of conversion gains, 114 attempts
+    ## 4. Do the measures agree on who gained? Spearman correlation of conversion gains
 
 ``` r
 gain_matrix <- attempts[, paste0(gain_measures, "_gain")]
@@ -624,11 +625,11 @@ print(round(cor(gain_matrix, method = "spearman"), 2))
 ```
 
     ##                 WAR_gain WAA_fg_gain WAA_br_gain WAA_br_adj_gain WPA_gain
-    ## WAR_gain            1.00        0.74        0.71            0.69     0.61
-    ## WAA_fg_gain         0.74        1.00        0.63            0.64     0.62
-    ## WAA_br_gain         0.71        0.63        1.00            0.99     0.80
-    ## WAA_br_adj_gain     0.69        0.64        0.99            1.00     0.80
-    ## WPA_gain            0.61        0.62        0.80            0.80     1.00
+    ## WAR_gain            1.00        0.83        0.72            0.71     0.64
+    ## WAA_fg_gain         0.83        1.00        0.63            0.64     0.62
+    ## WAA_br_gain         0.72        0.63        1.00            0.99     0.79
+    ## WAA_br_adj_gain     0.71        0.64        0.99            1.00     0.80
+    ## WPA_gain            0.64        0.62        0.79            0.80     1.00
 
 ## Checking the bullpen baseline
 
@@ -673,6 +674,8 @@ stayers <- fg_season |>
   filter(GS / G <= 0.2, TBF >= 100) |>
   left_join(relief_info, by = c("playerid", "Season")) |>
   mutate(next_season = Season + 1) |>
+  anti_join(read_csv("data/conversions.csv", show_col_types = FALSE),
+            by = c("playerid", "next_season" = "sp_season")) |>
   inner_join(next_year, by = c("playerid", "next_season" = "Season")) |>
   filter(next_GS / next_G <= 0.2, next_IP >= 20) |>
   left_join(league_sp, by = "Season") |>
@@ -697,7 +700,7 @@ cat("Stayers:", nrow(stayers), "reliever seasons followed by another relief seas
     nrow(attempts), "\n\n")
 ```
 
-    ## Stayers: 1808 reliever seasons followed by another relief season of 20+ IP. Attempts: 114
+    ## Stayers: 1790 reliever seasons followed by another relief season of 20+ IP. Attempts: 145
 
 ``` r
 # 1. Calibration of the pen baseline
@@ -727,14 +730,14 @@ cat("Cross-fitted RMSE of next season WAR: linear", round(sqrt(mean((stayers$nex
     " no model", round(sd(stayers$next_WAR), 3), "\n")
 ```
 
-    ## Cross-fitted RMSE of next season WAR: linear 0.691  flexible 0.687  no model 0.742
+    ## Cross-fitted RMSE of next season WAR: linear 0.69  flexible 0.686  no model 0.74
 
 ``` r
 cat("Cross-fitted R^2: linear", round(1 - sum((stayers$next_WAR - stayers$pred_linear)^2) / sum((stayers$next_WAR - mean(stayers$next_WAR))^2), 3),
     " flexible", round(1 - sum((stayers$next_WAR - stayers$pred_flex)^2) / sum((stayers$next_WAR - mean(stayers$next_WAR))^2), 3), "\n\n")
 ```
 
-    ## Cross-fitted R^2: linear 0.131  flexible 0.143
+    ## Cross-fitted R^2: linear 0.13  flexible 0.14
 
 ``` r
 cat("Actual minus predicted next season WAR by tenth of the linear prediction (a calibrated baseline is near 0 in every tenth, and the top tenth is where the elite relievers sit)\n")
@@ -752,16 +755,16 @@ print(as.data.frame(calib), row.names = FALSE)
 ```
 
     ##  bin   n mean_predicted mean_actual bias_linear bias_flex se_bias
-    ##    1 181           0.03        0.18       0.148     0.026   0.045
-    ##    2 181           0.20        0.24       0.041     0.018   0.048
-    ##    3 181           0.29        0.30       0.012     0.032   0.049
-    ##    4 181           0.35        0.35       0.004     0.022   0.047
-    ##    5 181           0.41        0.36      -0.055    -0.012   0.047
-    ##    6 181           0.48        0.40      -0.072    -0.006   0.047
-    ##    7 181           0.55        0.39      -0.160    -0.111   0.049
-    ##    8 181           0.63        0.55      -0.083    -0.034   0.046
-    ##    9 180           0.75        0.78       0.024     0.029   0.063
-    ##   10 180           1.00        1.15       0.152     0.050   0.065
+    ##    1 179           0.03        0.18       0.149     0.024   0.045
+    ##    2 179           0.20        0.27       0.068     0.047   0.049
+    ##    3 179           0.29        0.30       0.010     0.026   0.049
+    ##    4 179           0.35        0.35      -0.007     0.009   0.047
+    ##    5 179           0.41        0.34      -0.073    -0.024   0.047
+    ##    6 179           0.48        0.43      -0.046     0.010   0.050
+    ##    7 179           0.54        0.39      -0.158    -0.105   0.046
+    ##    8 179           0.63        0.55      -0.079    -0.029   0.049
+    ##    9 179           0.75        0.75      -0.001     0.006   0.063
+    ##   10 179           1.00        1.15       0.155     0.050   0.064
 
 ``` r
 cat("\nBias by cushion group among stayers (these are the groups the archetype results use)\n")
@@ -782,9 +785,9 @@ print(as.data.frame(stayers |>
 ```
 
     ##              group   n bias_linear bias_flex    se
-    ##   cushion 0.5 to 1 529      -0.077    -0.030 0.029
-    ##         cushion 1+ 547       0.049     0.025 0.033
-    ##  cushion under 0.5 732       0.022     0.006 0.023
+    ##   cushion 0.5 to 1 525      -0.076    -0.028 0.029
+    ##         cushion 1+ 543       0.048     0.023 0.033
+    ##  cushion under 0.5 722       0.024     0.006 0.023
 
 ``` r
 # Matched control baseline: for each attempt, the average next season WAR of the 25 closest stayers (other
@@ -828,9 +831,9 @@ gain_summary <- function(data, label) {
              matched_controls = sprintf("%.2f (%.2f)", mean(data$gain_matched),
                sd(data$gain_matched) / sqrt(nrow(data))))
 }
-gains <- bind_rows(gain_summary(attempts, "all 114 attempts"), gain_summary(attempts |>
+gains <- bind_rows(gain_summary(attempts, "all attempts"), gain_summary(attempts |>
     filter(attempt == "5+ starts"), "5+ starts"),
-                   gain_summary(attempts |> filter(attempt == "1 to 4 starts"), "1 to 4 starts"),
+                   gain_summary(attempts |> filter(attempt == "2 to 4 starts"), "2 to 4 starts"),
                    gain_summary(attempts |> filter(CushionGroup == "cushion under 0.5"), "cushion under 0.5"),
                    gain_summary(attempts |> filter(CushionGroup == "cushion 0.5 to 1"), "cushion 0.5 to 1"),
                    gain_summary(attempts |> filter(CushionGroup == "cushion 1+"), "cushion 1+"),
@@ -840,14 +843,14 @@ print(gains, row.names = FALSE)
 ```
 
     ##              group   n       linear     flexible matched_controls
-    ##   all 114 attempts 114  0.48 (0.10)  0.45 (0.10)      0.52 (0.11)
-    ##          5+ starts  79  0.82 (0.13)  0.79 (0.12)      0.87 (0.13)
-    ##      1 to 4 starts  35 -0.28 (0.10) -0.30 (0.10)     -0.27 (0.10)
-    ##  cushion under 0.5  64  0.41 (0.12)  0.36 (0.12)      0.39 (0.13)
-    ##   cushion 0.5 to 1  28  0.24 (0.21)  0.23 (0.19)      0.33 (0.21)
-    ##         cushion 1+  22  1.00 (0.29)  1.00 (0.29)      1.13 (0.29)
-    ##        Stuff+ 100+  29  1.13 (0.25)  1.12 (0.24)      1.24 (0.25)
-    ##   Stuff+ under 100  23  0.20 (0.21)  0.21 (0.21)      0.26 (0.21)
+    ##       all attempts 145  0.48 (0.09)  0.45 (0.09)      0.51 (0.09)
+    ##          5+ starts 122  0.65 (0.10)  0.62 (0.10)      0.69 (0.10)
+    ##      2 to 4 starts  23 -0.45 (0.11) -0.47 (0.10)     -0.44 (0.09)
+    ##  cushion under 0.5  76  0.38 (0.11)  0.33 (0.11)      0.36 (0.12)
+    ##   cushion 0.5 to 1  36  0.34 (0.19)  0.33 (0.17)      0.44 (0.19)
+    ##         cushion 1+  33  0.85 (0.21)  0.84 (0.20)      0.94 (0.21)
+    ##        Stuff+ 100+  37  1.22 (0.19)  1.18 (0.19)      1.30 (0.19)
+    ##   Stuff+ under 100  30  0.20 (0.17)  0.23 (0.17)      0.27 (0.17)
 
 ``` r
 cat("Correlation of the attempt level gains: linear vs flexible", round(cor(attempts$gain_linear,
@@ -855,7 +858,7 @@ cat("Correlation of the attempt level gains: linear vs flexible", round(cor(atte
       "\n")
 ```
 
-    ## Correlation of the attempt level gains: linear vs flexible 0.989  linear vs matched 0.99
+    ## Correlation of the attempt level gains: linear vs flexible 0.988  linear vs matched 0.989
 
 ``` r
 # The matched control method should give a gain of about 0 for relievers who stayed
@@ -870,4 +873,4 @@ cat("Placebo (all", nrow(stayers), "stayers against their matched controls): mea
     round(mean(placebo_gain), 3), " standard error", round(sd(placebo_gain) / sqrt(nrow(stayers)), 3), "\n")
 ```
 
-    ## Placebo (all 1808 stayers against their matched controls): mean gain 0.015  standard error 0.016
+    ## Placebo (all 1790 stayers against their matched controls): mean gain 0.015  standard error 0.016

@@ -130,7 +130,7 @@ ggplot(conversions, aes(rp_KBB * 100, sp_KBB * 100)) +
   geom_point(aes(size = sp_IP), color = "steelblue", alpha = 0.6) +
   geom_text(data = labeled, aes(label = PlayerName), size = 3, vjust = -1) +
   labs(title = "K-BB% as a reliever vs K-BB% as a starter the next season",
-       subtitle = "79 conversion attempts, 2015 to 2026. Dashed line is no change",
+       subtitle = "Conversion attempts, 2015 to 2026. Dashed line is no change",
        x = "Relief season K-BB%", y = "Starter season K-BB%", size = "Starter IP") +
   theme_classic()
 ggsave("charts/04_kbb_relief_vs_starter.png", width = 8, height = 6, dpi = 150)
@@ -236,6 +236,45 @@ ggplot(conversions, aes(MiLB_GS, sp_SIERA_vs_lg)) +
 ggsave("charts/04_minor_league_starts.png", width = 8, height = 6, dpi = 150)
 ```
 
+## Weighting by batters faced
+
+The new attempts include pitchers with only a few starts, so their SIERA is noisy. I repeated the main relationship with each attempt weighted by its batters faced as a starter.
+
+```{r}
+conversions <- read_csv("data/conversions.csv", show_col_types = FALSE)
+weighted_model <- lm(sp_SIERA_vs_lg ~ rp_SIERA_vs_lg, data = conversions, weights = sp_TBF)
+cat("SIERA change, mean:", round(mean(conversions$SIERA_change), 2),
+    " weighted:", round(weighted.mean(conversions$SIERA_change, conversions$sp_TBF), 2),
+    " share worse:", round(mean(conversions$SIERA_change > 0), 2), "\n")
+cat("Starter SIERA vs league, mean:", round(mean(conversions$sp_SIERA_vs_lg), 2),
+    " weighted:", round(weighted.mean(conversions$sp_SIERA_vs_lg, conversions$sp_TBF), 2), "\n")
+cat("Spearman:", round(cor(conversions$rp_SIERA_vs_lg, conversions$sp_SIERA_vs_lg, method = "spearman"), 2),
+    " weighted slope:", round(coef(weighted_model)[2], 2),
+    " standard error:", round(summary(weighted_model)$coefficients[2, 2], 2), "\n")
+
+# Leave one out error, weighted by batters faced
+loo_model <- rep(NA, nrow(conversions))
+loo_mean <- rep(NA, nrow(conversions))
+for (i in 1:nrow(conversions)) {
+  others <- conversions[-i, ]
+  fit <- lm(sp_SIERA_vs_lg ~ rp_SIERA_vs_lg, data = others, weights = sp_TBF)
+  loo_model[i] <- predict(fit, newdata = conversions[i, ])
+  loo_mean[i] <- weighted.mean(others$sp_SIERA_vs_lg, others$sp_TBF)
+}
+cat("Leave one out RMSE, no model:",
+    round(sqrt(weighted.mean((conversions$sp_SIERA_vs_lg - loo_mean)^2, conversions$sp_TBF)), 3),
+    " relief SIERA:",
+    round(sqrt(weighted.mean((conversions$sp_SIERA_vs_lg - loo_model)^2, conversions$sp_TBF)), 3), "\n")
+
+# Did the relationship change after 2021
+conversions <- conversions |> mutate(Later = sp_season >= 2022)
+early_model <- lm(sp_SIERA_vs_lg ~ rp_SIERA_vs_lg, data = conversions |> filter(!Later), weights = sp_TBF)
+late_model <- lm(sp_SIERA_vs_lg ~ rp_SIERA_vs_lg, data = conversions |> filter(Later), weights = sp_TBF)
+interaction_model <- lm(sp_SIERA_vs_lg ~ rp_SIERA_vs_lg * Later, data = conversions, weights = sp_TBF)
+cat("Weighted slope through 2021:", round(coef(early_model)[2], 2), " 2022 on:", round(coef(late_model)[2], 2),
+    " interaction p:", round(summary(interaction_model)$coefficients[4, 4], 2), "\n")
+```
+
 ## Different definitions of a conversion
 
 Whether the main results depend on the cutoffs.
@@ -273,14 +312,20 @@ starter_all <- role_seasons |>
   left_join(league_sp, by = "Season") |>
   transmute(playerid, PlayerName, sp_season = Season, sp_GS = GS, sp_IP = IP,
       sp_starter_share = GS_total / G_total,
-            sp_SIERA = SIERA, sp_SIERA_vs_lg = SIERA - lg_sp_siera, lg_sp_siera)
+            sp_SIERA = SIERA, sp_SIERA_vs_lg = SIERA - lg_sp_siera, lg_sp_siera, xMLBAMID)
+game_logs <- read_csv("data/game_logs.csv", show_col_types = FALSE) |>
+  filter(GS == 1)
 ```
 
 ```{r}
 # Same pairing rules as 01_data.Rmd, with the cutoffs as inputs
-build_variant <- function(min_gs, min_ip_per_gs, max_relief_gs_share, min_relief_tbf, max_gap) {
+build_variant <- function(min_pitches, min_long_starts, max_relief_gs_share, min_relief_tbf, max_gap) {
+  long_starts <- game_logs |>
+    filter(Pitches >= min_pitches) |>
+    count(xMLBAMID, sp_season = Season, name = "sp_LongStarts")
   starters <- starter_all |>
-    filter(sp_GS >= min_gs, sp_starter_share >= 0.5, sp_IP / sp_GS >= min_ip_per_gs, sp_season >= 2015)
+    inner_join(long_starts, by = c("xMLBAMID", "sp_season")) |>
+    filter(sp_LongStarts >= min_long_starts, sp_season >= 2015)
   relievers <- relief_all |>
     filter(rp_TBF >= min_relief_tbf, rp_GS_share <= max_relief_gs_share)
   pairs <- starters |>
@@ -321,16 +366,18 @@ summarize_variant <- function(label, pairs) {
     success_cushion_under_1 = round(mean(pairs$success[pairs$cushion < 1]), 2))
 }
 
-baseline <- build_variant(5, 3.5, 0.2, 100, 3)
+baseline <- build_variant(70, 2, 0.2, 100, 3)
 versions <- list(
-  "baseline: 5+ starts, 3.5+ IP per start, relief TBF 100+, relief starts 20% or less, lookback 3" = baseline,
-  "10+ starts" = build_variant(10, 3.5, 0.2, 100, 3),
-  "15+ starts" = build_variant(15, 3.5, 0.2, 100, 3),
-  "3+ IP per start (lets in shorter starts)" = build_variant(5, 3.0, 0.2, 100, 3),
-  "4.5+ IP per start" = build_variant(5, 4.5, 0.2, 100, 3),
-  "stricter relief season (150+ TBF, starts 10% or less)" = build_variant(5, 3.5, 0.1, 150, 3),
-  "looser relief season (60+ TBF, starts 30% or less)" = build_variant(5, 3.5, 0.3, 60, 3),
-  "lookback 1 year only" = build_variant(5, 3.5, 0.2, 100, 1))
+  "baseline: 2+ starts of 70+ pitches, relief TBF 100+, relief starts 20% or less, lookback 3" = baseline,
+  "1+ start of 70+ pitches" = build_variant(70, 1, 0.2, 100, 3),
+  "3+ starts of 70+ pitches" = build_variant(70, 3, 0.2, 100, 3),
+  "5+ starts of 70+ pitches" = build_variant(70, 5, 0.2, 100, 3),
+  "2+ starts of 60+ pitches" = build_variant(60, 2, 0.2, 100, 3),
+  "2+ starts of 80+ pitches" = build_variant(80, 2, 0.2, 100, 3),
+  "stricter relief season (150+ TBF, starts 10% or less)" = build_variant(70, 2, 0.1, 150, 3),
+  "lookback 1 year only" = build_variant(70, 2, 0.2, 100, 1))
+versions[["old rule (5+ starts, half of games, 3.5+ IP per start)"]] <- build_variant(1, 1, 0.2, 100, 3) |>
+  filter(sp_GS >= 5, sp_starter_share >= 0.5, sp_IP / sp_GS >= 3.5)
 ```
 
 ```{r}
@@ -369,8 +416,7 @@ repeat_pitchers <- baseline |> count(playerid, PlayerName) |> filter(n > 1)
 print(as.data.frame(repeat_pitchers), row.names = FALSE)
 
 # How noisy is a reliever's SIERA? The year to year relationship for relievers who stayed relievers shows how much
-# of
-# the 0.44 slope from relief SIERA to starter SIERA is regression to the mean instead of a role effect
+# of the slope from relief SIERA to starter SIERA is regression to the mean instead of a role effect
 cat("\n4. Year to year reliability of SIERA (SIERA vs league, this season to next season)\n")
 relief_next <- relief_all |> filter(rp_TBF >= 100, rp_GS_share <= 0.2) |>
   mutate(next_season = rp_season + 1) |>
@@ -456,11 +502,10 @@ conversions <- read_csv("data/conversions.csv", show_col_types = FALSE) |>
 thresholds <- c(-0.5, 0, 0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2)
 
 cat("Average league starter SIERA in these starter seasons:", round(mean(conversions$lg_sp_siera), 2), "\n")
-cat("Cushion range in the 79 conversions:", round(min(conversions$Cushion), 2), "to",
+cat("Cushion range:", round(min(conversions$Cushion), 2), "to",
     round(max(conversions$Cushion), 2), "\n\n")
 
 cat("Pitchers AT OR ABOVE each cushion\n")
-cat("SIERA columns use the 79 conversions, WAR and WPA columns use all 114 attempts\n")
 threshold_table <- NULL
 for (cutoff in thresholds) {
   conv_above <- conversions |> filter(Cushion >= cutoff)
@@ -493,7 +538,7 @@ bin_labels <- c("under 0", "0 to 0.5", "0.5 to 1", "1 to 1.5", "1.5+")
 conversions$CushionBin <- cut(conversions$Cushion, bin_breaks, bin_labels, right = FALSE)
 attempts$CushionBin <- cut(attempts$Cushion, bin_breaks, bin_labels, right = FALSE)
 
-cat("\nCushion bins, 79 conversions\n")
+cat("\nCushion bins, SIERA\n")
 conv_bins <- conversions |>
   group_by(CushionBin) |>
   summarize(n = n(), rp_SIERA = mean(rp_SIERA), sp_SIERA = mean(sp_SIERA),
@@ -502,7 +547,7 @@ conv_bins <- conversions |>
             stuck = mean(stuck, na.rm = TRUE), sp_IP = mean(sp_IP))
 print(as.data.frame(conv_bins), digits = 3)
 
-cat("\nCushion bins, all 114 attempts\n")
+cat("\nCushion bins, value\n")
 att_bins <- attempts |>
   group_by(CushionBin) |>
   summarize(n = n(), share_WAR_gain = mean(WAR_gain > 0), share_WPA_gain = mean(WPA_gain > 0, na.rm = TRUE),
@@ -517,7 +562,7 @@ print(as.data.frame(att_bins), digits = 3)
 
 ```{r, fig.width=8, fig.height=9}
 # Does the cushion still matter once you know the relief season value
-cat("\nCushion as a predictor of the gain (all 114 attempts)\n")
+cat("\nCushion as a predictor of the gain\n")
 cat("WAR gain on cushion: slope", round(coef(lm(WAR_gain ~ Cushion, data = attempts))[2], 3),
     " p =", round(summary(lm(WAR_gain ~ Cushion, data = attempts))$coefficients[2, 4], 3), "\n")
 cat("WPA gain on cushion: slope", round(coef(lm(WPA_gain ~ Cushion, data = attempts))[2], 3),
@@ -530,21 +575,21 @@ siera_plot <- ggplot(conv_bins, aes(CushionBin, SIERA_change)) +
       color = "gray") +
   geom_point(color = "steelblue", size = 3) +
   geom_text(aes(label = paste0("n=", n)), vjust = -1.2, size = 3) +
-  labs(title = "SIERA change by cushion (79 conversions)", x = "Relief SIERA cushion (runs)", y = "Runs") +
+  labs(title = "SIERA change by cushion", x = "Relief SIERA cushion (runs)", y = "Runs") +
   theme_classic()
 war_plot <- ggplot(att_bins, aes(CushionBin, WAR_gain)) +
   geom_hline(yintercept = 0, color = "gray", linetype = "dashed") +
   geom_errorbar(aes(ymin = WAR_gain - WAR_gain_se, ymax = WAR_gain + WAR_gain_se), width = 0.15, color = "gray") +
   geom_point(color = "steelblue", size = 3) +
   geom_text(aes(label = paste0("n=", n)), vjust = -1.2, size = 3) +
-  labs(title = "WAR gain by cushion (114 attempts)", x = "Relief SIERA cushion (runs)", y = "Wins") +
+  labs(title = "WAR gain by cushion", x = "Relief SIERA cushion (runs)", y = "Wins") +
   theme_classic()
 wpa_plot <- ggplot(att_bins, aes(CushionBin, WPA_gain)) +
   geom_hline(yintercept = 0, color = "gray", linetype = "dashed") +
   geom_errorbar(aes(ymin = WPA_gain - WPA_gain_se, ymax = WPA_gain + WPA_gain_se), width = 0.15, color = "gray") +
   geom_point(color = "steelblue", size = 3) +
   geom_text(aes(label = paste0("n=", n)), vjust = -1.2, size = 3) +
-  labs(title = "WPA gain by cushion (114 attempts)", x = "Relief SIERA cushion (runs)", y = "Wins") +
+  labs(title = "WPA gain by cushion", x = "Relief SIERA cushion (runs)", y = "Wins") +
   theme_classic()
 ggsave("charts/04_cushion_bins.png", grid.arrange(siera_plot, war_plot, wpa_plot, ncol = 1),
        width = 8, height = 9, dpi = 150)
@@ -593,7 +638,7 @@ loo_rmse <- function(formula, data, outcome) {
 }
 
 
-cat("PART 1. All 79 conversions (5+ starts). Outcome: starter SIERA vs league (lower is better)\n")
+cat("PART 1. All conversion attempts. Outcome: starter SIERA vs league (lower is better)\n")
 cat("Higher AUC is better. No model means guessing the average.\n\n")
 full <- conversions |> filter(!is.na(rp_Opp_KBB), !is.na(rp_SIERA_vs_lg))
 cat("n =", nrow(full), " no model RMSE =", round(sd(full$sp_SIERA_vs_lg) * sqrt((nrow(full) - 1) / nrow(full)), 3),
@@ -638,7 +683,7 @@ full |>
             stuck = mean(stuck, na.rm = TRUE), WAR_gain = mean(WAR_gain, na.rm = TRUE)) |>
   as.data.frame() |> print(digits = 3)
 
-cat("\n\nPART 2. The 38 conversions from 2020 on (Stuff+ exists). Outcome: starter SIERA vs league\n")
+cat("\n\nPART 2. Attempts with a relief season from 2020 on (Stuff+ exists). Outcome: starter SIERA vs league\n")
 stuff <- conversions |>
   filter(!is.na(rp_StuffPlus), !is.na(rp_NumPlusPitches), !is.na(rp_FB_Stuff), !is.na(Screen))
 cat("n =", nrow(stuff), " no model RMSE =", round(sd(stuff$sp_SIERA_vs_lg) * sqrt((nrow(stuff) - 1) / nrow(stuff)),
@@ -661,7 +706,7 @@ for (f in formulas_stuff) {
 print(table_stuff)
 
 cat("\nThe screen (count of cushion 1+, Stuff+ 100+, 2+ plus pitches, FB Stuff+ 100+) vs best relievers by SIERA\n")
-cat("Screen of 3 or 4 vs the rest, and top third by relief SIERA (same 38)\n")
+cat("Screen of 3 or 4 vs the rest, and top third by relief SIERA (same attempts)\n")
 stuff |>
   group_by(Screen_3plus = Screen >= 3) |>
   summarize(n = n(), rp_SIERA_vs_lg = mean(rp_SIERA_vs_lg), share_avg_or_better = mean(Success),
@@ -1027,7 +1072,7 @@ cat("Mean starter SIERA vs league: conversions through 2021", round(mean(train$s
 ```
 
 ```{r}
-# Leave one out inside all 79
+# Leave one out
 loo_linear <- rep(NA, nrow(conversions))
 for (i in 1:nrow(conversions)) {
   loo_model <- lm(sp_SIERA_vs_lg ~ rp_SIERA_vs_lg, data = conversions[-i, ])
@@ -1106,4 +1151,31 @@ cat("Success rate gap for cushion 1 or more vs less in 2022 to 2026:",
     round(mean(test$Success[test$Cushion >= 1]) - mean(test$Success[test$Cushion < 1]), 2),
     " bootstrap 95% interval", round(quantile(boot_gap, 0.025, na.rm = TRUE), 2), "to", round(quantile(boot_gap,
       0.975, na.rm = TRUE), 2), "\n")
+```
+
+## Mid-season moves
+
+Pitchers who moved into the rotation during a season are not in the main sample. Relief is every relief appearance before the first 70+ pitch start, and starting is every start from that one on. K-BB% is compared to the league average for the role.
+
+```{r}
+midseason <- read_csv("data/midseason_attempts.csv", show_col_types = FALSE)
+league_kbb <- read_csv("data/fg_role_seasons.csv", guess_max = 20000, show_col_types = FALSE) |>
+  group_by(Season, role) |>
+  summarize(lg_KBB = weighted.mean(`K-BB%`, TBF, na.rm = TRUE), .groups = "drop")
+league_rp <- league_kbb |> filter(role == "rel") |> select(Season, lg_rp_KBB = lg_KBB)
+league_sp <- league_kbb |> filter(role == "sta") |> select(Season, lg_sp_KBB = lg_KBB)
+midseason <- midseason |>
+  left_join(league_rp, by = "Season") |>
+  left_join(league_sp, by = "Season") |>
+  mutate(before_vs_lg = (before_KBB - lg_rp_KBB) * 100, after_vs_lg = (after_KBB - lg_sp_KBB) * 100,
+         Group = ifelse(GS_last_year >= 10, "10+ starts last year", "under 10 starts last year"))
+cat("K-BB% vs league, percentage points\n")
+midseason |>
+  group_by(Group) |>
+  summarize(n = n(), starts = median(after_GS), share_avg_or_better = mean(after_vs_lg >= 0),
+            spearman = cor(before_vs_lg, after_vs_lg, method = "spearman"),
+            before_vs_lg = mean(before_vs_lg), after_vs_lg = mean(after_vs_lg)) |>
+  as.data.frame() |> print(digits = 3)
+cat("All mid-season moves, Spearman:", round(cor(midseason$before_vs_lg, midseason$after_vs_lg, method = "spearman"), 2),
+    " n =", nrow(midseason), "\n")
 ```

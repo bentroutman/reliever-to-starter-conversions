@@ -83,10 +83,51 @@ write_csv(minors, "data/fg_minors.csv", na = "")
 chrome$kill()
 ```
 
+## Pull game logs
+
+Pitches, batters faced, strikeouts, and walks for every appearance, from
+the MLB Stats API. I only pull pitcher seasons with a start that either
+follow a qualifying relief season within three years or include 50+
+batters faced in relief (about 1,500 calls).
+
+``` r
+role_seasons <- read_csv("data/fg_role_seasons.csv", guess_max = 20000, show_col_types = FALSE)
+season_totals <- role_seasons |>
+  group_by(playerid, xMLBAMID, Season) |>
+  summarize(G_total = sum(G), GS_total = sum(GS), relief_TBF = sum(TBF[role == "rel"]), .groups = "drop")
+relief_years <- season_totals |>
+  filter(relief_TBF >= 100, GS_total / G_total <= 0.2) |>
+  select(playerid, relief_year = Season)
+prior_relievers <- season_totals |>
+  inner_join(relief_years, by = "playerid", relationship = "many-to-many") |>
+  filter(Season - relief_year >= 1, Season - relief_year <= 3)
+log_seasons <- season_totals |>
+  filter(Season >= 2015, GS_total >= 1) |>
+  filter(relief_TBF >= 50 | paste(playerid, Season) %in% paste(prior_relievers$playerid, prior_relievers$Season))
+
+game_logs <- NULL
+for (i in 1:nrow(log_seasons)) {
+  url <- paste0("https://statsapi.mlb.com/api/v1/people/", log_seasons$xMLBAMID[i],
+                "/stats?stats=gameLog&group=pitching&season=", log_seasons$Season[i], "&gameType=R")
+  splits <- fromJSON(url, flatten = TRUE)$stats$splits[[1]]
+  game_logs <- bind_rows(game_logs, splits |>
+    transmute(xMLBAMID = log_seasons$xMLBAMID[i], Season = log_seasons$Season[i], date, game_pk = game.gamePk,
+              GS = stat.gamesStarted, Pitches = stat.numberOfPitches, TBF = stat.battersFaced,
+              SO = stat.strikeOuts, BB = stat.baseOnBalls))
+  Sys.sleep(0.2)
+}
+write_csv(game_logs, "data/game_logs.csv")
+cat("Appearances:", nrow(game_logs), "\n")
+```
+
 ## Build the conversion sample
 
-Each starter season is paired with the most recent relief season in the
-three years before it.
+A conversion attempt is a season with at least 2 starts of 70+ pitches.
+There is no minimum share of games started and no innings minimum, so
+attempts that went badly or ended early stay in. Each one is paired with
+the most recent qualifying relief season in the three years before it.
+The starter results are all of his starts that season, including the
+short ones.
 
 ``` r
 role_seasons <- read_csv("data/fg_role_seasons.csv", guess_max = 20000, show_col_types = FALSE)
@@ -122,11 +163,17 @@ league_rp <- role_seasons |>
 ```
 
 ``` r
-# Starter seasons: at least 5 starts, mostly starting, and 3.5+ IP per start to drop openers
+# Starter seasons: at least 2 starts of 70+ pitches
+game_logs <- read_csv("data/game_logs.csv", show_col_types = FALSE)
+long_starts <- game_logs |>
+  filter(GS == 1, Pitches >= 70) |>
+  group_by(xMLBAMID, Season) |>
+  summarize(LongStarts = n(), .groups = "drop")
 starter_seasons <- role_seasons |>
   filter(role == "sta") |>
   left_join(season_totals, by = c("playerid", "Season")) |>
-  filter(GS >= 5, GS_total / G_total >= 0.5, IP / GS >= 3.5)
+  inner_join(long_starts, by = c("xMLBAMID", "Season")) |>
+  filter(LongStarts >= 2)
 
 # Relief seasons: 100+ batters faced in relief and no more than 20% of games as starts
 relief_seasons <- role_seasons |>
@@ -221,7 +268,8 @@ relief_side <- relief_seasons |>
 starter_side <- starter_seasons |>
   left_join(league_sp, by = "Season") |>
   transmute(playerid, xMLBAMID, PlayerName, Throws, sp_season = Season, sp_team = TeamNameAbb,
-            sp_GS = GS, sp_IP = IP, sp_TBF = TBF, sp_WAR = WAR,
+            sp_GS = GS, sp_LongStarts = LongStarts, sp_start_share = GS_total / G_total, sp_IP = IP, sp_TBF = TBF,
+            sp_WAR = WAR,
             sp_SIERA = SIERA, sp_SIERA_vs_lg = SIERA - lg_sp_siera,
             sp_K = `K%`, sp_BB = `BB%`, sp_KBB = `K-BB%`, sp_KBB_vs_lg = `K-BB%` - lg_sp_kbb,
             sp_FBVelo = FBVelo, sp_StuffPlus = sp_stuff, sp_LocationPlus = sp_location)
@@ -290,19 +338,19 @@ write_csv(conversions, "data/conversions.csv")
 cat("Conversion attempts:", nrow(conversions), "\n")
 ```
 
-    ## Conversion attempts: 79
+    ## Conversion attempts: 145
 
 ``` r
 cat("Unique pitchers:", n_distinct(conversions$playerid), "\n")
 ```
 
-    ## Unique pitchers: 77
+    ## Unique pitchers: 129
 
 ``` r
-cat("Attempts with 60+ starter IP:", sum(conversions$sp_IP >= 60), "\n")
+cat("Attempts with 5+ starts:", sum(conversions$sp_GS >= 5), "\n")
 ```
 
-    ## Attempts with 60+ starter IP: 63
+    ## Attempts with 5+ starts: 122
 
 ``` r
 print(table(conversions$sp_season))
@@ -310,29 +358,48 @@ print(table(conversions$sp_season))
 
     ## 
     ## 2015 2016 2017 2018 2019 2020 2021 2022 2023 2024 2025 2026 
-    ##    4    7    9    6    6    5    5    7    9    7    7    7
+    ##    7   12   16   10   16   10    9   13   15   15   12   10
 
 ``` r
 print(table(gap = conversions$gap))
 ```
 
     ## gap
-    ##  1  2  3 
-    ## 68  9  2
+    ##   1   2   3 
+    ## 126  13   6
 
 ``` r
-# Short attempts that miss the 5 start cutoff (1 to 4 real starts the year after a relief season)
-short_attempts <- role_seasons |>
-  filter(role == "sta", GS <= 4, IP / GS >= 3.5) |>
-  transmute(playerid, PlayerName, sp_season = Season, sp_GS = GS, sp_IP = IP, sp_SIERA = SIERA,
-            rp_season = Season - 1) |>
-  inner_join(relief_side, by = c("playerid", "rp_season")) |>
-  arrange(sp_season, PlayerName)
-write_csv(short_attempts, "data/short_attempts.csv")
-cat("Short attempts (1 to 4 starts):", nrow(short_attempts), "\n")
+# Mid-season moves: 50+ batters faced in relief with starts in 20% or less of games before the first 70+ pitch start
+appearances <- game_logs |>
+  group_by(xMLBAMID, Season) |>
+  mutate(FirstLongStart = ifelse(any(GS == 1 & Pitches >= 70), min(date[GS == 1 & Pitches >= 70]), NA),
+         LongStarts = sum(GS == 1 & Pitches >= 70)) |>
+  ungroup() |>
+  filter(Season >= 2015, LongStarts >= 2)
+before_move <- appearances |>
+  filter(date < FirstLongStart) |>
+  group_by(xMLBAMID, Season) |>
+  summarize(start_share_before = mean(GS), before_TBF = sum(TBF[GS == 0]),
+            before_KBB = sum((SO - BB)[GS == 0]) / before_TBF, .groups = "drop") |>
+  filter(before_TBF >= 50, start_share_before <= 0.2)
+after_move <- appearances |>
+  filter(date >= FirstLongStart, GS == 1) |>
+  group_by(xMLBAMID, Season) |>
+  summarize(after_GS = n(), LongStarts = first(LongStarts), after_TBF = sum(TBF),
+            after_KBB = sum(SO - BB) / after_TBF, .groups = "drop")
+last_year <- season_totals |>
+  transmute(playerid, Season = Season + 1, GS_last_year = GS_total)
+midseason_attempts <- before_move |>
+  inner_join(after_move, by = c("xMLBAMID", "Season")) |>
+  inner_join(role_seasons |> distinct(xMLBAMID, playerid, Season, PlayerName), by = c("xMLBAMID", "Season")) |>
+  left_join(last_year, by = c("playerid", "Season")) |>
+  mutate(GS_last_year = coalesce(GS_last_year, 0)) |>
+  anti_join(conversions, by = c("xMLBAMID", "Season" = "sp_season"))
+write_csv(midseason_attempts, "data/midseason_attempts.csv")
+cat("Mid-season attempts not already in the sample:", nrow(midseason_attempts), "\n")
 ```
 
-    ## Short attempts (1 to 4 starts): 35
+    ## Mid-season attempts not already in the sample: 133
 
 ``` r
 cat("Qualifying relief seasons, 2014 to 2025:", sum(relief_side$rp_season <= 2025), "\n")
@@ -578,7 +645,15 @@ velo_fade <- pitches |>
             .groups = "drop") |>
   mutate(Velo_fade = ifelse(FB_after25 >= 20, Velo_after25 - Velo_first15, NA),
          Velo_max_gap = Velo_p95 - Velo_mean)
+```
 
+    ## Warning in inner_join(pitches, primary_fb, by = c("pitcher", "game_year")): Detected an unexpected many-to-many relationship between `x` and `y`.
+    ## ℹ Row 49342 of `x` matches multiple rows in `y`.
+    ## ℹ Row 1 of `y` matches multiple rows in `x`.
+    ## ℹ If a many-to-many relationship is expected, set `relationship =
+    ##   "many-to-many"` to silence this warning.
+
+``` r
 savant_features <- platoon |>
   left_join(opp_arsenal, by = c("pitcher", "game_year")) |>
   left_join(opp_weapon, by = c("pitcher", "game_year")) |>
@@ -590,4 +665,4 @@ write_csv(savant_features, "data/savant_features.csv")
 cat("Pitcher relief seasons with Statcast features:", nrow(savant_features), "\n")
 ```
 
-    ## Pitcher relief seasons with Statcast features: 73
+    ## Pitcher relief seasons with Statcast features: 136

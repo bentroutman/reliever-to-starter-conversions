@@ -82,7 +82,7 @@ per_pitcher <- mix |>
 cat("Relief vs starter lines for", n_distinct(paste(changes$playerid, changes$sp_season)), "conversions\n\n")
 ```
 
-    ## Relief vs starter lines for 79 conversions
+    ## Relief vs starter lines for 145 conversions
 
 ``` r
 cat("Average change from relief to starter (usage in percentage points, velo in mph)\n")
@@ -99,35 +99,35 @@ change_summary <- changes |>
 print(as.data.frame(change_summary), digits = 3)
 ```
 
-    ##       type      measure  n   relief  starter share_up median_change    change
-    ## 1  process     Changeup 79   0.1132   0.1401    0.646       0.02288  0.026936
-    ## 2  process        Curve 79   0.1124   0.1152    0.430       0.00000  0.002841
-    ## 3  process       Cutter 79   0.0560   0.0809    0.316       0.00000  0.024852
-    ## 4  process    F-Strike% 79   0.6013   0.6090    0.544       0.00472  0.007680
-    ## 5  process       FBVelo 79  93.7544  92.5489    0.152      -1.20659 -1.205464
-    ## 6  process     FB_Stuff 38 100.3078  94.1296    0.289      -7.54022 -5.397894
-    ## 7  process     FourSeam 79   0.3555   0.2858    0.342      -0.04578 -0.069721
-    ## 8  process NumPitches10 79   3.2278   3.6203    0.468       0.00000  0.392405
-    ## 9  process       Sinker 79   0.1785   0.2164    0.519       0.00247  0.037891
-    ## 10 process       Slider 79   0.2279   0.2118    0.380       0.00000 -0.016070
-    ## 11 process        Zone% 79   0.4289   0.4296    0.532       0.00285  0.000736
-    ## 12 process       pfxvCH 66  85.6739  84.8480    0.197      -1.06871 -1.050906
-    ## 13 process       pfxvSL 56  85.1778  83.9954    0.196      -0.97235 -1.143890
-    ## 14 process  sp_location 38 102.2385 102.6622    0.579       0.80249  1.124259
-    ## 15 process  sp_pitching 38 104.9096 100.1268    0.368      -3.17002 -3.958302
-    ## 16 process      sp_s_CH 30  92.4035  91.5355    0.533       1.84304 -0.299801
-    ## 17 process      sp_s_CU 22 105.8945  97.6182    0.136      -7.06316 -9.663246
-    ## 18 process      sp_s_SL 34 110.4173 103.9859    0.206      -6.14183 -8.419978
-    ## 19 process     sp_stuff 38 103.3494  97.4676    0.263      -4.81931 -5.671269
-    ## 20  result          BB% 79   0.0899   0.0793    0.367      -0.00657 -0.010611
-    ## 21  result          GB% 79   0.4646   0.4342    0.304      -0.02587 -0.030445
-    ## 22  result     HardHit% 73   0.3575   0.3794    0.740       0.02156  0.024768
-    ## 23  result           K% 79   0.2220   0.2053    0.354      -0.01348 -0.016642
-    ## 24  result        K-BB% 79   0.1320   0.1260    0.468      -0.01451 -0.006031
-    ## 25  result     O-Swing% 79   0.3142   0.3091    0.443      -0.00461 -0.005069
-    ## 26  result        SIERA 79   3.8744   4.4148    0.785       0.57745  0.540372
-    ## 27  result       SwStr% 79   0.1093   0.0992    0.253      -0.01163 -0.010118
-    ## 28  result   Z-Contact% 79   0.8589   0.8699    0.646       0.01084  0.011017
+    ##       type      measure   n   relief  starter share_up median_change    change
+    ## 1  process     Changeup 145   0.1071   0.1373    0.669       0.02646  0.030196
+    ## 2  process        Curve 145   0.1126   0.1123    0.414       0.00000 -0.000327
+    ## 3  process       Cutter 145   0.0685   0.0791    0.317       0.00000  0.010529
+    ## 4  process    F-Strike% 145   0.6000   0.6148    0.566       0.00962  0.014813
+    ## 5  process       FBVelo 145  93.6635  92.5472    0.138      -1.10890 -1.116358
+    ## 6  process     FB_Stuff  67  98.6234  93.9053    0.313      -7.09570 -4.750180
+    ## 7  process     FourSeam 145   0.3506   0.2936    0.372      -0.03268 -0.057050
+    ## 8  process NumPitches10 145   3.1793   3.6414    0.490       0.00000  0.462069
+    ## 9  process       Sinker 145   0.1805   0.2085    0.497       0.00000  0.027919
+    ## 10 process       Slider 145   0.2118   0.2113    0.400       0.00000 -0.000518
+    ## 11 process        Zone% 145   0.4323   0.4304    0.538       0.00293 -0.001882
+    ## 12 process       pfxvCH 125  85.6735  85.0176    0.280      -0.85643 -0.749286
+    ## 13 process       pfxvSL 105  84.9065  83.8697    0.286      -0.85506 -0.863470
+    ## 14 process  sp_location  67 100.8774 101.8423    0.612       2.05617  2.085121
+    ## 15 process  sp_pitching  67 102.2121  98.9661    0.388      -1.98556 -2.649900
+    ## 16 process      sp_s_CH  53  93.7860  90.5615    0.453      -3.00688 -2.736727
+    ## 17 process      sp_s_CU  37 103.5908  98.8722    0.297      -4.86542 -5.088145
+    ## 18 process      sp_s_SL  54 108.0694 103.7763    0.278      -4.41570 -5.753687
+    ## 19 process     sp_stuff  67 102.0204  97.2332    0.269      -4.25694 -5.128215
+    ## 20  result          BB% 145   0.0883   0.0824    0.379      -0.00633 -0.005870
+    ## 21  result          GB% 145   0.4561   0.4278    0.331      -0.02020 -0.028279
+    ## 22  result     HardHit% 136   0.3592   0.3875    0.706       0.03026  0.030789
+    ## 23  result           K% 145   0.2206   0.2050    0.366      -0.01581 -0.015578
+    ## 24  result        K-BB% 145   0.1323   0.1226    0.490      -0.00496 -0.009707
+    ## 25  result     O-Swing% 145   0.3087   0.3048    0.428      -0.00461 -0.003896
+    ## 26  result        SIERA 145   3.8907   4.5006    0.766       0.61931  0.609879
+    ## 27  result       SwStr% 145   0.1068   0.0983    0.317      -0.01035 -0.008452
+    ## 28  result   Z-Contact% 145   0.8587   0.8685    0.634       0.00978  0.009753
 
 ``` r
 cat("\nPitches added (under 5% to 8%+) and dropped (8%+ to under 5%), number of conversions\n")
@@ -141,12 +141,12 @@ print(mix |> group_by(measure) |> summarize(added = sum(added), dropped = sum(dr
 ```
 
     ##    measure added dropped
-    ## 1 Changeup    10       1
-    ## 2    Curve     9       1
-    ## 3   Cutter    11       1
-    ## 4 FourSeam     3       6
-    ## 5   Sinker     9       2
-    ## 6   Slider     7       3
+    ## 1 Changeup    23       3
+    ## 2    Curve    11       4
+    ## 3   Cutter    14       8
+    ## 4 FourSeam     5       8
+    ## 5   Sinker    17       2
+    ## 6   Slider    18       4
 
 ``` r
 cat("\nAdded a pitch or not\n")
@@ -165,8 +165,8 @@ per_pitcher |>
 ```
 
     ##   added_any  n rp_SIERA_vs_lg share_avg_or_better sp_SIERA_vs_lg WAR_gain stuck
-    ## 1     FALSE 42         0.0246               0.405         0.2307     0.63 0.395
-    ## 2      TRUE 37        -0.0266               0.486        -0.0184     1.02 0.559
+    ## 1     FALSE 76         0.0328               0.421          0.220    0.400 0.300
+    ## 2      TRUE 69        -0.0180               0.406          0.158    0.564 0.369
 
 ``` r
 cat("\nWho added a pitch\n")
@@ -182,81 +182,145 @@ print(as.data.frame(per_pitcher |> filter(added_any) |>
 ```
 
     ##             PlayerName sp_season          added_pitches dropped_pitches
-    ## 1         Jesse Chavez      2017                 Slider                
-    ## 2        Trevor Cahill      2017                 Cutter        FourSeam
-    ## 3         Wily Peralta      2021                 Sinker                
-    ## 4  Christian Friedrich      2016               Changeup                
-    ## 5           JC Ramírez      2017                  Curve        FourSeam
-    ## 6       Erasmo Ramírez      2017                 Cutter                
-    ## 7          Chad Bettis      2015                  Curve                
-    ## 8    Christian Bergman      2017           Sinker Curve        FourSeam
-    ## 9        Drew Pomeranz      2016        Cutter Changeup                
-    ## 10          Félix Peña      2018                 Sinker                
-    ## 11         Clay Holmes      2025        Cutter Changeup                
-    ## 12         Buck Farmer      2017          Sinker Slider           Curve
-    ## 13      Glenn Sparkman      2019                  Curve                
-    ## 14        Zack Littell      2023                 Sinker                
-    ## 15    Brandon Finnegan      2016      FourSeam Changeup                
-    ## 16      Reynaldo López      2024                  Curve                
-    ## 17         Luke Weaver      2023          Cutter Slider                
-    ## 18     Touki Toussaint      2020                 Slider                
-    ## 19      Michael Kopech      2022                  Curve                
-    ## 20       Nestor Cortes      2021                 Cutter                
-    ## 21       Peter Lambert      2026          Sinker Cutter                
-    ## 22      Freddy Peralta      2021        Slider Changeup                
-    ## 23       Dakota Hudson      2019               FourSeam                
-    ## 24          Cole Irvin      2021                 Sinker                
-    ## 25       Corbin Burnes      2020 Sinker Cutter Changeup        FourSeam
-    ## 26        Jordan Hicks      2024               Changeup                
-    ## 27     Keegan Thompson      2022                 Slider                
-    ## 28        Tanner Houck      2023        Cutter Changeup                
-    ## 29      Clarke Schmidt      2023                 Cutter        FourSeam
-    ## 30         Tyler Wells      2022           Slider Curve                
-    ## 31       Bailey Falter      2022                  Curve                
-    ## 32         Griffin Jax      2026                  Curve                
-    ## 33  Matthew Liberatore      2025               Changeup                
-    ## 34      Brandon Walter      2025               FourSeam                
-    ## 35      Andre Pallante      2024                 Sinker                
-    ## 36     Garrett Crochet      2024                 Cutter                
-    ## 37        Reid Detmers      2026               Changeup                
+    ## 1        Ross Detwiler      2015               Changeup                
+    ## 2          Cesár Ramos      2016               Changeup                
+    ## 3      Clayton Richard      2016         Curve Changeup                
+    ## 4      Héctor Santiago      2019                 Slider                
+    ## 5        Derek Holland      2020         Curve Changeup          Slider
+    ## 6         Jesse Chavez      2017                 Slider                
+    ## 7        Trevor Cahill      2017                 Cutter        FourSeam
+    ## 8         Jordan Lyles      2018               Changeup                
+    ## 9         Wily Peralta      2021                 Sinker                
+    ## 10 Christian Friedrich      2016               Changeup                
+    ## 11          JC Ramírez      2017                  Curve        FourSeam
+    ## 12         Adam Warren      2015                 Sinker                
+    ## 13         Travis Wood      2017        Slider Changeup                
+    ## 14          Ryan Weber      2019                 Slider          Cutter
+    ## 15      Erasmo Ramírez      2017                 Cutter                
+    ## 16         Chad Bettis      2015                  Curve                
+    ## 17   Christian Bergman      2017           Sinker Curve        FourSeam
+    ## 18       Drew Pomeranz      2016        Cutter Changeup                
+    ## 19       Aaron Sanchez      2015               Changeup                
+    ## 20         Joe Biagini      2017          Sinker Cutter          Slider
+    ## 21         Steven Matz      2026                 Slider                
+    ## 22          Félix Peña      2018                 Sinker                
+    ## 23       Drew VerHagen      2017                 Slider                
+    ## 24       Drew VerHagen      2019               FourSeam                
+    ## 25         Jakob Junis      2024               FourSeam                
+    ## 26         Clay Holmes      2025        Cutter Changeup                
+    ## 27         Matt Strahm      2023                 Slider  Curve Changeup
+    ## 28         Buck Farmer      2017          Sinker Slider           Curve
+    ## 29         Austin Voth      2022                 Slider                
+    ## 30      Glenn Sparkman      2019                  Curve                
+    ## 31         Mike Mayers      2022               Changeup          Cutter
+    ## 32         Mike Mayers      2023                 Sinker                
+    ## 33        Zack Littell      2023                 Sinker                
+    ## 34 Odrisamer Despaigne      2017                 Cutter           Curve
+    ## 35    Brandon Finnegan      2016      FourSeam Changeup                
+    ## 36      Reynaldo López      2024                  Curve                
+    ## 37      Ryan Yarbrough      2025                 Slider           Curve
+    ## 38         Luke Weaver      2023          Cutter Slider                
+    ## 39     Touki Toussaint      2020                 Slider                
+    ## 40        Sean Newcomb      2020               Changeup                
+    ## 41        Sean Newcomb      2025        Sinker Changeup                
+    ## 42      Dinelson Lamet      2023                 Sinker                
+    ## 43      Michael Kopech      2022                  Curve                
+    ## 44        Jeff Hoffman      2021                 Slider                
+    ## 45       Nestor Cortes      2021                 Cutter                
+    ## 46       Peter Lambert      2026          Sinker Cutter                
+    ## 47       Carson Fulmer      2024          Sinker Slider          Cutter
+    ## 48      Freddy Peralta      2021        Slider Changeup                
+    ## 49       Dakota Hudson      2019               FourSeam                
+    ## 50          Cole Irvin      2021                 Sinker                
+    ## 51            A.J. Puk      2024               Changeup                
+    ## 52       Corbin Burnes      2019                 Sinker                
+    ## 53       Corbin Burnes      2020 Sinker Cutter Changeup        FourSeam
+    ## 54        Jordan Hicks      2024               Changeup                
+    ## 55     Keegan Thompson      2022                 Slider                
+    ## 56        Tanner Houck      2023        Cutter Changeup                
+    ## 57      Clarke Schmidt      2023                 Cutter        FourSeam
+    ## 58          Joey Wentz      2025                 Slider Cutter Changeup
+    ## 59         Tyler Wells      2022           Slider Curve                
+    ## 60       Bailey Falter      2022                  Curve                
+    ## 61         Griffin Jax      2026                  Curve                
+    ## 62      Bowden Francis      2024               Changeup                
+    ## 63  Matthew Liberatore      2025               Changeup                
+    ## 64            Ray Kerr      2024                 Cutter                
+    ## 65      Brandon Walter      2025               FourSeam                
+    ## 66      Andre Pallante      2024                 Sinker                
+    ## 67     Garrett Crochet      2024                 Cutter                
+    ## 68        Reid Detmers      2026               Changeup                
+    ## 69   Carmen Mlodzinski      2025        Sinker Changeup          Cutter
     ##    sp_SIERA_vs_lg WAR_gain
-    ## 1            0.42    -0.09
-    ## 2           -0.36    -0.02
-    ## 3            0.95     0.76
-    ## 4            0.48     1.50
-    ## 5            0.20     0.65
-    ## 6           -0.12     0.81
-    ## 7            0.02     1.95
-    ## 8            0.68    -0.36
-    ## 9           -0.48     2.19
-    ## 10          -0.16     1.22
-    ## 11           0.27     1.24
-    ## 12           0.10     0.13
-    ## 13           1.08    -0.69
-    ## 14          -0.30     0.83
-    ## 15           0.62     0.25
-    ## 16          -0.56     3.06
-    ## 17           0.28     0.01
-    ## 18           0.55    -0.67
-    ## 19           0.66     0.03
-    ## 20          -0.18     1.28
-    ## 21          -0.04     2.25
-    ## 22          -0.90     3.00
-    ## 23           0.50     0.74
-    ## 24           0.54     1.71
-    ## 25          -1.48     1.81
-    ## 26           0.17    -0.21
-    ## 27           0.48     0.47
-    ## 28          -0.08     0.60
-    ## 29          -0.10     1.51
-    ## 30           0.47     0.27
-    ## 31          -0.26    -0.06
-    ## 32          -0.68     0.66
-    ## 33           0.19     1.33
-    ## 34          -1.00     0.59
-    ## 35          -0.05     1.26
-    ## 36          -1.64     3.79
-    ## 37          -0.93     4.09
+    ## 1            1.16    -1.02
+    ## 2            0.94    -1.01
+    ## 3            0.19     0.06
+    ## 4            0.78    -0.28
+    ## 5            0.28    -0.19
+    ## 6            0.42    -0.09
+    ## 7           -0.36    -0.03
+    ## 8           -0.22     0.32
+    ## 9            0.95     0.76
+    ## 10           0.48     1.49
+    ## 11           0.20     0.64
+    ## 12           0.33     1.49
+    ## 13           1.03    -0.72
+    ## 14           0.60    -0.13
+    ## 15          -0.12     0.80
+    ## 16           0.02     1.95
+    ## 17           0.68    -0.36
+    ## 18          -0.48     2.18
+    ## 19           0.94    -0.57
+    ## 20          -0.04     0.73
+    ## 21           0.42    -0.43
+    ## 22          -0.16     1.22
+    ## 23           1.37    -0.79
+    ## 24          -0.44    -0.32
+    ## 25          -0.63     0.24
+    ## 26           0.27     1.25
+    ## 27          -1.14     1.56
+    ## 28           0.10     0.12
+    ## 29           0.12     0.78
+    ## 30           1.08    -0.69
+    ## 31           0.44    -1.50
+    ## 32          -0.37    -0.09
+    ## 33          -0.30     0.83
+    ## 34           1.35     0.76
+    ## 35           0.62     0.24
+    ## 36          -0.56     3.06
+    ## 37           0.09     0.03
+    ## 38           0.28     0.01
+    ## 39           0.55    -0.68
+    ## 40           1.16    -0.79
+    ## 41          -0.18     1.88
+    ## 42           0.52    -0.69
+    ## 43           0.66     0.03
+    ## 44           1.40    -0.07
+    ## 45          -0.18     1.27
+    ## 46          -0.04     2.25
+    ## 47           0.12    -0.11
+    ## 48          -0.90     3.01
+    ## 49           0.50     0.73
+    ## 50           0.54     1.71
+    ## 51           3.05     0.90
+    ## 52          -0.37    -0.91
+    ## 53          -1.48     1.80
+    ## 54           0.17    -0.22
+    ## 55           0.48     0.46
+    ## 56          -0.08     0.59
+    ## 57          -0.10     1.50
+    ## 58           0.06     0.77
+    ## 59           0.47     0.27
+    ## 60          -0.26    -0.06
+    ## 61          -0.68     0.67
+    ## 62          -0.57     0.52
+    ## 63           0.19     1.32
+    ## 64          -1.25    -0.44
+    ## 65          -1.00     0.59
+    ## 66          -0.05     1.25
+    ## 67          -1.64     3.79
+    ## 68          -0.93     4.09
+    ## 69           0.45     1.17
 
 ``` r
 cat("\nAverage change by outcome (starter SIERA vs league at or below 0 = success)\n")
@@ -274,63 +338,63 @@ print(as.data.frame(by_success), digits = 3)
 ```
 
     ##       type      measure n_league average or better n_worse than average
-    ## 1  process     Changeup                         35                   44
-    ## 2  process        Curve                         35                   44
-    ## 3  process       Cutter                         35                   44
-    ## 4  process    F-Strike%                         35                   44
-    ## 5  process       FBVelo                         35                   44
-    ## 6  process     FB_Stuff                         21                   17
-    ## 7  process     FourSeam                         35                   44
-    ## 8  process NumPitches10                         35                   44
-    ## 9  process       Sinker                         35                   44
-    ## 10 process       Slider                         35                   44
-    ## 11 process        Zone%                         35                   44
-    ## 12 process       pfxvCH                         29                   37
-    ## 13 process       pfxvSL                         28                   28
-    ## 14 process  sp_location                         21                   17
-    ## 15 process  sp_pitching                         21                   17
-    ## 16 process      sp_s_CH                         16                   14
-    ## 17 process      sp_s_CU                         10                   12
-    ## 18 process      sp_s_SL                         21                   13
-    ## 19 process     sp_stuff                         21                   17
-    ## 20  result          BB%                         35                   44
-    ## 21  result          GB%                         35                   44
-    ## 22  result     HardHit%                         33                   40
-    ## 23  result           K%                         35                   44
-    ## 24  result        K-BB%                         35                   44
-    ## 25  result     O-Swing%                         35                   44
-    ## 26  result        SIERA                         35                   44
-    ## 27  result       SwStr%                         35                   44
-    ## 28  result   Z-Contact%                         35                   44
+    ## 1  process     Changeup                         60                   85
+    ## 2  process        Curve                         60                   85
+    ## 3  process       Cutter                         60                   85
+    ## 4  process    F-Strike%                         60                   85
+    ## 5  process       FBVelo                         60                   85
+    ## 6  process     FB_Stuff                         32                   35
+    ## 7  process     FourSeam                         60                   85
+    ## 8  process NumPitches10                         60                   85
+    ## 9  process       Sinker                         60                   85
+    ## 10 process       Slider                         60                   85
+    ## 11 process        Zone%                         60                   85
+    ## 12 process       pfxvCH                         51                   74
+    ## 13 process       pfxvSL                         47                   58
+    ## 14 process  sp_location                         32                   35
+    ## 15 process  sp_pitching                         32                   35
+    ## 16 process      sp_s_CH                         25                   28
+    ## 17 process      sp_s_CU                         17                   20
+    ## 18 process      sp_s_SL                         29                   25
+    ## 19 process     sp_stuff                         32                   35
+    ## 20  result          BB%                         60                   85
+    ## 21  result          GB%                         60                   85
+    ## 22  result     HardHit%                         58                   78
+    ## 23  result           K%                         60                   85
+    ## 24  result        K-BB%                         60                   85
+    ## 25  result     O-Swing%                         60                   85
+    ## 26  result        SIERA                         60                   85
+    ## 27  result       SwStr%                         60                   85
+    ## 28  result   Z-Contact%                         60                   85
     ##    change_league average or better change_worse than average
-    ## 1                          0.02937                  2.50e-02
-    ## 2                         -0.00140                  6.21e-03
-    ## 3                          0.05594                  1.21e-04
-    ## 4                          0.02848                 -8.87e-03
-    ## 5                         -0.90884                 -1.44e+00
-    ## 6                         -2.68684                 -8.75e+00
-    ## 7                         -0.08307                 -5.91e-02
-    ## 8                          0.40000                  3.86e-01
-    ## 9                          0.03002                  4.42e-02
-    ## 10                        -0.02617                 -8.03e-03
-    ## 11                         0.00682                 -4.11e-03
-    ## 12                        -0.96443                 -1.12e+00
-    ## 13                        -0.93102                 -1.36e+00
-    ## 14                         2.88358                 -1.05e+00
-    ## 15                        -0.36953                 -8.39e+00
-    ## 16                         1.43110                 -2.28e+00
-    ## 17                       -11.36324                 -8.25e+00
-    ## 18                        -6.28315                 -1.19e+01
-    ## 19                        -3.06404                 -8.89e+00
-    ## 20                        -0.01759                 -5.06e-03
-    ## 21                        -0.02400                 -3.56e-02
-    ## 22                         0.02003                  2.87e-02
-    ## 23                         0.00152                 -3.11e-02
-    ## 24                         0.01912                 -2.60e-02
-    ## 25                         0.01132                 -1.81e-02
-    ## 26                         0.23118                  7.86e-01
-    ## 27                        -0.00437                 -1.47e-02
-    ## 28                         0.00608                  1.49e-02
+    ## 1                          0.02583                   0.03328
+    ## 2                         -0.00441                   0.00256
+    ## 3                          0.03474                  -0.00656
+    ## 4                          0.02939                   0.00452
+    ## 5                         -1.03728                  -1.17217
+    ## 6                         -4.34223                  -5.12317
+    ## 7                         -0.06912                  -0.04853
+    ## 8                          0.50000                   0.43529
+    ## 9                          0.03490                   0.02299
+    ## 10                        -0.01405                   0.00903
+    ## 11                         0.00460                  -0.00645
+    ## 12                        -0.91275                  -0.63663
+    ## 13                        -0.84394                  -0.87929
+    ## 14                         3.43569                   0.85031
+    ## 15                        -0.62962                  -4.49702
+    ## 16                        -2.49692                  -2.95084
+    ## 17                        -5.73119                  -4.54155
+    ## 18                        -4.88993                  -6.75565
+    ## 19                        -4.06952                  -6.09616
+    ## 20                        -0.01753                   0.00236
+    ## 21                        -0.01799                  -0.03554
+    ## 22                         0.03077                   0.03080
+    ## 23                         0.00316                  -0.02880
+    ## 24                         0.02069                  -0.03116
+    ## 25                         0.01016                  -0.01382
+    ## 26                         0.23994                   0.87101
+    ## 27                        -0.00352                  -0.01194
+    ## 28                         0.00688                   0.01178
 
 ``` r
 # Does each change relate to the starter result once relief SIERA is known
@@ -355,64 +419,64 @@ for (m in all_measures) {
 print(effect_table)
 ```
 
-    ##         measure    type  n spearman_SIERA spearman_WAR_gain beta_after_rp_SIERA
-    ## 1      FourSeam process 79          0.086            -0.178               0.113
-    ## 2        Sinker process 79          0.026             0.117              -0.009
-    ## 3        Cutter process 79         -0.154             0.107              -0.182
-    ## 4        Slider process 79         -0.005            -0.034               0.013
-    ## 5         Curve process 79         -0.021            -0.132              -0.021
-    ## 6      Changeup process 79         -0.177             0.307              -0.042
-    ## 7  NumPitches10 process 79         -0.153             0.238              -0.157
-    ## 8        FBVelo process 79         -0.208             0.047              -0.227
-    ## 9        pfxvSL process 56         -0.062            -0.060              -0.035
-    ## 10       pfxvCH process 66          0.109            -0.133              -0.010
-    ## 11     sp_stuff process 38         -0.366             0.178              -0.330
-    ## 12     FB_Stuff process 38         -0.154            -0.029              -0.202
-    ## 13      sp_s_SL process 34         -0.246             0.182              -0.233
-    ## 14      sp_s_CH process 30         -0.394             0.294              -0.229
-    ## 15      sp_s_CU process 22          0.141            -0.151               0.035
-    ## 16  sp_location process 38         -0.276             0.077              -0.166
-    ## 17  sp_pitching process 38         -0.385             0.144              -0.347
-    ## 18        Zone% process 79         -0.129             0.001              -0.059
-    ## 19    F-Strike% process 79         -0.384             0.159              -0.282
-    ## 20           K%  result 79         -0.278             0.202              -0.571
-    ## 21          BB%  result 79          0.292            -0.278               0.326
-    ## 22        K-BB%  result 79         -0.382             0.321              -0.699
-    ## 23       SwStr%  result 79         -0.209             0.065              -0.417
-    ## 24     O-Swing%  result 79         -0.360             0.317              -0.339
-    ## 25   Z-Contact%  result 79          0.068             0.033               0.201
-    ## 26          GB%  result 79         -0.148             0.217              -0.116
-    ## 27     HardHit%  result 73          0.106            -0.106               0.022
-    ## 28        SIERA  result 79          0.455            -0.428               0.638
-    ##        p
-    ## 1  0.109
-    ## 2  0.901
-    ## 3  0.009
-    ## 4  0.855
-    ## 5  0.766
-    ## 6  0.564
-    ## 7  0.024
-    ## 8  0.001
-    ## 9  0.654
-    ## 10 0.908
-    ## 11 0.000
-    ## 12 0.034
-    ## 13 0.023
-    ## 14 0.047
-    ## 15 0.766
-    ## 16 0.090
-    ## 17 0.000
-    ## 18 0.403
-    ## 19 0.000
-    ## 20 0.000
-    ## 21 0.000
-    ## 22 0.000
-    ## 23 0.000
-    ## 24 0.000
-    ## 25 0.007
-    ## 26 0.100
-    ## 27 0.765
-    ## 28 0.000
+    ##         measure    type   n spearman_SIERA spearman_WAR_gain
+    ## 1      FourSeam process 145          0.032            -0.144
+    ## 2        Sinker process 145         -0.048             0.150
+    ## 3        Cutter process 145         -0.084             0.124
+    ## 4        Slider process 145          0.038            -0.089
+    ## 5         Curve process 145         -0.007            -0.061
+    ## 6      Changeup process 145          0.004             0.046
+    ## 7  NumPitches10 process 145         -0.087             0.084
+    ## 8        FBVelo process 145         -0.081            -0.009
+    ## 9        pfxvSL process 105          0.000            -0.103
+    ## 10       pfxvCH process 125          0.101            -0.172
+    ## 11     sp_stuff process  67         -0.072            -0.038
+    ## 12     FB_Stuff process  67          0.019            -0.128
+    ## 13      sp_s_SL process  54         -0.158            -0.111
+    ## 14      sp_s_CH process  53         -0.223             0.306
+    ## 15      sp_s_CU process  37          0.054            -0.133
+    ## 16  sp_location process  67         -0.264             0.095
+    ## 17  sp_pitching process  67         -0.198             0.044
+    ## 18        Zone% process 145         -0.083             0.114
+    ## 19    F-Strike% process 145         -0.264             0.107
+    ## 20           K%  result 145         -0.360             0.173
+    ## 21          BB%  result 145          0.325            -0.379
+    ## 22        K-BB%  result 145         -0.427             0.320
+    ## 23       SwStr%  result 145         -0.215            -0.045
+    ## 24     O-Swing%  result 145         -0.314             0.246
+    ## 25   Z-Contact%  result 145          0.054             0.105
+    ## 26          GB%  result 145         -0.184             0.095
+    ## 27     HardHit%  result 136          0.020            -0.146
+    ## 28        SIERA  result 145          0.493            -0.393
+    ##    beta_after_rp_SIERA     p
+    ## 1                0.042 0.527
+    ## 2                0.005 0.935
+    ## 3               -0.098 0.136
+    ## 4                0.010 0.882
+    ## 5               -0.002 0.970
+    ## 6                0.015 0.817
+    ## 7               -0.106 0.105
+    ## 8               -0.188 0.005
+    ## 9               -0.006 0.937
+    ## 10               0.034 0.628
+    ## 11              -0.293 0.002
+    ## 12              -0.189 0.048
+    ## 13              -0.209 0.043
+    ## 14              -0.124 0.135
+    ## 15              -0.061 0.542
+    ## 16              -0.234 0.010
+    ## 17              -0.392 0.000
+    ## 18              -0.176 0.007
+    ## 19              -0.262 0.000
+    ## 20              -0.654 0.000
+    ## 21               0.589 0.000
+    ## 22              -0.875 0.000
+    ## 23              -0.428 0.000
+    ## 24              -0.362 0.000
+    ## 25               0.169 0.012
+    ## 26              -0.119 0.069
+    ## 27              -0.043 0.528
+    ## 28               0.829 0.000
 
 ``` r
 # usage change by pitch group, successes vs the rest
@@ -426,7 +490,7 @@ ggplot(usage_plot, aes(measure, change, fill = Success)) +
   geom_col(position = "dodge") +
   scale_fill_manual(values = c("league average or better" = "steelblue", "worse than average" = "red")) +
   labs(title = "Pitch mix change from the relief season to the starter season",
-       subtitle = "79 conversions, split by starter SIERA vs league. Sliders include sweepers, changeups include splitters",
+       subtitle = "Conversion attempts, split by starter SIERA vs league. Sliders include sweepers, changeups include splitters",
        x = NULL, y = "Usage change (percentage points)", fill = "As a starter") +
   theme_classic()
 ```
@@ -546,7 +610,7 @@ write_csv(statcast_changes, "data/statcast_changes.csv")
 cat("Conversions with Statcast in both seasons:", nrow(statcast_changes), "\n\n")
 ```
 
-    ## Conversions with Statcast in both seasons: 73
+    ## Conversions with Statcast in both seasons: 136
 
 ``` r
 cat("Averages, relief season vs starter season (starts only)\n")
@@ -572,28 +636,28 @@ statcast_changes |>
   as.data.frame() |> print(digits = 3)
 ```
 
-    ##                     name   value
-    ## 1                 n_fade 69.0000
-    ## 2                  n_tto 59.0000
-    ## 3    rp_PitchesPerOuting 27.3146
-    ## 4    sp_PitchesPerOuting 83.7393
-    ## 5            rp_OppShare  0.4967
-    ## 6            sp_OppShare  0.5763
-    ## 7             rp_Opp_KBB  0.1043
-    ## 8             sp_Opp_KBB  0.1091
-    ## 9            rp_Same_KBB  0.1562
-    ## 10           sp_Same_KBB  0.1329
-    ## 11       rp_Opp_Offspeed  0.1684
-    ## 12       sp_Opp_Offspeed  0.1880
-    ## 13       rp_Opp_Breaking  0.2530
-    ## 14       sp_Opp_Breaking  0.2449
-    ## 15       rp_Velo_first15 94.0000
-    ## 16       sp_Velo_first15 92.8357
-    ## 17 sp_Velo_fade_in_start -0.4847
-    ## 18           sp_wOBA_1st  0.3254
-    ## 19           sp_wOBA_2nd  0.3443
-    ## 20           sp_wOBA_3rd  0.3479
-    ## 21        sp_TTO_penalty  0.0186
+    ##                     name    value
+    ## 1                 n_fade 116.0000
+    ## 2                  n_tto  72.0000
+    ## 3    rp_PitchesPerOuting  26.1312
+    ## 4    sp_PitchesPerOuting  81.4413
+    ## 5            rp_OppShare   0.5012
+    ## 6            sp_OppShare   0.5852
+    ## 7             rp_Opp_KBB   0.1072
+    ## 8             sp_Opp_KBB   0.1030
+    ## 9            rp_Same_KBB   0.1486
+    ## 10           sp_Same_KBB   0.1347
+    ## 11       rp_Opp_Offspeed   0.1661
+    ## 12       sp_Opp_Offspeed   0.1878
+    ## 13       rp_Opp_Breaking   0.2438
+    ## 14       sp_Opp_Breaking   0.2455
+    ## 15       rp_Velo_first15  93.8328
+    ## 16       sp_Velo_first15  92.8427
+    ## 17 sp_Velo_fade_in_start  -0.5487
+    ## 18           sp_wOBA_1st   0.3301
+    ## 19           sp_wOBA_2nd   0.3589
+    ## 20           sp_wOBA_3rd   0.3581
+    ## 21        sp_TTO_penalty   0.0217
 
 ``` r
 change_measures <- c("Opp_KBB_change", "Same_KBB_change", "Opp_Whiff_change", "Opp_Offspeed_change",
@@ -616,31 +680,31 @@ statcast_changes |>
 ```
 
     ##                     name n_league average or better n_worse than average
-    ## 1         Opp_KBB_change                         33                   40
-    ## 2        Same_KBB_change                         33                   40
-    ## 3       Opp_Whiff_change                         33                   40
-    ## 4    Opp_Offspeed_change                         33                   40
-    ## 5    Opp_Breaking_change                         33                   40
-    ## 6    Opp_Fastball_change                         33                   40
-    ## 7        OppShare_change                         33                   40
-    ## 8    Velo_first15_change                         33                   40
-    ## 9  sp_Velo_fade_in_start                         33                   40
-    ## 10        sp_TTO_penalty                         33                   40
-    ## 11    rp_Platoon_KBB_gap                         33                   40
-    ## 12    sp_Platoon_KBB_gap                         33                   40
+    ## 1         Opp_KBB_change                         58                   78
+    ## 2        Same_KBB_change                         58                   78
+    ## 3       Opp_Whiff_change                         58                   78
+    ## 4    Opp_Offspeed_change                         58                   78
+    ## 5    Opp_Breaking_change                         58                   78
+    ## 6    Opp_Fastball_change                         58                   78
+    ## 7        OppShare_change                         58                   78
+    ## 8    Velo_first15_change                         58                   78
+    ## 9  sp_Velo_fade_in_start                         58                   78
+    ## 10        sp_TTO_penalty                         58                   78
+    ## 11    rp_Platoon_KBB_gap                         58                   78
+    ## 12    sp_Platoon_KBB_gap                         58                   78
     ##    value_league average or better value_worse than average
-    ## 1                         0.03133                 -0.01707
-    ## 2                        -0.00365                 -0.03953
-    ## 3                        -0.00693                 -0.01792
-    ## 4                         0.01427                  0.02394
-    ## 5                        -0.01187                 -0.00491
-    ## 6                        -0.07356                 -0.03185
-    ## 7                         0.08429                  0.07570
-    ## 8                        -0.83347                 -1.43719
-    ## 9                        -0.44131                 -0.52214
-    ## 10                        0.01347                  0.02355
-    ## 11                        0.05227                  0.05173
-    ## 12                        0.01729                  0.02926
+    ## 1                         0.02813                 -0.02810
+    ## 2                         0.00373                 -0.02706
+    ## 3                        -0.00925                 -0.01509
+    ## 4                         0.01620                  0.02568
+    ## 5                        -0.00695                  0.00813
+    ## 6                        -0.05672                 -0.03485
+    ## 7                         0.08424                  0.08378
+    ## 8                        -0.95900                 -1.01317
+    ## 9                        -0.53448                 -0.55918
+    ## 10                        0.01372                  0.03023
+    ## 11                        0.04336                  0.04005
+    ## 12                        0.01896                  0.04110
 
 ``` r
 cat("\nEach measure vs starter SIERA vs league (Spearman), and its effect after relief SIERA (SD units)\n")
@@ -663,19 +727,19 @@ for (m in change_measures) {
 print(effect_table)
 ```
 
-    ##                  measure  n spearman_SIERA beta_after_rp_SIERA     p
-    ## 1         Opp_KBB_change 73         -0.350              -0.476 0.000
-    ## 2        Same_KBB_change 73         -0.230              -0.379 0.000
-    ## 3       Opp_Whiff_change 73         -0.139              -0.240 0.001
-    ## 4    Opp_Offspeed_change 73         -0.094               0.039 0.602
-    ## 5    Opp_Breaking_change 73         -0.020              -0.016 0.830
-    ## 6    Opp_Fastball_change 73          0.218               0.148 0.039
-    ## 7        OppShare_change 73         -0.115              -0.030 0.678
-    ## 8    Velo_first15_change 73         -0.294              -0.248 0.000
-    ## 9  sp_Velo_fade_in_start 69          0.028              -0.017 0.822
-    ## 10        sp_TTO_penalty 59          0.082               0.093 0.235
-    ## 11    rp_Platoon_KBB_gap 73         -0.104              -0.139 0.053
-    ## 12    sp_Platoon_KBB_gap 73         -0.007              -0.044 0.542
+    ##                  measure   n spearman_SIERA beta_after_rp_SIERA     p
+    ## 1         Opp_KBB_change 136         -0.385              -0.624 0.000
+    ## 2        Same_KBB_change 136         -0.196              -0.407 0.000
+    ## 3       Opp_Whiff_change 136         -0.152              -0.158 0.022
+    ## 4    Opp_Offspeed_change 136         -0.010               0.052 0.447
+    ## 5    Opp_Breaking_change 136         -0.009              -0.010 0.880
+    ## 6    Opp_Fastball_change 136          0.101               0.083 0.220
+    ## 7        OppShare_change 136         -0.028              -0.043 0.531
+    ## 8    Velo_first15_change 136         -0.046              -0.145 0.036
+    ## 9  sp_Velo_fade_in_start 116          0.043              -0.024 0.705
+    ## 10        sp_TTO_penalty  72          0.142               0.093 0.162
+    ## 11    rp_Platoon_KBB_gap 136         -0.122              -0.100 0.141
+    ## 12    sp_Platoon_KBB_gap 136          0.076               0.061 0.374
 
 ``` r
 # wOBA by time through the order as a starter, and velo fade within starts, by outcome

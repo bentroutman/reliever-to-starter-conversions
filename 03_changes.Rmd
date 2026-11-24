@@ -142,7 +142,7 @@ ggplot(usage_plot, aes(measure, change, fill = Success)) +
   geom_col(position = "dodge") +
   scale_fill_manual(values = c("league average or better" = "steelblue", "worse than average" = "red")) +
   labs(title = "Pitch mix change from the relief season to the starter season",
-       subtitle = "79 conversions, split by starter SIERA vs league. Sliders include sweepers, changeups include splitters",
+       subtitle = "Conversion attempts, split by starter SIERA vs league. Sliders include sweepers, changeups include splitters",
        x = NULL, y = "Usage change (percentage points)", fill = "As a starter") +
   theme_classic()
 ggsave("charts/03_usage_change.png", width = 9, height = 5.5, dpi = 150)
