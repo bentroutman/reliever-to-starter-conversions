@@ -542,7 +542,7 @@ write_csv(value_pitching, "../data/bref_value_pitching.csv", na = "")
 
 ## Pitch features
 
-Platoon, arsenal, and workload measures from the relief season pitches.
+Platoon splits, arsenal, and workload from the relief season pitches.
 
 ``` r
 pitches <- read_csv("../data/savant/relief_season_pitches.csv", guess_max = 50000)

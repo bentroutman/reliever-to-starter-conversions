@@ -509,7 +509,7 @@ pitches <- pitches |>
          Whiff = description %in% whiff_types,
          PA = !is.na(events) & events != "truncated_pa",
          K = PA & events %in% c("strikeout", "strikeout_double_play"),
-         BB = PA & events %in% c("walk", "hit_by_pitch"))
+         BB = PA & events %in% c("walk", "intent_walk"))
 ```
 
 ```{r}
