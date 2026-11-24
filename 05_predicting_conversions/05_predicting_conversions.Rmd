@@ -20,17 +20,15 @@ role_seasons <- read_csv("../data/fg_role_seasons.csv", guess_max = 20000, show_
 conversions <- read_csv("../data/conversions.csv", show_col_types = FALSE)
 
 for (column in c("pfxFA%", "pfxSI%", "pfxFC%", "pfxSL%", "pfxCU%", "pfxKC%", "pfxCV%", "pfxCH%", "pfxFS%",
-                 "pfxFO%", "pfxSC%", "pfxST%")) {
+                 "pfxFO%", "pfxSC%")) {
   role_seasons[[column]][is.na(role_seasons[[column]])] <- 0
 }
 role_seasons <- role_seasons |>
-  mutate(FourSeam = `pfxFA%`, Sinker = `pfxSI%`, Cutter = `pfxFC%`, Slider = `pfxSL%` + `pfxST%`,
+  mutate(FourSeam = `pfxFA%`, Sinker = `pfxSI%`, Cutter = `pfxFC%`, Slider = `pfxSL%`,
          Curve = `pfxCU%` + `pfxKC%` + `pfxCV%`, Changeup = `pfxCH%` + `pfxFS%` + `pfxFO%` + `pfxSC%`,
          NumPitches10 = (FourSeam >= 0.1) + (Sinker >= 0.1) + (Cutter >= 0.1) + (Slider >= 0.1) +
            (Curve >= 0.1) + (Changeup >= 0.1),
-         FBVelo = case_when(Sinker > FourSeam ~ pfxvSI,
-                            FourSeam > 0 ~ pfxvFA,
-                            TRUE ~ pfxvFC),
+         FBVelo = ifelse(Sinker > FourSeam, pfxvSI, pfxvFA),
          FB_Stuff = ifelse(Sinker > FourSeam, sp_s_SI, sp_s_FF))
 
 league_rp <- role_seasons |>
@@ -254,17 +252,15 @@ conversions <- read_csv("../data/conversions.csv", show_col_types = FALSE)
 
 # Usage columns are NA when a pitch is not thrown
 for (column in c("pfxFA%", "pfxSI%", "pfxFC%", "pfxSL%", "pfxCU%", "pfxKC%", "pfxCV%", "pfxCH%", "pfxFS%",
-                 "pfxFO%", "pfxSC%", "pfxST%")) {
+                 "pfxFO%", "pfxSC%")) {
   role_seasons[[column]][is.na(role_seasons[[column]])] <- 0
 }
 role_seasons <- role_seasons |>
-  mutate(FourSeam = `pfxFA%`, Sinker = `pfxSI%`, Cutter = `pfxFC%`, Slider = `pfxSL%` + `pfxST%`,
+  mutate(FourSeam = `pfxFA%`, Sinker = `pfxSI%`, Cutter = `pfxFC%`, Slider = `pfxSL%`,
          Curve = `pfxCU%` + `pfxKC%` + `pfxCV%`, Changeup = `pfxCH%` + `pfxFS%` + `pfxFO%` + `pfxSC%`,
          NumPitches10 = (FourSeam >= 0.1) + (Sinker >= 0.1) + (Cutter >= 0.1) + (Slider >= 0.1) +
            (Curve >= 0.1) + (Changeup >= 0.1),
-         FBVelo = case_when(Sinker > FourSeam ~ pfxvSI,
-                            FourSeam > 0 ~ pfxvFA,
-                            TRUE ~ pfxvFC))
+         FBVelo = ifelse(Sinker > FourSeam, pfxvSI, pfxvFA))
 
 league_rp <- role_seasons |>
   filter(role == "rel") |>

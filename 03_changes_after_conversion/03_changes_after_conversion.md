@@ -20,8 +20,7 @@ conversions <- read_csv("../data/conversions.csv", show_col_types = FALSE) |>
 expected <- read_csv("../data/value_attempts.csv", show_col_types = FALSE) |>
   select(playerid, sp_season, WAR_gain)
 
-# Pitch groups. Sweepers go with sliders, knuckle curves with curves, splitters with changeups
-role_seasons[is.na(role_seasons$`pfxST%`), "pfxST%"] <- 0
+# Pitch groups. Sweepers are already in the slider column, knuckle curves go with curves, splitters with changeups
 for (column in c("pfxFA%", "pfxSI%", "pfxFC%", "pfxSL%", "pfxCU%", "pfxKC%", "pfxCV%", "pfxCH%", "pfxFS%",
                  "pfxFO%", "pfxSC%")) {
   role_seasons[[column]][is.na(role_seasons[[column]])] <- 0
@@ -30,14 +29,12 @@ role_seasons <- role_seasons |>
   mutate(FourSeam = `pfxFA%`,
          Sinker = `pfxSI%`,
          Cutter = `pfxFC%`,
-         Slider = `pfxSL%` + `pfxST%`,
+         Slider = `pfxSL%`,
          Curve = `pfxCU%` + `pfxKC%` + `pfxCV%`,
          Changeup = `pfxCH%` + `pfxFS%` + `pfxFO%` + `pfxSC%`,
          NumPitches10 = (FourSeam >= 0.1) + (Sinker >= 0.1) + (Cutter >= 0.1) + (Slider >= 0.1) +
            (Curve >= 0.1) + (Changeup >= 0.1),
-         FBVelo = case_when(Sinker > FourSeam ~ pfxvSI,
-                            FourSeam > 0 ~ pfxvFA,
-                            TRUE ~ pfxvFC),
+         FBVelo = ifelse(Sinker > FourSeam, pfxvSI, pfxvFA),
          FB_Stuff = ifelse(Sinker > FourSeam, sp_s_SI, sp_s_FF))
 
 pitch_groups <- c("FourSeam", "Sinker", "Cutter", "Slider", "Curve", "Changeup")
@@ -109,9 +106,9 @@ print(as.data.frame(change_summary), digits = 3)
     ## 5  process       FBVelo 145  93.6635  92.5472    0.138      -1.10890 -1.116358
     ## 6  process     FB_Stuff  67  98.6234  93.9053    0.313      -7.09570 -4.750180
     ## 7  process     FourSeam 145   0.3506   0.2936    0.372      -0.03268 -0.057050
-    ## 8  process NumPitches10 145   3.1793   3.6414    0.490       0.00000  0.462069
+    ## 8  process NumPitches10 145   3.1793   3.6138    0.462       0.00000  0.434483
     ## 9  process       Sinker 145   0.1805   0.2085    0.497       0.00000  0.027919
-    ## 10 process       Slider 145   0.2118   0.2113    0.400       0.00000 -0.000518
+    ## 10 process       Slider 145   0.1815   0.1713    0.386       0.00000 -0.010209
     ## 11 process        Zone% 145   0.4323   0.4304    0.538       0.00293 -0.001882
     ## 12 process       pfxvCH 125  85.6735  85.0176    0.280      -0.85643 -0.749286
     ## 13 process       pfxvSL 105  84.9065  83.8697    0.286      -0.85506 -0.863470
@@ -148,7 +145,7 @@ print(mix |> group_by(measure) |> summarize(added = sum(added), dropped = sum(dr
     ## 3   Cutter    14       8
     ## 4 FourSeam     5       8
     ## 5   Sinker    17       2
-    ## 6   Slider    18       4
+    ## 6   Slider    15       4
 
 ``` r
 cat("\nAdded a pitch or not\n")
@@ -167,8 +164,8 @@ per_pitcher |>
 ```
 
     ##   added_any  n rp_SIERA_vs_lg share_avg_or_better sp_SIERA_vs_lg WAR_gain stuck
-    ## 1     FALSE 76         0.0328               0.421          0.220    0.400 0.300
-    ## 2      TRUE 69        -0.0180               0.406          0.158    0.564 0.369
+    ## 1     FALSE 78         0.0374               0.410          0.223    0.405 0.292
+    ## 2      TRUE 67        -0.0250               0.418          0.154    0.562 0.381
 
 ``` r
 cat("\nWho added a pitch\n")
@@ -212,47 +209,45 @@ print(as.data.frame(per_pitcher |> filter(added_any) |>
     ## 26         Clay Holmes      2025        Cutter Changeup                
     ## 27         Matt Strahm      2023                 Slider  Curve Changeup
     ## 28         Buck Farmer      2017          Sinker Slider           Curve
-    ## 29         Austin Voth      2022                 Slider                
-    ## 30      Glenn Sparkman      2019                  Curve                
-    ## 31         Mike Mayers      2022               Changeup          Cutter
-    ## 32         Mike Mayers      2023                 Sinker                
-    ## 33        Zack Littell      2023                 Sinker                
-    ## 34 Odrisamer Despaigne      2017                 Cutter           Curve
-    ## 35    Brandon Finnegan      2016      FourSeam Changeup                
-    ## 36      Reynaldo López      2024                  Curve                
-    ## 37      Ryan Yarbrough      2025                 Slider           Curve
-    ## 38         Luke Weaver      2023          Cutter Slider                
-    ## 39     Touki Toussaint      2020                 Slider                
-    ## 40        Sean Newcomb      2020               Changeup                
-    ## 41        Sean Newcomb      2025        Sinker Changeup                
-    ## 42      Dinelson Lamet      2023                 Sinker                
-    ## 43      Michael Kopech      2022                  Curve                
-    ## 44        Jeff Hoffman      2021                 Slider                
-    ## 45       Nestor Cortes      2021                 Cutter                
-    ## 46       Peter Lambert      2026          Sinker Cutter                
-    ## 47       Carson Fulmer      2024          Sinker Slider          Cutter
-    ## 48      Freddy Peralta      2021        Slider Changeup                
-    ## 49       Dakota Hudson      2019               FourSeam                
-    ## 50          Cole Irvin      2021                 Sinker                
-    ## 51            A.J. Puk      2024               Changeup                
-    ## 52       Corbin Burnes      2019                 Sinker                
-    ## 53       Corbin Burnes      2020 Sinker Cutter Changeup        FourSeam
-    ## 54        Jordan Hicks      2024               Changeup                
-    ## 55     Keegan Thompson      2022                 Slider                
-    ## 56        Tanner Houck      2023        Cutter Changeup                
-    ## 57      Clarke Schmidt      2023                 Cutter        FourSeam
-    ## 58          Joey Wentz      2025                 Slider Cutter Changeup
-    ## 59         Tyler Wells      2022           Slider Curve                
-    ## 60       Bailey Falter      2022                  Curve                
-    ## 61         Griffin Jax      2026                  Curve                
-    ## 62      Bowden Francis      2024               Changeup                
-    ## 63  Matthew Liberatore      2025               Changeup                
-    ## 64            Ray Kerr      2024                 Cutter                
-    ## 65      Brandon Walter      2025               FourSeam                
-    ## 66      Andre Pallante      2024                 Sinker                
-    ## 67     Garrett Crochet      2024                 Cutter                
-    ## 68        Reid Detmers      2026               Changeup                
-    ## 69   Carmen Mlodzinski      2025        Sinker Changeup          Cutter
+    ## 29      Glenn Sparkman      2019                  Curve                
+    ## 30         Mike Mayers      2022               Changeup          Cutter
+    ## 31         Mike Mayers      2023                 Sinker                
+    ## 32        Zack Littell      2023                 Sinker                
+    ## 33 Odrisamer Despaigne      2017                 Cutter           Curve
+    ## 34    Brandon Finnegan      2016      FourSeam Changeup                
+    ## 35      Reynaldo López      2024                  Curve                
+    ## 36      Ryan Yarbrough      2025                 Slider           Curve
+    ## 37         Luke Weaver      2023          Cutter Slider                
+    ## 38     Touki Toussaint      2020                 Slider                
+    ## 39        Sean Newcomb      2020               Changeup                
+    ## 40        Sean Newcomb      2025        Sinker Changeup                
+    ## 41      Dinelson Lamet      2023                 Sinker                
+    ## 42      Michael Kopech      2022                  Curve                
+    ## 43        Jeff Hoffman      2021                 Slider                
+    ## 44       Nestor Cortes      2021                 Cutter                
+    ## 45       Peter Lambert      2026          Sinker Cutter                
+    ## 46       Carson Fulmer      2024          Sinker Slider          Cutter
+    ## 47      Freddy Peralta      2021        Slider Changeup                
+    ## 48       Dakota Hudson      2019               FourSeam                
+    ## 49          Cole Irvin      2021                 Sinker                
+    ## 50            A.J. Puk      2024               Changeup                
+    ## 51       Corbin Burnes      2019                 Sinker                
+    ## 52       Corbin Burnes      2020 Sinker Cutter Changeup        FourSeam
+    ## 53        Jordan Hicks      2024               Changeup                
+    ## 54        Tanner Houck      2023        Cutter Changeup                
+    ## 55      Clarke Schmidt      2023                 Cutter        FourSeam
+    ## 56          Joey Wentz      2025                 Slider Cutter Changeup
+    ## 57         Tyler Wells      2022                  Curve                
+    ## 58       Bailey Falter      2022                  Curve                
+    ## 59         Griffin Jax      2026                  Curve                
+    ## 60      Bowden Francis      2024               Changeup                
+    ## 61  Matthew Liberatore      2025               Changeup                
+    ## 62            Ray Kerr      2024                 Cutter                
+    ## 63      Brandon Walter      2025               FourSeam                
+    ## 64      Andre Pallante      2024                 Sinker                
+    ## 65     Garrett Crochet      2024                 Cutter                
+    ## 66        Reid Detmers      2026               Changeup                
+    ## 67   Carmen Mlodzinski      2025        Sinker Changeup          Cutter
     ##    sp_SIERA_vs_lg WAR_gain
     ## 1            1.16    -1.02
     ## 2            0.94    -1.01
@@ -282,47 +277,45 @@ print(as.data.frame(per_pitcher |> filter(added_any) |>
     ## 26           0.27     1.25
     ## 27          -1.14     1.56
     ## 28           0.10     0.12
-    ## 29           0.12     0.78
-    ## 30           1.08    -0.69
-    ## 31           0.44    -1.50
-    ## 32          -0.37    -0.09
-    ## 33          -0.30     0.83
-    ## 34           1.35     0.76
-    ## 35           0.62     0.24
-    ## 36          -0.56     3.06
-    ## 37           0.09     0.03
-    ## 38           0.28     0.01
-    ## 39           0.55    -0.68
-    ## 40           1.16    -0.79
-    ## 41          -0.18     1.88
-    ## 42           0.52    -0.69
-    ## 43           0.66     0.03
-    ## 44           1.40    -0.07
-    ## 45          -0.18     1.27
-    ## 46          -0.04     2.25
-    ## 47           0.12    -0.11
-    ## 48          -0.90     3.01
-    ## 49           0.50     0.73
-    ## 50           0.54     1.71
-    ## 51           3.05     0.90
-    ## 52          -0.37    -0.91
-    ## 53          -1.48     1.80
-    ## 54           0.17    -0.22
-    ## 55           0.48     0.46
-    ## 56          -0.08     0.59
-    ## 57          -0.10     1.50
-    ## 58           0.06     0.77
-    ## 59           0.47     0.27
-    ## 60          -0.26    -0.06
-    ## 61          -0.68     0.67
-    ## 62          -0.57     0.52
-    ## 63           0.19     1.32
-    ## 64          -1.25    -0.44
-    ## 65          -1.00     0.59
-    ## 66          -0.05     1.25
-    ## 67          -1.64     3.79
-    ## 68          -0.93     4.09
-    ## 69           0.45     1.17
+    ## 29           1.08    -0.69
+    ## 30           0.44    -1.50
+    ## 31          -0.37    -0.09
+    ## 32          -0.30     0.83
+    ## 33           1.35     0.76
+    ## 34           0.62     0.24
+    ## 35          -0.56     3.06
+    ## 36           0.09     0.03
+    ## 37           0.28     0.01
+    ## 38           0.55    -0.68
+    ## 39           1.16    -0.79
+    ## 40          -0.18     1.88
+    ## 41           0.52    -0.69
+    ## 42           0.66     0.03
+    ## 43           1.40    -0.07
+    ## 44          -0.18     1.27
+    ## 45          -0.04     2.25
+    ## 46           0.12    -0.11
+    ## 47          -0.90     3.01
+    ## 48           0.50     0.73
+    ## 49           0.54     1.71
+    ## 50           3.05     0.90
+    ## 51          -0.37    -0.91
+    ## 52          -1.48     1.80
+    ## 53           0.17    -0.22
+    ## 54          -0.08     0.59
+    ## 55          -0.10     1.50
+    ## 56           0.06     0.77
+    ## 57           0.47     0.27
+    ## 58          -0.26    -0.06
+    ## 59          -0.68     0.67
+    ## 60          -0.57     0.52
+    ## 61           0.19     1.32
+    ## 62          -1.25    -0.44
+    ## 63          -1.00     0.59
+    ## 64          -0.05     1.25
+    ## 65          -1.64     3.79
+    ## 66          -0.93     4.09
+    ## 67           0.45     1.17
 
 ``` r
 cat("\nAverage change by outcome (starter SIERA vs league at or below 0 = success)\n")
@@ -376,9 +369,9 @@ print(as.data.frame(by_success), digits = 3)
     ## 5                         -1.03728                  -1.17217
     ## 6                         -4.34223                  -5.12317
     ## 7                         -0.06912                  -0.04853
-    ## 8                          0.50000                   0.43529
+    ## 8                          0.48333                   0.40000
     ## 9                          0.03490                   0.02299
-    ## 10                        -0.01405                   0.00903
+    ## 10                        -0.01938                  -0.00373
     ## 11                         0.00460                  -0.00645
     ## 12                        -0.91275                  -0.63663
     ## 13                        -0.84394                  -0.87929
@@ -425,10 +418,10 @@ print(effect_table)
     ## 1      FourSeam process 145          0.032            -0.144
     ## 2        Sinker process 145         -0.048             0.150
     ## 3        Cutter process 145         -0.084             0.124
-    ## 4        Slider process 145          0.038            -0.089
+    ## 4        Slider process 145          0.049            -0.122
     ## 5         Curve process 145         -0.007            -0.061
     ## 6      Changeup process 145          0.004             0.046
-    ## 7  NumPitches10 process 145         -0.087             0.084
+    ## 7  NumPitches10 process 145         -0.084             0.061
     ## 8        FBVelo process 145         -0.081            -0.009
     ## 9        pfxvSL process 105          0.000            -0.103
     ## 10       pfxvCH process 125          0.101            -0.172
@@ -454,10 +447,10 @@ print(effect_table)
     ## 1                0.042 0.527
     ## 2                0.005 0.935
     ## 3               -0.098 0.136
-    ## 4                0.010 0.882
+    ## 4                0.007 0.910
     ## 5               -0.002 0.970
     ## 6                0.015 0.817
-    ## 7               -0.106 0.105
+    ## 7               -0.097 0.137
     ## 8               -0.188 0.005
     ## 9               -0.006 0.937
     ## 10               0.034 0.628
@@ -506,6 +499,8 @@ ggsave("charts/usage_change.png", width = 9, height = 5.5, dpi = 150)
 ## Statcast changes
 
 Platoon results, velocity within outings, and times through the order.
+The relief season platoon K-BB% and whiff rate are saved to
+`statcast_changes.csv` for notebook 04.
 
 ``` r
 conversions <- read_csv("../data/conversions.csv", show_col_types = FALSE) |>
@@ -543,7 +538,7 @@ pitches <- bind_rows(relief_pitches, starter_pitches) |>
 pitches <- pitches |>
   arrange(pitcher, game_year, game_pk, at_bat_number, pitch_number) |>
   group_by(pitcher, game_year, game_pk) |>
-  mutate(OutingPitch = row_number()) |>
+  mutate(GamePitchNum = row_number()) |>
   ungroup()
 ```
 
@@ -560,8 +555,7 @@ primary_fb <- pitches |>
 season_measures <- pitches |>
   left_join(primary_fb, by = c("pitcher", "game_year", "role")) |>
   group_by(pitcher, game_year, role) |>
-  summarize(Outings = n_distinct(game_pk),
-            PitchesPerOuting = n() / n_distinct(game_pk),
+  summarize(PitchesPerOuting = n() / n_distinct(game_pk),
             OppShare_PA = sum(PA & OppHand) / sum(PA),
             Opp_KBB = (sum(K & OppHand) - sum(BB & OppHand)) / sum(PA & OppHand),
             Same_KBB = (sum(K & !OppHand) - sum(BB & !OppHand)) / sum(PA & !OppHand),
@@ -570,11 +564,9 @@ season_measures <- pitches |>
             Opp_Breaking = mean(Breaking[OppHand]),
             Opp_Fastball = mean(Fastball[OppHand]),
             Same_Breaking = mean(Breaking[!OppHand]),
-            Velo_first15 = mean(release_speed[pitch_type == primary_fb & OutingPitch <= 15], na.rm = TRUE),
-            Velo_61plus = mean(release_speed[pitch_type == primary_fb & OutingPitch > 60], na.rm = TRUE),
-            FB_61plus = sum(pitch_type == primary_fb & OutingPitch > 60, na.rm = TRUE),
-            xwOBA_1st = sum(estimated_woba_using_speedangle[n_thruorder_pitcher == 1], na.rm = TRUE) /
-              sum(woba_denom[n_thruorder_pitcher == 1], na.rm = TRUE),
+            Velo_first15 = mean(release_speed[pitch_type == primary_fb & GamePitchNum <= 15], na.rm = TRUE),
+            Velo_61plus = mean(release_speed[pitch_type == primary_fb & GamePitchNum > 60], na.rm = TRUE),
+            FB_61plus = sum(pitch_type == primary_fb & GamePitchNum > 60, na.rm = TRUE),
             wOBA_1st = sum(woba_value[n_thruorder_pitcher == 1], na.rm = TRUE) /
               sum(woba_denom[n_thruorder_pitcher == 1], na.rm = TRUE),
             wOBA_2nd = sum(woba_value[n_thruorder_pitcher == 2], na.rm = TRUE) /

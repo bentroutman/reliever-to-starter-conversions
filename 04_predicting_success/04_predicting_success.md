@@ -19,19 +19,23 @@ savant_features <- read_csv("../data/savant_features.csv", show_col_types = FALS
 conversions <- conversions |>
   left_join(savant_features, by = c("xMLBAMID", "rp_season"))
 
+# Platoon K-BB% and whiff rate come from notebook 03
+statcast_relief <- read_csv("../data/statcast_changes.csv", show_col_types = FALSE) |>
+  select(xMLBAMID, sp_season, Opp_KBB = rp_Opp_KBB, Opp_Whiff = rp_Opp_Whiff, Platoon_KBB_gap = rp_Platoon_KBB_gap)
+conversions <- conversions |>
+  left_join(statcast_relief, by = c("xMLBAMID", "sp_season"))
+
 indicators <- c("rp_SIERA_vs_lg", "rp_KBB", "rp_K", "rp_BB",
-                "rp_Zone", "rp_FStrike", "rp_LocationPlus", "rp_botCmd",
-                "rp_StuffPlus", "rp_botStf", "rp_FB_Stuff", "rp_BestSecondary_Stuff",
-                "rp_SecondSecondary_Stuff", "rp_Offspeed_Stuff", "rp_NumPlusPitches", "rp_FBVelo", "rp_FA_IVB",
-                  "Velo_max_gap", "Velo_fade",
-                "rp_SwStr", "rp_ZContact", "rp_OSwing", "rp_OContact", "rp_CStr",
+                "rp_Zone", "rp_FStrike", "rp_LocationPlus",
+                "rp_StuffPlus", "rp_FB_Stuff", "rp_BestSecondary_Stuff",
+                "rp_SecondSecondary_Stuff", "rp_NumPlusPitches", "rp_FBVelo",
+                "Velo_max_gap", "Velo_fade",
+                "rp_SwStr", "rp_ZContact", "rp_OSwing", "rp_OContact",
                 "rp_GB", "rp_HardHit", "rp_Barrel",
-                "rp_NumPitches10", "rp_NumPitches5", "rp_ThirdPitchUsage", "rp_TopTwoUsage",
-                "rp_OffspeedUsage", "rp_FastballUsage",
-                "Opp_NumPitches10", "Opp_OffspeedUsage", "Opp_CurveUsage", "Opp_BestSecondaryWhiff",
-                "Opp_KBB", "Opp_Whiff", "Opp_wOBA", "Platoon_KBB_gap", "Platoon_wOBA_gap",
-                "rp_PitchesPerG", "rp_TBFPerG", "Share25Plus", "Share40Plus", "rp_gmLI",
-                "rp_age", "prev_MLB_GS", "MiLB_GS", "MiLB_GS_share", "MiLB_max_IP", "MaxProIP")
+                "rp_NumPitches10", "rp_FastballUsage",
+                "Opp_NumPitches10", "Opp_KBB", "Opp_Whiff", "Opp_wOBA", "Platoon_KBB_gap", "Platoon_wOBA_gap",
+                "rp_TBFPerG", "rp_gmLI",
+                "rp_age", "prev_MLB_GS", "MiLB_GS", "MiLB_GS_share", "MaxProIP")
 ```
 
 ``` r
@@ -71,52 +75,36 @@ print(correlations)
     ## 5                   rp_Zone 145       0.061            0.133     -0.096  0.030
     ## 6                rp_FStrike 145      -0.171           -0.084     -0.210  0.145
     ## 7           rp_LocationPlus  67      -0.067           -0.014     -0.317  0.129
-    ## 8                 rp_botCmd  67       0.040            0.107     -0.384  0.051
-    ## 9              rp_StuffPlus  67      -0.330           -0.302     -0.193  0.373
-    ## 10                rp_botStf  67      -0.277           -0.365     -0.216  0.423
-    ## 11              rp_FB_Stuff  67      -0.279           -0.295     -0.264  0.370
-    ## 12   rp_BestSecondary_Stuff  67      -0.255           -0.095     -0.019  0.275
-    ## 13 rp_SecondSecondary_Stuff  59      -0.068            0.148     -0.050  0.224
-    ## 14        rp_Offspeed_Stuff  44       0.042           -0.138     -0.283  0.224
-    ## 15        rp_NumPlusPitches  67      -0.220           -0.174     -0.215  0.401
-    ## 16                rp_FBVelo 145      -0.098            0.013     -0.135  0.143
-    ## 17                rp_FA_IVB 140      -0.013           -0.030     -0.021  0.019
-    ## 18             Velo_max_gap 136       0.095            0.072     -0.036  0.065
-    ## 19                Velo_fade 117       0.019           -0.045     -0.002 -0.144
-    ## 20                 rp_SwStr 145      -0.336           -0.345     -0.255  0.140
-    ## 21              rp_ZContact 145       0.271            0.308      0.172 -0.030
-    ## 22                rp_OSwing 145      -0.316           -0.180     -0.122  0.197
-    ## 23              rp_OContact 145       0.264            0.295      0.186 -0.097
-    ## 24                  rp_CStr 145      -0.044           -0.132     -0.325 -0.038
-    ## 25                    rp_GB 145       0.052            0.034      0.004  0.116
-    ## 26               rp_HardHit 136       0.014            0.076     -0.021 -0.060
-    ## 27                rp_Barrel 136      -0.124           -0.132      0.013 -0.044
-    ## 28          rp_NumPitches10 145      -0.065           -0.094      0.022  0.071
-    ## 29           rp_NumPitches5 145      -0.101            0.028      0.089 -0.001
-    ## 30       rp_ThirdPitchUsage 145      -0.042           -0.156     -0.055 -0.016
-    ## 31           rp_TopTwoUsage 145       0.032           -0.035     -0.126  0.084
-    ## 32         rp_OffspeedUsage 145      -0.054           -0.010      0.172 -0.026
-    ## 33         rp_FastballUsage 145       0.136            0.153      0.017  0.058
-    ## 34         Opp_NumPitches10 136      -0.130           -0.087      0.189 -0.030
-    ## 35        Opp_OffspeedUsage 136      -0.069            0.001      0.174 -0.043
-    ## 36           Opp_CurveUsage 136       0.020            0.026      0.018 -0.073
-    ## 37   Opp_BestSecondaryWhiff 124      -0.119           -0.195     -0.116  0.039
-    ## 38                  Opp_KBB 136      -0.269           -0.427     -0.490  0.088
-    ## 39                Opp_Whiff 136      -0.223           -0.377     -0.261  0.069
-    ## 40                 Opp_wOBA 136       0.235            0.305      0.267 -0.248
-    ## 41          Platoon_KBB_gap 136      -0.098            0.026      0.150 -0.005
-    ## 42         Platoon_wOBA_gap 136       0.091            0.200      0.113 -0.149
-    ## 43           rp_PitchesPerG 145      -0.062            0.055      0.204 -0.061
-    ## 44               rp_TBFPerG 145      -0.041            0.079      0.224 -0.060
-    ## 45              Share25Plus 136      -0.032            0.036      0.220 -0.089
-    ## 46              Share40Plus 136      -0.038            0.036      0.232 -0.057
-    ## 47                  rp_gmLI 145      -0.187           -0.234     -0.204  0.201
-    ## 48                   rp_age 145      -0.001            0.056     -0.089 -0.064
-    ## 49              prev_MLB_GS 145      -0.043           -0.065     -0.045 -0.047
-    ## 50                  MiLB_GS 145       0.199            0.147     -0.088 -0.114
-    ## 51            MiLB_GS_share 144       0.124           -0.039     -0.090  0.095
-    ## 52              MiLB_max_IP 145       0.073            0.143      0.036 -0.188
-    ## 53                 MaxProIP 145       0.112            0.182     -0.023 -0.151
+    ## 8              rp_StuffPlus  67      -0.330           -0.302     -0.193  0.373
+    ## 9               rp_FB_Stuff  67      -0.279           -0.295     -0.264  0.370
+    ## 10   rp_BestSecondary_Stuff  67      -0.255           -0.095     -0.019  0.275
+    ## 11 rp_SecondSecondary_Stuff  59      -0.068            0.148     -0.050  0.224
+    ## 12        rp_NumPlusPitches  67      -0.220           -0.174     -0.215  0.401
+    ## 13                rp_FBVelo 145      -0.098            0.013     -0.135  0.143
+    ## 14             Velo_max_gap 136       0.088            0.072     -0.033  0.071
+    ## 15                Velo_fade 117       0.019           -0.045     -0.002 -0.144
+    ## 16                 rp_SwStr 145      -0.336           -0.345     -0.255  0.140
+    ## 17              rp_ZContact 145       0.271            0.308      0.172 -0.030
+    ## 18                rp_OSwing 145      -0.316           -0.180     -0.122  0.197
+    ## 19              rp_OContact 145       0.264            0.295      0.186 -0.097
+    ## 20                    rp_GB 145       0.052            0.034      0.004  0.116
+    ## 21               rp_HardHit 136       0.014            0.076     -0.021 -0.060
+    ## 22                rp_Barrel 136      -0.124           -0.132      0.013 -0.044
+    ## 23          rp_NumPitches10 145      -0.043           -0.070      0.091  0.035
+    ## 24         rp_FastballUsage 145       0.136            0.153      0.017  0.058
+    ## 25         Opp_NumPitches10 136      -0.130           -0.087      0.189 -0.030
+    ## 26                  Opp_KBB 136      -0.269           -0.427     -0.490  0.088
+    ## 27                Opp_Whiff 136      -0.223           -0.377     -0.261  0.069
+    ## 28                 Opp_wOBA 136       0.235            0.305      0.267 -0.248
+    ## 29          Platoon_KBB_gap 136      -0.098            0.026      0.150 -0.005
+    ## 30         Platoon_wOBA_gap 136       0.091            0.200      0.113 -0.149
+    ## 31               rp_TBFPerG 145      -0.041            0.079      0.224 -0.060
+    ## 32                  rp_gmLI 145      -0.187           -0.234     -0.204  0.201
+    ## 33                   rp_age 145      -0.001            0.056     -0.089 -0.064
+    ## 34              prev_MLB_GS 145      -0.043           -0.065     -0.045 -0.047
+    ## 35                  MiLB_GS 145       0.199            0.147     -0.088 -0.114
+    ## 36            MiLB_GS_share 144       0.124           -0.039     -0.090  0.095
+    ## 37                 MaxProIP 145       0.112            0.182     -0.023 -0.151
     ##    sp_WAR_per_150 beta_after_rp_SIERA p_after_rp_SIERA
     ## 1          -0.273                  NA               NA
     ## 2           0.265              -0.154            0.400
@@ -125,52 +113,36 @@ print(correlations)
     ## 5          -0.138               0.081            0.215
     ## 6           0.099              -0.024            0.733
     ## 7           0.028               0.021            0.834
-    ## 8          -0.041               0.134            0.171
-    ## 9           0.376              -0.074            0.483
-    ## 10          0.399              -0.058            0.573
-    ## 11          0.265              -0.058            0.580
-    ## 12          0.362              -0.094            0.308
-    ## 13          0.125              -0.023            0.769
-    ## 14          0.045               0.066            0.482
-    ## 15          0.267              -0.033            0.736
-    ## 16          0.163               0.036            0.606
-    ## 17          0.099               0.003            0.968
-    ## 18         -0.100               0.070            0.307
-    ## 19         -0.030               0.078            0.255
-    ## 20          0.215              -0.086            0.290
-    ## 21         -0.184               0.011            0.886
-    ## 22          0.225              -0.128            0.076
-    ## 23         -0.142               0.016            0.825
-    ## 24         -0.005               0.099            0.159
-    ## 25         -0.035               0.055            0.404
-    ## 26          0.021               0.020            0.772
-    ## 27          0.044              -0.079            0.243
-    ## 28          0.060              -0.036            0.579
-    ## 29          0.086              -0.091            0.166
-    ## 30          0.020               0.065            0.325
-    ## 31         -0.011               0.086            0.195
-    ## 32          0.096              -0.070            0.285
-    ## 33         -0.136               0.094            0.151
-    ## 34          0.081              -0.121            0.075
-    ## 35          0.117              -0.101            0.139
-    ## 36         -0.070              -0.021            0.755
-    ## 37          0.108               0.040            0.602
-    ## 38          0.204               0.053            0.601
-    ## 39          0.194               0.010            0.898
-    ## 40         -0.137               0.025            0.748
-    ## 41         -0.035              -0.091            0.183
-    ## 42         -0.068               0.033            0.632
-    ## 43          0.038              -0.109            0.100
-    ## 44          0.009              -0.124            0.063
-    ## 45          0.024              -0.111            0.109
-    ## 46          0.009              -0.084            0.223
-    ## 47          0.176              -0.016            0.820
-    ## 48          0.014               0.032            0.631
-    ## 49          0.043               0.001            0.983
-    ## 50         -0.147               0.104            0.113
-    ## 51         -0.029               0.063            0.331
-    ## 52         -0.111               0.068            0.302
-    ## 53         -0.127               0.088            0.179
+    ## 8           0.376              -0.074            0.483
+    ## 9           0.265              -0.058            0.580
+    ## 10          0.362              -0.094            0.308
+    ## 11          0.125              -0.023            0.769
+    ## 12          0.267              -0.033            0.736
+    ## 13          0.163               0.036            0.606
+    ## 14         -0.093               0.065            0.340
+    ## 15         -0.030               0.078            0.255
+    ## 16          0.215              -0.086            0.290
+    ## 17         -0.184               0.011            0.886
+    ## 18          0.225              -0.128            0.076
+    ## 19         -0.142               0.016            0.825
+    ## 20         -0.035               0.055            0.404
+    ## 21          0.021               0.020            0.772
+    ## 22          0.044              -0.079            0.243
+    ## 23          0.047              -0.046            0.485
+    ## 24         -0.136               0.094            0.151
+    ## 25          0.081              -0.121            0.075
+    ## 26          0.204               0.053            0.601
+    ## 27          0.194               0.010            0.898
+    ## 28         -0.137               0.025            0.748
+    ## 29         -0.035              -0.091            0.183
+    ## 30         -0.068               0.033            0.632
+    ## 31          0.009              -0.124            0.063
+    ## 32          0.176              -0.016            0.820
+    ## 33          0.014               0.032            0.631
+    ## 34          0.043               0.001            0.983
+    ## 35         -0.147               0.104            0.113
+    ## 36         -0.029               0.063            0.331
+    ## 37         -0.127               0.088            0.179
 
 ``` r
 # Simple group splits
@@ -242,13 +214,13 @@ for (group_name in c("ArsenalGroup", "StarterHistory", "MinorsGroup", "WorkloadG
     ## 
     ##  ArsenalGroup 
     ##   ArsenalGroup  n rp_SIERA_vs_lg sp_SIERA_vs_lg KBB_change Velo_change sp_IP
-    ## 1    2 pitches 27        -0.0434         0.1023  -0.007343      -1.266  69.2
-    ## 2    3 pitches 60         0.0297         0.3429  -0.020379      -1.173  70.4
-    ## 3   4+ pitches 58         0.0110         0.0746   0.000231      -0.988  70.2
+    ## 1    2 pitches 29       -0.12022         0.2100   -0.02119      -1.365  70.5
+    ## 2    3 pitches 65       -0.00211         0.2576   -0.01736      -1.178  69.7
+    ## 3   4+ pitches 51        0.09550         0.0948    0.00658      -0.897  70.4
     ##   sp_WAR_per_150 stuck
-    ## 1           1.10 0.259
-    ## 2           1.20 0.345
-    ## 3           1.38 0.360
+    ## 1           1.03 0.276
+    ## 2           1.27 0.339
+    ## 3           1.36 0.364
     ## 
     ##  StarterHistory 
     ##       StarterHistory  n rp_SIERA_vs_lg sp_SIERA_vs_lg KBB_change Velo_change
@@ -886,7 +858,7 @@ cat("The conversion slope (relief SIERA to starter SIERA) is", round(coef(lm(sp_
     ## The conversion slope (relief SIERA to starter SIERA) is 0.37 so most of the shrinkage toward the mean is what a one year reliever sample would show anyway
 
 ``` r
-# Other outcomes: the same relationship measured with K-BB%, xFIP, FIP, and WAR per 150 IP instead of SIERA
+# Other outcomes: the same relationship measured with K-BB% and WAR per 150 IP instead of SIERA
 cat("\n5. Does the relief to starter relationship hold for other outcomes? Spearman correlations in the baseline sample\n")
 ```
 
@@ -896,30 +868,16 @@ cat("\n5. Does the relief to starter relationship hold for other outcomes? Spear
 ``` r
 alternate <- baseline |>
   left_join(role_seasons |> filter(role == "sta") |>
-              transmute(playerid, sp_season = Season, sp_KBB = `K-BB%`, sp_xFIP = xFIP, sp_FIP = FIP,
-                sp_WAR_per_150 = WAR / IP * 150),
+              transmute(playerid, sp_season = Season, sp_KBB = `K-BB%`, sp_WAR_per_150 = WAR / IP * 150),
             by = c("playerid", "sp_season")) |>
   left_join(role_seasons |> filter(role == "rel") |>
-              transmute(playerid, rp_season = Season, rp_KBB = `K-BB%`, rp_xFIP = xFIP, rp_FIP = FIP),
+              transmute(playerid, rp_season = Season, rp_KBB = `K-BB%`),
             by = c("playerid", "rp_season"))
 cat("relief K-BB% with starter K-BB%:", round(cor(alternate$rp_KBB, alternate$sp_KBB, method = "spearman"), 2),
     "\n")
 ```
 
     ## relief K-BB% with starter K-BB%: 0.45
-
-``` r
-cat("relief xFIP with starter xFIP:", round(cor(alternate$rp_xFIP, alternate$sp_xFIP, method = "spearman"), 2),
-    "\n")
-```
-
-    ## relief xFIP with starter xFIP: 0.44
-
-``` r
-cat("relief FIP with starter FIP:", round(cor(alternate$rp_FIP, alternate$sp_FIP, method = "spearman"), 2), "\n")
-```
-
-    ## relief FIP with starter FIP: 0.15
 
 ``` r
 cat("relief SIERA vs league with starter WAR per 150 IP:", round(cor(alternate$rp_SIERA_vs_lg,
@@ -954,7 +912,7 @@ cat("Indicators tested:", nrow(correlations), " raw p under 0.05:", sum(correlat
       sum(correlations$q_BH < 0.10), "\n")
 ```
 
-    ## Indicators tested: 53  raw p under 0.05: 18  expected by chance alone: 2.7  BH q under 0.10: 16
+    ## Indicators tested: 37  raw p under 0.05: 17  expected by chance alone: 1.9  BH q under 0.10: 17
 
 ``` r
 print(as.data.frame(correlations |> arrange(p_raw) |> head(12) |>
@@ -969,13 +927,13 @@ print(as.data.frame(correlations |> arrange(p_raw) |> head(12) |>
     ##            rp_K 145   -0.372 0.0000 0.000
     ##        rp_SwStr 145   -0.336 0.0000 0.000
     ##       rp_OSwing 145   -0.316 0.0001 0.001
-    ##     rp_ZContact 145    0.271 0.0010 0.009
-    ##     rp_OContact 145    0.264 0.0013 0.010
-    ##         Opp_KBB 136   -0.269 0.0015 0.010
-    ##           rp_BB 145    0.250 0.0024 0.014
-    ##        Opp_wOBA 136    0.235 0.0059 0.031
-    ##    rp_StuffPlus  67   -0.330 0.0064 0.031
-    ##       Opp_Whiff 136   -0.223 0.0091 0.040
+    ##     rp_ZContact 145    0.271 0.0010 0.006
+    ##     rp_OContact 145    0.264 0.0013 0.007
+    ##         Opp_KBB 136   -0.269 0.0015 0.007
+    ##           rp_BB 145    0.250 0.0024 0.010
+    ##        Opp_wOBA 136    0.235 0.0059 0.021
+    ##    rp_StuffPlus  67   -0.330 0.0064 0.021
+    ##       Opp_Whiff 136   -0.223 0.0091 0.028
 
 ## SIERA cushion
 
@@ -1495,17 +1453,15 @@ conversions <- read_csv("../data/conversions.csv", show_col_types = FALSE)
 
 # Pitch groups, same as 03_changes_after_conversion.Rmd
 for (column in c("pfxFA%", "pfxSI%", "pfxFC%", "pfxSL%", "pfxCU%", "pfxKC%", "pfxCV%", "pfxCH%", "pfxFS%",
-                 "pfxFO%", "pfxSC%", "pfxST%")) {
+                 "pfxFO%", "pfxSC%")) {
   role_seasons[[column]][is.na(role_seasons[[column]])] <- 0
 }
 role_seasons <- role_seasons |>
-  mutate(FourSeam = `pfxFA%`, Sinker = `pfxSI%`, Cutter = `pfxFC%`, Slider = `pfxSL%` + `pfxST%`,
+  mutate(FourSeam = `pfxFA%`, Sinker = `pfxSI%`, Cutter = `pfxFC%`, Slider = `pfxSL%`,
          Curve = `pfxCU%` + `pfxKC%` + `pfxCV%`, Changeup = `pfxCH%` + `pfxFS%` + `pfxFO%` + `pfxSC%`,
          NumPitches10 = (FourSeam >= 0.1) + (Sinker >= 0.1) + (Cutter >= 0.1) + (Slider >= 0.1) +
            (Curve >= 0.1) + (Changeup >= 0.1),
-         FBVelo = case_when(Sinker > FourSeam ~ pfxvSI,
-                            FourSeam > 0 ~ pfxvFA,
-                            TRUE ~ pfxvFC),
+         FBVelo = ifelse(Sinker > FourSeam, pfxvSI, pfxvFA),
          FB_Stuff = ifelse(Sinker > FourSeam, sp_s_SI, sp_s_FF))
 
 league_sp <- role_seasons |>
@@ -1604,7 +1560,7 @@ print(effect_table, digits = 3)
     ## 3     SwStr        656       -0.009755        145        -0.00845
     ## 4   FStrike        656        0.000882        145         0.01481
     ## 5        GB        656       -0.017844        145        -0.02828
-    ## 6    FBVelo        656       -0.585690        145        -1.11636
+    ## 6    FBVelo        654       -0.589931        145        -1.11636
     ## 7 StuffPlus        338       -3.048464         67        -5.12821
     ## 8   LocPlus        338        0.571650         67         2.08512
 
@@ -1632,11 +1588,11 @@ swingmen |>
 
     ##    trait                    group   n SIERA_change FBVelo_change sp_vs_lg
     ## 1   Hand                    lefty 178        0.624        -0.566    0.420
-    ## 2   Hand                   righty 478        0.685        -0.593    0.460
+    ## 2   Hand                   righty 478        0.685        -0.599    0.460
     ## 3 Relief better than avg reliever 297        1.193        -0.741    0.263
-    ## 4 Relief  worse than avg reliever 359        0.235        -0.457    0.604
+    ## 4 Relief  worse than avg reliever 359        0.235        -0.464    0.604
     ## 5   Velo                  95+ mph 123        0.866        -0.812    0.362
-    ## 6   Velo                 under 95 533        0.623        -0.533    0.470
+    ## 6   Velo                 under 95 531        0.626        -0.538    0.470
 
 ``` r
 # Fit the proxy on swingmen: starter SIERA vs league from the relief line
@@ -1671,14 +1627,14 @@ print(round(summary(fit_full)$coefficients, 3))
 ```
 
     ##                 Estimate Std. Error t value Pr(>|t|)
-    ## (Intercept)       -1.609      1.522  -1.057    0.291
-    ## rp_SIERA_vs_lg     0.415      0.129   3.207    0.001
-    ## rp_KBB             2.808      1.629   1.724    0.085
-    ## rp_SwStr          -4.480      1.455  -3.079    0.002
-    ## rp_FBVelo          0.022      0.015   1.449    0.148
-    ## rp_Age             0.006      0.010   0.650    0.516
-    ## rp_NumPitches10   -0.003      0.035  -0.089    0.929
-    ## rp_ThrowsLTRUE    -0.076      0.074  -1.020    0.308
+    ## (Intercept)       -1.347      1.566  -0.860    0.390
+    ## rp_SIERA_vs_lg     0.410      0.130   3.159    0.002
+    ## rp_KBB             2.745      1.632   1.683    0.093
+    ## rp_SwStr          -4.463      1.456  -3.065    0.002
+    ## rp_FBVelo          0.019      0.015   1.239    0.216
+    ## rp_Age             0.006      0.010   0.603    0.547
+    ## rp_NumPitches10   -0.002      0.036  -0.063    0.950
+    ## rp_ThrowsLTRUE    -0.081      0.075  -1.089    0.277
 
 ``` r
 cat("Stuff+ model R2:", round(summary(fit_stuff)$r.squared, 3), " n =", nrow(swing_stuff), "\n")
@@ -1747,7 +1703,7 @@ print(score_table, digits = 3)
     ##   bias_actual_minus_pred spearman AUC_success
     ## 1                 -0.291       NA       0.500
     ## 2                 -0.259    0.421       0.727
-    ## 3                 -0.251    0.407       0.713
+    ## 3                 -0.250    0.408       0.713
 
 ``` r
 # Stuff+ version on the 2020 and later conversions
@@ -1806,8 +1762,8 @@ for (name in c("pred_simple", "pred_full")) {
     ## 1     FALSE 96               0.292         0.3376 pred_simple
     ## 2      TRUE 49               0.653        -0.0969 pred_simple
     ##   top_third  n share_avg_or_better sp_SIERA_vs_lg     model
-    ## 1     FALSE 96               0.292         0.3281 pred_full
-    ## 2      TRUE 49               0.653        -0.0781 pred_full
+    ## 1     FALSE 96               0.292          0.343 pred_full
+    ## 2      TRUE 49               0.653         -0.108 pred_full
 
 ``` r
 # Project 2026 relievers
@@ -1865,20 +1821,20 @@ print(as.data.frame(head(projection, 15)), digits = 3)
     ## 14       Jacob Latz  30 68.0         2.89              -1.09       114
     ## 15        Dylan Lee  31 67.0         2.90              -1.08       113
     ##    proj_starter_SIERA_simple proj_starter_SIERA_full proj_starter_SIERA_stuff
-    ## 1                       4.29                    4.12                     3.96
-    ## 2                       4.25                    4.09                     4.03
-    ## 3                       4.65                    4.47                     4.03
+    ## 1                       4.29                    4.11                     3.96
+    ## 2                       4.25                    4.08                     4.03
+    ## 3                       4.65                    4.50                     4.03
     ## 4                       4.16                    4.11                     4.04
-    ## 5                       4.58                    4.42                     4.05
-    ## 6                       4.06                    4.08                     4.06
-    ## 7                       4.34                    4.16                     4.11
-    ## 8                       4.03                    4.11                     4.13
-    ## 9                       4.22                    4.31                     4.13
-    ## 10                      4.58                    4.57                     4.16
-    ## 11                      4.19                    4.22                     4.18
-    ## 12                      4.38                    4.40                     4.18
-    ## 13                      4.42                    4.41                     4.18
-    ## 14                      4.38                    4.26                     4.19
+    ## 5                       4.58                    4.43                     4.05
+    ## 6                       4.06                    4.07                     4.06
+    ## 7                       4.34                    4.15                     4.11
+    ## 8                       4.03                    4.09                     4.13
+    ## 9                       4.22                    4.30                     4.13
+    ## 10                      4.58                    4.56                     4.16
+    ## 11                      4.19                    4.20                     4.18
+    ## 12                      4.38                    4.38                     4.18
+    ## 13                      4.42                    4.40                     4.18
+    ## 14                      4.38                    4.25                     4.19
     ## 15                      4.38                    4.15                     4.20
     ##    proj_vs_league_stuff
     ## 1                 -0.26
@@ -1921,14 +1877,14 @@ print(as.data.frame(projection |> filter(PlayerName %in% c("Adrian Morejon", "Da
     ## 7      David Bednar  31 69.3         2.96              -1.02       103
     ## 8 Jonathan Loáisiga  31 67.0         3.43              -0.54       106
     ##   proj_starter_SIERA_simple proj_starter_SIERA_full proj_starter_SIERA_stuff
-    ## 1                      4.29                    4.12                     3.96
+    ## 1                      4.29                    4.11                     3.96
     ## 2                      4.56                    4.35                     4.25
-    ## 3                      4.48                    4.59                     4.26
-    ## 4                      4.32                    4.55                     4.27
-    ## 5                      4.51                    4.54                     4.31
+    ## 3                      4.48                    4.58                     4.26
+    ## 4                      4.32                    4.54                     4.27
+    ## 5                      4.51                    4.52                     4.31
     ## 6                      4.53                    4.57                     4.36
     ## 7                      4.39                    4.32                     4.51
-    ## 8                      4.52                    4.57                     4.54
+    ## 8                      4.52                    4.56                     4.54
     ##   proj_vs_league_stuff
     ## 1                -0.26
     ## 2                 0.03
@@ -1978,17 +1934,15 @@ conversions <- read_csv("../data/conversions.csv", show_col_types = FALSE) |>
 
 # Swingmen features, same as 04_predicting_success.Rmd
 for (column in c("pfxFA%", "pfxSI%", "pfxFC%", "pfxSL%", "pfxCU%", "pfxKC%", "pfxCV%", "pfxCH%", "pfxFS%",
-    "pfxFO%", "pfxSC%", "pfxST%")) {
+    "pfxFO%", "pfxSC%")) {
   role_seasons[[column]][is.na(role_seasons[[column]])] <- 0
 }
 role_seasons <- role_seasons |>
-  mutate(FourSeam = `pfxFA%`, Sinker = `pfxSI%`, Cutter = `pfxFC%`, Slider = `pfxSL%` + `pfxST%`,
+  mutate(FourSeam = `pfxFA%`, Sinker = `pfxSI%`, Cutter = `pfxFC%`, Slider = `pfxSL%`,
       Curve = `pfxCU%` + `pfxKC%` + `pfxCV%`,
          Changeup = `pfxCH%` + `pfxFS%` + `pfxFO%` + `pfxSC%`,
          NumPitches10 = (FourSeam >= 0.1) + (Sinker >= 0.1) + (Cutter >= 0.1) + (Slider >= 0.1) + (Curve >= 0.1) + (Changeup >= 0.1),
-         FBVelo = case_when(Sinker > FourSeam ~ pfxvSI,
-                            FourSeam > 0 ~ pfxvFA,
-                            TRUE ~ pfxvFC))
+         FBVelo = ifelse(Sinker > FourSeam, pfxvSI, pfxvFA))
 league_sp <- role_seasons |> filter(role == "sta") |> group_by(Season) |>
     summarize(lg_sp_siera = weighted.mean(SIERA, TBF, na.rm = TRUE))
 league_rp <- role_seasons |> filter(role == "rel") |> group_by(Season) |>
@@ -2075,15 +2029,15 @@ print(results, row.names = FALSE)
     ##            linear on relief SIERA, fit on earlier conversions 65 0.756
     ##                            swingman proxy (relief SIERA only) 65 0.806
     ##  swingman proxy plus intercept shift from earlier conversions 65 0.753
-    ##                                           swingman full proxy 65 0.820
-    ##                      swingman full proxy plus intercept shift 65 0.760
+    ##                                           swingman full proxy 65 0.819
+    ##                      swingman full proxy plus intercept shift 65 0.758
     ##  bias_actual_minus_pred spearman AUC_success
     ##                  -0.324       NA       0.500
     ##                  -0.176     0.26       0.680
     ##                  -0.360     0.26       0.680
     ##                  -0.218     0.26       0.680
-    ##                  -0.386     0.24       0.648
-    ##                  -0.234     0.24       0.648
+    ##                  -0.389     0.24       0.654
+    ##                  -0.234     0.24       0.654
 
 ``` r
 cat("Intercept shift estimated on the earlier conversions (the swingman proxy runs this much too pessimistic):",

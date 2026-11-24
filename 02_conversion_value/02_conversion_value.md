@@ -242,8 +242,8 @@ print(as.data.frame(archetype_table))
     ##          archetype                           group   n share_5plus_GS next_IP
     ## 1             Velo                         95+ mph  40          0.825  94.842
     ## 2             Velo                    under 95 mph 105          0.848  87.940
-    ## 3          Arsenal                       2 pitches  27          0.778  86.370
-    ## 4          Arsenal               3+ pitches at 10% 118          0.856  90.638
+    ## 3          Arsenal                       2 pitches  29          0.759  88.586
+    ## 4          Arsenal               3+ pitches at 10% 116          0.862  90.158
     ## 5         Leverage       high leverage (gmLI 1.3+)  30          0.900 109.489
     ## 6         Leverage                  lower leverage 115          0.826  84.719
     ## 7           Length      long relief (6+ TBF per G)  63          0.873  87.159
@@ -262,8 +262,8 @@ print(as.data.frame(archetype_table))
     ##    next_WAR pen_WAR share_WAR_gain WAR_gain_se WPA_gain_se WAR_gain WPA_gain
     ## 1     1.232   0.577          0.700       0.191       0.180    0.655   -0.128
     ## 2     0.766   0.356          0.581       0.101       0.104    0.410   -0.273
-    ## 3     0.805   0.402          0.556       0.237       0.261    0.402   -0.483
-    ## 4     0.915   0.420          0.627       0.098       0.093    0.495   -0.176
+    ## 3     0.874   0.426          0.586       0.223       0.244    0.449   -0.450
+    ## 4     0.900   0.415          0.621       0.099       0.094    0.485   -0.179
     ## 5     1.535   0.621          0.700       0.230       0.220    0.914    0.075
     ## 6     0.728   0.364          0.591       0.095       0.097    0.364   -0.314
     ## 7     0.762   0.351          0.635       0.117       0.131    0.411   -0.363

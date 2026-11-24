@@ -24,12 +24,12 @@ Starter and reliever lines (2014 to 2026) and minor league lines (2006 to 2026),
 ```{r, eval=FALSE}
 site <- "https://www.fangraphs.com"
 columns <- c("playerid", "xMLBAMID", "PlayerName", "Throws", "Season", "Age", "TeamNameAbb", "G", "GS", "IP", "TBF",
-             "Pitches", "WAR", "RAR", "SIERA", "xFIP", "FIP", "K%", "BB%", "K-BB%", "GB%", "Zone%", "F-Strike%",
-             "SwStr%", "CStr%", "O-Swing%", "O-Contact%", "Z-Contact%", "gmLI", "HardHit%", "Barrel%",
+             "WAR", "RAR", "SIERA", "K%", "BB%", "K-BB%", "GB%", "Zone%", "F-Strike%",
+             "SwStr%", "O-Swing%", "O-Contact%", "Z-Contact%", "gmLI", "HardHit%", "Barrel%",
              "pfxFA%", "pfxFC%", "pfxFS%", "pfxFO%", "pfxSI%", "pfxSL%", "pfxCU%", "pfxKC%", "pfxCH%", "pfxSC%",
-             "pfxKN%", "pfxST%", "pfxCV%", "pfxEP%", "pfxvFA", "pfxvSI", "pfxvFC", "pfxvSL", "pfxvCH", "pfxFA-Z",
+             "pfxKN%", "pfxCV%", "pfxEP%", "pfxvFA", "pfxvSI", "pfxvSL", "pfxvCH",
              "sp_stuff", "sp_location", "sp_pitching", "sp_s_FF", "sp_s_SI", "sp_s_FC", "sp_s_SL", "sp_s_CU",
-             "sp_s_CH", "sp_s_FS", "sp_s_KC", "sp_s_FO", "pb_stuff", "pb_command")
+             "sp_s_CH", "sp_s_FS", "sp_s_KC", "sp_s_FO")
 
 # Open a Chrome window and connect to it
 chrome <- process$new(find_chrome(), c("--remote-debugging-port=9222", "--no-first-run",
@@ -56,7 +56,7 @@ for (season in 2014:2026) {
       mutate(role = role_name)
     cat(season, role_name, nrow(players), "pitchers\n")
     role_seasons <- bind_rows(role_seasons, players)
-    Sys.sleep(4)  # FanGraphs blocks requests that come too fast
+    Sys.sleep(4)
   }
 }
 
@@ -165,30 +165,19 @@ relief_seasons <- role_seasons |>
 
 ```{r}
 usage_cols <- c("pfxFA%", "pfxFC%", "pfxFS%", "pfxFO%", "pfxSI%", "pfxSL%", "pfxCU%", "pfxKC%",
-                "pfxCH%", "pfxSC%", "pfxKN%", "pfxST%", "pfxCV%", "pfxEP%")
+                "pfxCH%", "pfxSC%", "pfxKN%", "pfxCV%", "pfxEP%")
 usage <- as.matrix(relief_seasons[, usage_cols])
 usage[is.na(usage)] <- 0
 
 relief_seasons$NumPitches10 <- rowSums(usage >= 0.10)
-relief_seasons$NumPitches5 <- rowSums(usage >= 0.05)
-relief_seasons$TopTwoUsage <- NA
-relief_seasons$ThirdPitchUsage <- NA
-for (i in 1:nrow(usage)) {
-  sorted_usage <- sort(usage[i, ], decreasing = TRUE)
-  relief_seasons$TopTwoUsage[i] <- sorted_usage[1] + sorted_usage[2]
-  relief_seasons$ThirdPitchUsage[i] <- sorted_usage[3]
-}
-relief_seasons$OffspeedUsage <- usage[, "pfxCH%"] + usage[, "pfxFS%"] + usage[, "pfxFO%"] + usage[, "pfxSC%"]
 relief_seasons$FastballUsage <- usage[, "pfxFA%"] + usage[, "pfxSI%"]
 ```
 
 ```{r}
 # Stuff+ by pitch type (2020 on), only for pitches thrown at least 5% of the time
-# FanGraphs files sweepers under SL
 relief_seasons$FB_Stuff <- NA
 relief_seasons$BestSecondary_Stuff <- NA
 relief_seasons$SecondSecondary_Stuff <- NA
-relief_seasons$Offspeed_Stuff <- NA
 relief_seasons$NumPlusPitches <- NA
 for (i in 1:nrow(relief_seasons)) {
   if (is.na(relief_seasons$sp_stuff[i])) next
@@ -198,55 +187,44 @@ for (i in 1:nrow(relief_seasons)) {
                    CH = relief_seasons$sp_s_CH[i], FS = relief_seasons$sp_s_FS[i],
                    FO = relief_seasons$sp_s_FO[i])
   pitch_usage <- c(FF = usage[i, "pfxFA%"], SI = usage[i, "pfxSI%"], FC = usage[i, "pfxFC%"],
-                   SL = usage[i, "pfxSL%"] + usage[i, "pfxST%"], CU = usage[i, "pfxCU%"] + usage[i, "pfxCV%"],
+                   SL = usage[i, "pfxSL%"], CU = usage[i, "pfxCU%"] + usage[i, "pfxCV%"],
                    KC = usage[i, "pfxKC%"], CH = usage[i, "pfxCH%"], FS = usage[i, "pfxFS%"],
                    FO = usage[i, "pfxFO%"])
   used <- !is.na(pitch_stuff) & pitch_usage >= 0.05
   fastballs <- used & names(pitch_stuff) %in% c("FF", "SI")
   secondaries <- sort(pitch_stuff[used & !names(pitch_stuff) %in% c("FF", "SI")], decreasing = TRUE)
-  offspeed <- pitch_stuff[used & names(pitch_stuff) %in% c("CH", "FS", "FO")]
 
   if (any(fastballs)) {
     relief_seasons$FB_Stuff[i] <- pitch_stuff[fastballs][which.max(pitch_usage[fastballs])]
   }
   relief_seasons$BestSecondary_Stuff[i] <- secondaries[1]
   relief_seasons$SecondSecondary_Stuff[i] <- secondaries[2]  # NA if there is only one secondary
-  if (length(offspeed) > 0) relief_seasons$Offspeed_Stuff[i] <- max(offspeed)
   relief_seasons$NumPlusPitches[i] <- sum(pitch_stuff[used] >= 100)
 }
 ```
 
 ```{r}
-# Primary fastball is the four-seam unless the sinker is thrown more (cutter if neither is thrown)
+# Primary fastball is the four-seam unless the sinker is thrown more
+# Cutters are left out since they behave more like sliders
 relief_seasons <- relief_seasons |>
-  mutate(FBVelo = case_when(coalesce(`pfxSI%`, 0) > coalesce(`pfxFA%`, 0) ~ pfxvSI,
-                            coalesce(`pfxFA%`, 0) > 0 ~ pfxvFA,
-                            TRUE ~ pfxvFC),
-         PitchesPerG = Pitches / G,
+  mutate(FBVelo = ifelse(coalesce(`pfxSI%`, 0) > coalesce(`pfxFA%`, 0), pfxvSI, pfxvFA),
          TBFPerG = TBF / G)
 starter_seasons <- starter_seasons |>
-  mutate(FBVelo = case_when(coalesce(`pfxSI%`, 0) > coalesce(`pfxFA%`, 0) ~ pfxvSI,
-                            coalesce(`pfxFA%`, 0) > 0 ~ pfxvFA,
-                            TRUE ~ pfxvFC))
+  mutate(FBVelo = ifelse(coalesce(`pfxSI%`, 0) > coalesce(`pfxFA%`, 0), pfxvSI, pfxvFA))
 
 relief_side <- relief_seasons |>
   left_join(league_rp, by = "Season") |>
-  transmute(playerid, rp_season = Season, rp_age = Age, rp_IP = IP, rp_TBF = TBF,
+  transmute(playerid, rp_season = Season, rp_age = Age,
             rp_SIERA = SIERA, rp_SIERA_vs_lg = SIERA - lg_rp_siera,
             rp_K = `K%`, rp_BB = `BB%`, rp_KBB = `K-BB%`, rp_GB = `GB%`,
-            rp_Zone = `Zone%`, rp_FStrike = `F-Strike%`, rp_SwStr = `SwStr%`, rp_CStr = `CStr%`,
+            rp_Zone = `Zone%`, rp_FStrike = `F-Strike%`, rp_SwStr = `SwStr%`,
             rp_OSwing = `O-Swing%`, rp_ZContact = `Z-Contact%`, rp_OContact = `O-Contact%`,
             rp_HardHit = `HardHit%`, rp_Barrel = `Barrel%`, rp_gmLI = gmLI,
-            rp_FBVelo = FBVelo, rp_FA_IVB = `pfxFA-Z`,
-            rp_NumPitches10 = NumPitches10, rp_NumPitches5 = NumPitches5,
-            rp_TopTwoUsage = TopTwoUsage, rp_ThirdPitchUsage = ThirdPitchUsage,
-            rp_OffspeedUsage = OffspeedUsage, rp_FastballUsage = FastballUsage,
-            rp_PitchesPerG = PitchesPerG, rp_TBFPerG = TBFPerG,
+            rp_FBVelo = FBVelo, rp_NumPitches10 = NumPitches10,
+            rp_FastballUsage = FastballUsage, rp_TBFPerG = TBFPerG,
             rp_StuffPlus = sp_stuff, rp_LocationPlus = sp_location,
-            rp_botStf = pb_stuff, rp_botCmd = pb_command,
             rp_FB_Stuff = FB_Stuff, rp_BestSecondary_Stuff = BestSecondary_Stuff,
-            rp_SecondSecondary_Stuff = SecondSecondary_Stuff, rp_Offspeed_Stuff = Offspeed_Stuff,
-            rp_NumPlusPitches = NumPlusPitches)
+            rp_SecondSecondary_Stuff = SecondSecondary_Stuff, rp_NumPlusPitches = NumPlusPitches)
 
 starter_side <- starter_seasons |>
   left_join(league_sp, by = "Season") |>
@@ -284,7 +262,6 @@ for (i in 1:nrow(pairs)) {
 ```{r}
 pairs$MiLB_G <- 0
 pairs$MiLB_GS <- 0
-pairs$MiLB_max_IP <- 0
 pairs$MaxProIP <- 0
 for (i in 1:nrow(pairs)) {
   player_minors <- minors |>
@@ -293,7 +270,6 @@ for (i in 1:nrow(pairs)) {
     filter(playerid == pairs$playerid[i], Season <= pairs$rp_season[i])
   pairs$MiLB_G[i] <- sum(player_minors$MiLB_G)
   pairs$MiLB_GS[i] <- sum(player_minors$MiLB_GS)
-  pairs$MiLB_max_IP[i] <- max(c(0, player_minors$MiLB_IP))
 
   # Most innings in one season, minors and majors combined
   pro_ip <- full_join(player_minors, player_mlb, by = "Season") |>
@@ -311,7 +287,7 @@ conversions <- pairs |>
          stuck = next_GS >= 10) |>
   arrange(sp_season, PlayerName)
 
-write_csv(conversions, "../data/conversions.csv")
+write_csv(conversions |> select(-GS_between, -gap, -MiLB_G, -sp_FBVelo, -sp_WAR), "../data/conversions.csv")
 
 cat("Conversion attempts:", nrow(conversions), "\n")
 cat("Unique pitchers:", n_distinct(conversions$playerid), "\n")
@@ -367,7 +343,7 @@ Every Statcast pitch from the relief season of each pitcher in the sample.
 # Takes about 8 minutes
 keep_columns <- c("pitcher", "game_year", "game_pk", "pitch_type", "release_speed", "stand", "p_throws",
                   "description", "events", "inning", "at_bat_number", "pitch_number", "n_thruorder_pitcher",
-                  "woba_value", "woba_denom", "estimated_woba_using_speedangle")
+                  "woba_value", "woba_denom")
 
 # Statcast starts in 2015
 pitcher_seasons <- read_csv("../data/conversions.csv") |>
@@ -398,7 +374,7 @@ cat("Saved", nrow(all_pitches), "pitches\n")
 # Takes about 11 minutes
 keep_columns <- c("pitcher", "game_year", "game_pk", "pitch_type", "release_speed", "stand", "p_throws",
                   "description", "events", "inning", "at_bat_number", "pitch_number", "n_thruorder_pitcher",
-                  "woba_value", "woba_denom", "estimated_woba_using_speedangle")
+                  "woba_value", "woba_denom")
 
 pitcher_seasons <- read_csv("../data/conversions.csv") |>
   distinct(xMLBAMID, sp_season, PlayerName)
@@ -422,7 +398,7 @@ cat("Saved", nrow(all_pitches), "pitches\n")
 
 ## Pull win probability
 
-WPA and average leverage from Baseball-Reference, plus the Chadwick register to match player IDs.
+Win probability added (WPA) and average leverage index for every pitcher season from Baseball-Reference. The Chadwick register converts Baseball-Reference player IDs to MLBAM IDs so these match the rest of the data.
 
 ```{r, eval=FALSE}
 # Takes about 2 minutes
@@ -493,43 +469,30 @@ write_csv(value_pitching, "../data/bref_value_pitching.csv", na = "")
 
 ## Pitch features
 
-Platoon splits, arsenal, and workload from the relief season pitches.
+Platoon wOBA, arsenal against opposite-handed hitters, and velocity fade from the relief season pitches.
 
 ```{r}
 pitches <- read_csv("../data/savant/relief_season_pitches.csv", guess_max = 50000)
 
-swing_types <- c("swinging_strike", "swinging_strike_blocked", "foul", "foul_tip", "hit_into_play",
-                 "foul_bunt", "missed_bunt")
-whiff_types <- c("swinging_strike", "swinging_strike_blocked")
-
 pitches <- pitches |>
   filter(!is.na(pitch_type)) |>
-  mutate(OppHand = stand != p_throws,
-         Swing = description %in% swing_types,
-         Whiff = description %in% whiff_types,
-         PA = !is.na(events) & events != "truncated_pa",
-         K = PA & events %in% c("strikeout", "strikeout_double_play"),
-         BB = PA & events %in% c("walk", "intent_walk"))
+  mutate(OppHand = stand != p_throws)
 ```
 
 ```{r}
 pitches <- pitches |>
   arrange(pitcher, game_year, game_pk, at_bat_number, pitch_number) |>
   group_by(pitcher, game_year, game_pk) |>
-  mutate(OutingPitch = row_number()) |>
+  mutate(GamePitchNum = row_number()) |>
   ungroup()
 
-# Results against same-handed and opposite-handed hitters
+# wOBA against same-handed and opposite-handed hitters
 platoon <- pitches |>
   group_by(pitcher, game_year) |>
-  summarize(Opp_KBB = (sum(K & OppHand) - sum(BB & OppHand)) / sum(PA & OppHand),
-            Same_KBB = (sum(K & !OppHand) - sum(BB & !OppHand)) / sum(PA & !OppHand),
-            Opp_Whiff = sum(Whiff & OppHand) / sum(Swing & OppHand),
-            Opp_wOBA = sum(woba_value[OppHand], na.rm = TRUE) / sum(woba_denom[OppHand], na.rm = TRUE),
+  summarize(Opp_wOBA = sum(woba_value[OppHand], na.rm = TRUE) / sum(woba_denom[OppHand], na.rm = TRUE),
             Same_wOBA = sum(woba_value[!OppHand], na.rm = TRUE) / sum(woba_denom[!OppHand], na.rm = TRUE),
             .groups = "drop") |>
-  mutate(Platoon_KBB_gap = Same_KBB - Opp_KBB,
-         Platoon_wOBA_gap = Opp_wOBA - Same_wOBA) |>
+  mutate(Platoon_wOBA_gap = Opp_wOBA - Same_wOBA) |>
   select(-Same_wOBA)
 ```
 
@@ -538,30 +501,12 @@ platoon <- pitches |>
 opp_usage <- pitches |>
   filter(OppHand) |>
   group_by(pitcher, game_year, pitch_type) |>
-  summarize(n = n(), swings = sum(Swing), whiffs = sum(Whiff), .groups = "drop") |>
+  summarize(n = n(), .groups = "drop") |>
   group_by(pitcher, game_year) |>
   mutate(usage = n / sum(n))
 
 opp_arsenal <- opp_usage |>
   summarize(Opp_NumPitches10 = sum(usage >= 0.10),
-            Opp_OffspeedUsage = sum(usage[pitch_type %in% c("CH", "FS", "FO", "SC")]),
-            Opp_CurveUsage = sum(usage[pitch_type %in% c("CU", "KC", "CS", "SV")]),
-            .groups = "drop")
-```
-
-```{r}
-# Best whiff rate against opposite-handed hitters on a non-fastball, with 25+ swings
-opp_weapon <- opp_usage |>
-  filter(!pitch_type %in% c("FF", "SI"), swings >= 25) |>
-  summarize(Opp_BestSecondaryWhiff = max(whiffs / swings), .groups = "drop")
-
-outings <- pitches |>
-  group_by(pitcher, game_year, game_pk) |>
-  summarize(outing_pitches = n(), .groups = "drop") |>
-  group_by(pitcher, game_year) |>
-  summarize(Outings = n(),
-            Share25Plus = mean(outing_pitches >= 25),
-            Share40Plus = mean(outing_pitches >= 40),
             .groups = "drop")
 ```
 
@@ -572,26 +517,25 @@ primary_fb <- pitches |>
   count(pitcher, game_year, pitch_type) |>
   group_by(pitcher, game_year) |>
   filter(n == max(n)) |>
+  slice(1) |>
   select(pitcher, game_year, primary_fb = pitch_type)
 
 velo_fade <- pitches |>
   inner_join(primary_fb, by = c("pitcher", "game_year")) |>
   filter(pitch_type == primary_fb, !is.na(release_speed)) |>
   group_by(pitcher, game_year) |>
-  summarize(Velo_first15 = mean(release_speed[OutingPitch <= 15]),
-            Velo_after25 = mean(release_speed[OutingPitch > 25]),
-            FB_after25 = sum(OutingPitch > 25),
+  summarize(Velo_first15 = mean(release_speed[GamePitchNum <= 15]),
+            Velo_after25 = mean(release_speed[GamePitchNum > 25]),
+            FB_after25 = sum(GamePitchNum > 25),
             Velo_p95 = quantile(release_speed, 0.95),
             Velo_mean = mean(release_speed),
             .groups = "drop") |>
   mutate(Velo_fade = ifelse(FB_after25 >= 20, Velo_after25 - Velo_first15, NA),
          Velo_max_gap = Velo_p95 - Velo_mean) |>
-  select(pitcher, game_year, Velo_first15, Velo_fade, Velo_max_gap)
+  select(pitcher, game_year, Velo_fade, Velo_max_gap)
 
 savant_features <- platoon |>
   left_join(opp_arsenal, by = c("pitcher", "game_year")) |>
-  left_join(opp_weapon, by = c("pitcher", "game_year")) |>
-  left_join(outings, by = c("pitcher", "game_year")) |>
   left_join(velo_fade, by = c("pitcher", "game_year")) |>
   rename(xMLBAMID = pitcher, rp_season = game_year)
 

@@ -21,8 +21,7 @@ conversions <- read_csv("../data/conversions.csv", show_col_types = FALSE) |>
 expected <- read_csv("../data/value_attempts.csv", show_col_types = FALSE) |>
   select(playerid, sp_season, WAR_gain)
 
-# Pitch groups. Sweepers go with sliders, knuckle curves with curves, splitters with changeups
-role_seasons[is.na(role_seasons$`pfxST%`), "pfxST%"] <- 0
+# Pitch groups. Sweepers are already in the slider column, knuckle curves go with curves, splitters with changeups
 for (column in c("pfxFA%", "pfxSI%", "pfxFC%", "pfxSL%", "pfxCU%", "pfxKC%", "pfxCV%", "pfxCH%", "pfxFS%",
                  "pfxFO%", "pfxSC%")) {
   role_seasons[[column]][is.na(role_seasons[[column]])] <- 0
@@ -31,14 +30,12 @@ role_seasons <- role_seasons |>
   mutate(FourSeam = `pfxFA%`,
          Sinker = `pfxSI%`,
          Cutter = `pfxFC%`,
-         Slider = `pfxSL%` + `pfxST%`,
+         Slider = `pfxSL%`,
          Curve = `pfxCU%` + `pfxKC%` + `pfxCV%`,
          Changeup = `pfxCH%` + `pfxFS%` + `pfxFO%` + `pfxSC%`,
          NumPitches10 = (FourSeam >= 0.1) + (Sinker >= 0.1) + (Cutter >= 0.1) + (Slider >= 0.1) +
            (Curve >= 0.1) + (Changeup >= 0.1),
-         FBVelo = case_when(Sinker > FourSeam ~ pfxvSI,
-                            FourSeam > 0 ~ pfxvFA,
-                            TRUE ~ pfxvFC),
+         FBVelo = ifelse(Sinker > FourSeam, pfxvSI, pfxvFA),
          FB_Stuff = ifelse(Sinker > FourSeam, sp_s_SI, sp_s_FF))
 
 pitch_groups <- c("FourSeam", "Sinker", "Cutter", "Slider", "Curve", "Changeup")
@@ -152,7 +149,7 @@ ggsave("charts/usage_change.png", width = 9, height = 5.5, dpi = 150)
 
 ## Statcast changes
 
-Platoon results, velocity within outings, and times through the order.
+Platoon results, velocity within outings, and times through the order. The relief season platoon K-BB% and whiff rate are saved to `statcast_changes.csv` for notebook 04.
 
 ```{r}
 conversions <- read_csv("../data/conversions.csv", show_col_types = FALSE) |>
@@ -190,7 +187,7 @@ pitches <- bind_rows(relief_pitches, starter_pitches) |>
 pitches <- pitches |>
   arrange(pitcher, game_year, game_pk, at_bat_number, pitch_number) |>
   group_by(pitcher, game_year, game_pk) |>
-  mutate(OutingPitch = row_number()) |>
+  mutate(GamePitchNum = row_number()) |>
   ungroup()
 ```
 
@@ -207,8 +204,7 @@ primary_fb <- pitches |>
 season_measures <- pitches |>
   left_join(primary_fb, by = c("pitcher", "game_year", "role")) |>
   group_by(pitcher, game_year, role) |>
-  summarize(Outings = n_distinct(game_pk),
-            PitchesPerOuting = n() / n_distinct(game_pk),
+  summarize(PitchesPerOuting = n() / n_distinct(game_pk),
             OppShare_PA = sum(PA & OppHand) / sum(PA),
             Opp_KBB = (sum(K & OppHand) - sum(BB & OppHand)) / sum(PA & OppHand),
             Same_KBB = (sum(K & !OppHand) - sum(BB & !OppHand)) / sum(PA & !OppHand),
@@ -217,11 +213,9 @@ season_measures <- pitches |>
             Opp_Breaking = mean(Breaking[OppHand]),
             Opp_Fastball = mean(Fastball[OppHand]),
             Same_Breaking = mean(Breaking[!OppHand]),
-            Velo_first15 = mean(release_speed[pitch_type == primary_fb & OutingPitch <= 15], na.rm = TRUE),
-            Velo_61plus = mean(release_speed[pitch_type == primary_fb & OutingPitch > 60], na.rm = TRUE),
-            FB_61plus = sum(pitch_type == primary_fb & OutingPitch > 60, na.rm = TRUE),
-            xwOBA_1st = sum(estimated_woba_using_speedangle[n_thruorder_pitcher == 1], na.rm = TRUE) /
-              sum(woba_denom[n_thruorder_pitcher == 1], na.rm = TRUE),
+            Velo_first15 = mean(release_speed[pitch_type == primary_fb & GamePitchNum <= 15], na.rm = TRUE),
+            Velo_61plus = mean(release_speed[pitch_type == primary_fb & GamePitchNum > 60], na.rm = TRUE),
+            FB_61plus = sum(pitch_type == primary_fb & GamePitchNum > 60, na.rm = TRUE),
             wOBA_1st = sum(woba_value[n_thruorder_pitcher == 1], na.rm = TRUE) /
               sum(woba_denom[n_thruorder_pitcher == 1], na.rm = TRUE),
             wOBA_2nd = sum(woba_value[n_thruorder_pitcher == 2], na.rm = TRUE) /

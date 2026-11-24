@@ -21,19 +21,23 @@ savant_features <- read_csv("../data/savant_features.csv", show_col_types = FALS
 conversions <- conversions |>
   left_join(savant_features, by = c("xMLBAMID", "rp_season"))
 
+# Platoon K-BB% and whiff rate come from notebook 03
+statcast_relief <- read_csv("../data/statcast_changes.csv", show_col_types = FALSE) |>
+  select(xMLBAMID, sp_season, Opp_KBB = rp_Opp_KBB, Opp_Whiff = rp_Opp_Whiff, Platoon_KBB_gap = rp_Platoon_KBB_gap)
+conversions <- conversions |>
+  left_join(statcast_relief, by = c("xMLBAMID", "sp_season"))
+
 indicators <- c("rp_SIERA_vs_lg", "rp_KBB", "rp_K", "rp_BB",
-                "rp_Zone", "rp_FStrike", "rp_LocationPlus", "rp_botCmd",
-                "rp_StuffPlus", "rp_botStf", "rp_FB_Stuff", "rp_BestSecondary_Stuff",
-                "rp_SecondSecondary_Stuff", "rp_Offspeed_Stuff", "rp_NumPlusPitches", "rp_FBVelo", "rp_FA_IVB",
-                  "Velo_max_gap", "Velo_fade",
-                "rp_SwStr", "rp_ZContact", "rp_OSwing", "rp_OContact", "rp_CStr",
+                "rp_Zone", "rp_FStrike", "rp_LocationPlus",
+                "rp_StuffPlus", "rp_FB_Stuff", "rp_BestSecondary_Stuff",
+                "rp_SecondSecondary_Stuff", "rp_NumPlusPitches", "rp_FBVelo",
+                "Velo_max_gap", "Velo_fade",
+                "rp_SwStr", "rp_ZContact", "rp_OSwing", "rp_OContact",
                 "rp_GB", "rp_HardHit", "rp_Barrel",
-                "rp_NumPitches10", "rp_NumPitches5", "rp_ThirdPitchUsage", "rp_TopTwoUsage",
-                "rp_OffspeedUsage", "rp_FastballUsage",
-                "Opp_NumPitches10", "Opp_OffspeedUsage", "Opp_CurveUsage", "Opp_BestSecondaryWhiff",
-                "Opp_KBB", "Opp_Whiff", "Opp_wOBA", "Platoon_KBB_gap", "Platoon_wOBA_gap",
-                "rp_PitchesPerG", "rp_TBFPerG", "Share25Plus", "Share40Plus", "rp_gmLI",
-                "rp_age", "prev_MLB_GS", "MiLB_GS", "MiLB_GS_share", "MiLB_max_IP", "MaxProIP")
+                "rp_NumPitches10", "rp_FastballUsage",
+                "Opp_NumPitches10", "Opp_KBB", "Opp_Whiff", "Opp_wOBA", "Platoon_KBB_gap", "Platoon_wOBA_gap",
+                "rp_TBFPerG", "rp_gmLI",
+                "rp_age", "prev_MLB_GS", "MiLB_GS", "MiLB_GS_share", "MaxProIP")
 ```
 
 ```{r}
@@ -440,21 +444,17 @@ cat("The conversion slope (relief SIERA to starter SIERA) is", round(coef(lm(sp_
 ```
 
 ```{r}
-# Other outcomes: the same relationship measured with K-BB%, xFIP, FIP, and WAR per 150 IP instead of SIERA
+# Other outcomes: the same relationship measured with K-BB% and WAR per 150 IP instead of SIERA
 cat("\n5. Does the relief to starter relationship hold for other outcomes? Spearman correlations in the baseline sample\n")
 alternate <- baseline |>
   left_join(role_seasons |> filter(role == "sta") |>
-              transmute(playerid, sp_season = Season, sp_KBB = `K-BB%`, sp_xFIP = xFIP, sp_FIP = FIP,
-                sp_WAR_per_150 = WAR / IP * 150),
+              transmute(playerid, sp_season = Season, sp_KBB = `K-BB%`, sp_WAR_per_150 = WAR / IP * 150),
             by = c("playerid", "sp_season")) |>
   left_join(role_seasons |> filter(role == "rel") |>
-              transmute(playerid, rp_season = Season, rp_KBB = `K-BB%`, rp_xFIP = xFIP, rp_FIP = FIP),
+              transmute(playerid, rp_season = Season, rp_KBB = `K-BB%`),
             by = c("playerid", "rp_season"))
 cat("relief K-BB% with starter K-BB%:", round(cor(alternate$rp_KBB, alternate$sp_KBB, method = "spearman"), 2),
     "\n")
-cat("relief xFIP with starter xFIP:", round(cor(alternate$rp_xFIP, alternate$sp_xFIP, method = "spearman"), 2),
-    "\n")
-cat("relief FIP with starter FIP:", round(cor(alternate$rp_FIP, alternate$sp_FIP, method = "spearman"), 2), "\n")
 cat("relief SIERA vs league with starter WAR per 150 IP:", round(cor(alternate$rp_SIERA_vs_lg,
     alternate$sp_WAR_per_150, method = "spearman"), 2), "\n")
 cat("relief K-BB% with starter WAR per 150 IP:", round(cor(alternate$rp_KBB, alternate$sp_WAR_per_150,
@@ -754,17 +754,15 @@ conversions <- read_csv("../data/conversions.csv", show_col_types = FALSE)
 
 # Pitch groups, same as 03_changes_after_conversion.Rmd
 for (column in c("pfxFA%", "pfxSI%", "pfxFC%", "pfxSL%", "pfxCU%", "pfxKC%", "pfxCV%", "pfxCH%", "pfxFS%",
-                 "pfxFO%", "pfxSC%", "pfxST%")) {
+                 "pfxFO%", "pfxSC%")) {
   role_seasons[[column]][is.na(role_seasons[[column]])] <- 0
 }
 role_seasons <- role_seasons |>
-  mutate(FourSeam = `pfxFA%`, Sinker = `pfxSI%`, Cutter = `pfxFC%`, Slider = `pfxSL%` + `pfxST%`,
+  mutate(FourSeam = `pfxFA%`, Sinker = `pfxSI%`, Cutter = `pfxFC%`, Slider = `pfxSL%`,
          Curve = `pfxCU%` + `pfxKC%` + `pfxCV%`, Changeup = `pfxCH%` + `pfxFS%` + `pfxFO%` + `pfxSC%`,
          NumPitches10 = (FourSeam >= 0.1) + (Sinker >= 0.1) + (Cutter >= 0.1) + (Slider >= 0.1) +
            (Curve >= 0.1) + (Changeup >= 0.1),
-         FBVelo = case_when(Sinker > FourSeam ~ pfxvSI,
-                            FourSeam > 0 ~ pfxvFA,
-                            TRUE ~ pfxvFC),
+         FBVelo = ifelse(Sinker > FourSeam, pfxvSI, pfxvFA),
          FB_Stuff = ifelse(Sinker > FourSeam, sp_s_SI, sp_s_FF))
 
 league_sp <- role_seasons |>
@@ -988,17 +986,15 @@ conversions <- read_csv("../data/conversions.csv", show_col_types = FALSE) |>
 
 # Swingmen features, same as 04_predicting_success.Rmd
 for (column in c("pfxFA%", "pfxSI%", "pfxFC%", "pfxSL%", "pfxCU%", "pfxKC%", "pfxCV%", "pfxCH%", "pfxFS%",
-    "pfxFO%", "pfxSC%", "pfxST%")) {
+    "pfxFO%", "pfxSC%")) {
   role_seasons[[column]][is.na(role_seasons[[column]])] <- 0
 }
 role_seasons <- role_seasons |>
-  mutate(FourSeam = `pfxFA%`, Sinker = `pfxSI%`, Cutter = `pfxFC%`, Slider = `pfxSL%` + `pfxST%`,
+  mutate(FourSeam = `pfxFA%`, Sinker = `pfxSI%`, Cutter = `pfxFC%`, Slider = `pfxSL%`,
       Curve = `pfxCU%` + `pfxKC%` + `pfxCV%`,
          Changeup = `pfxCH%` + `pfxFS%` + `pfxFO%` + `pfxSC%`,
          NumPitches10 = (FourSeam >= 0.1) + (Sinker >= 0.1) + (Cutter >= 0.1) + (Slider >= 0.1) + (Curve >= 0.1) + (Changeup >= 0.1),
-         FBVelo = case_when(Sinker > FourSeam ~ pfxvSI,
-                            FourSeam > 0 ~ pfxvFA,
-                            TRUE ~ pfxvFC))
+         FBVelo = ifelse(Sinker > FourSeam, pfxvSI, pfxvFA))
 league_sp <- role_seasons |> filter(role == "sta") |> group_by(Season) |>
     summarize(lg_sp_siera = weighted.mean(SIERA, TBF, na.rm = TRUE))
 league_rp <- role_seasons |> filter(role == "rel") |> group_by(Season) |>

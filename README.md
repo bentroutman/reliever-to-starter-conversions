@@ -44,22 +44,22 @@ Fastball velocity fell 1.1 mph. For the 67 attempts with Stuff+ (2020 on), Stuff
 
 ## 5. Who Gets Converted ([05_predicting_conversions](05_predicting_conversions/05_predicting_conversions.md))
 
-Teams mostly chose relievers by role and starting history. Those traits separated converts much better than skill did (cross-validated AUC of 0.79 for both, compared to 0.57).
+Teams mostly chose relievers by role and starting history. Those traits separated converts much better than skill did (cross-validated AUC of 0.79 for both, compared to 0.59).
 
 ![How converts differ from other relievers](05_predicting_conversions/charts/convert_profile.png)
 
-To predict conversions, I tested each model on 1,401 relief seasons from 2021 to 2025 (64 conversions). Each test year only uses earlier relief seasons and conversions that had already happened.
+To predict conversions, I tested each model on 1,398 relief seasons from 2021 to 2025 (64 conversions). Each test year only uses earlier relief seasons and conversions that had already happened.
 
 | Model | Expected conversions | Calibration slope | Log loss | AUC |
 |---|---|---|---|---|
-| Base rate | 72.2 | | 0.1859 | |
-| Logistic regression (15 traits) | 72.2 | 0.82 | 0.1519 | 0.841 |
-| Ridge | 75.4 | 0.92 | 0.1526 | 0.840 |
-| Lasso | 76.6 | 0.92 | 0.1534 | 0.843 |
-| Logistic regression (4 traits) | 73.6 | 0.83 | 0.1531 | 0.844 |
+| Base rate | 72.3 | | 0.1862 | |
+| Logistic regression (15 traits) | 72.1 | 0.82 | 0.1520 | 0.841 |
+| Ridge | 75.5 | 0.93 | 0.1530 | 0.840 |
+| Lasso | 77.0 | 0.93 | 0.1536 | 0.845 |
+| Logistic regression (4 traits) | 73.5 | 0.83 | 0.1532 | 0.844 |
 | Simple unfitted score | | | | 0.850 |
 
-AUC is averaged over the five test years. A calibration slope of 1 is perfect, and below 1 is overconfident. I used ridge for the final probabilities because its calibration slope was close to 1, but every model expected too many conversions. Ridge did not beat the simple score at ranking pitchers (the 95% interval on the AUC difference is -0.029 to 0.009).
+AUC is averaged over the five test years. A calibration slope of 1 is perfect, and below 1 is overconfident. I used ridge for the final probabilities because its calibration slope was close to 1, but every model expected too many conversions. Ridge did not beat the simple score at ranking pitchers (the 95% interval on the AUC difference is -0.029 to 0.007).
 
 ## Limitations
 
