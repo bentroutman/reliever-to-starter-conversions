@@ -28,7 +28,7 @@ Each attempt is compared to the expected next season of a similar reliever who s
 | WPA | -0.23 | 0.09 |
 | WAA (role adjusted) | -0.22 | 0.07 |
 
-A flexible baseline and matched controls gave similar WAR gains (0.45 and 0.51). Attempts with 5+ starts gained 0.65 WAR, and the 23 attempts with 2 to 4 starts lost 0.46.
+Attempts with 5+ starts gained 0.65 WAR, and the 23 attempts with 2 to 4 starts lost 0.46.
 
 ## 3. What Changed ([03_changes_after_conversion](03_changes_after_conversion/03_changes_after_conversion.md))
 
@@ -44,7 +44,7 @@ Fastball velocity fell 1.1 mph. For the 67 attempts with Stuff+ (2020 on), Stuff
 
 ## 5. Who Gets Converted ([05_predicting_conversions](05_predicting_conversions/05_predicting_conversions.md))
 
-Teams mostly chose relievers by role and starting history. Those traits separated converts much better than skill did (cross-validated AUC of 0.79 for both, compared to 0.59).
+Teams mostly chose relievers by role and starting history. Those traits separated converts much better than skill did (cross-validated AUC of 0.79 and 0.78, compared to 0.58).
 
 ![How converts differ from other relievers](05_predicting_conversions/charts/convert_profile.png)
 
@@ -55,7 +55,6 @@ To predict conversions, I tested each model on 1,398 relief seasons from 2021 to
 | Base rate | 72.3 | | 0.1862 | |
 | Logistic regression (15 traits) | 72.1 | 0.82 | 0.1520 | 0.841 |
 | Ridge | 75.5 | 0.93 | 0.1530 | 0.840 |
-| Lasso | 77.0 | 0.93 | 0.1536 | 0.845 |
 | Logistic regression (4 traits) | 73.5 | 0.83 | 0.1532 | 0.844 |
 | Simple unfitted score | | | | 0.850 |
 
@@ -65,14 +64,14 @@ AUC is averaged over the five test years. A calibration slope of 1 is perfect, a
 
 - The traits and cutoffs were chosen after seeing all of the data, and ridge was chosen on the same test years it is reported on, so the test results are slightly optimistic.
 - The weighted relief SIERA slope fell from 0.46 for attempts through 2021 to 0.21 after, which could be noise (p = 0.06).
-- The 70 pitch cutoff, the 2 start rule, and the cushion and Stuff+ cutoffs were my choices. Some attempts only have a few starts, so their results are noisy.
+- The 70 pitch cutoff, the 2 start rule, the cushion and Stuff+ cutoffs, and the archetype cutoffs (such as 95 mph) were my choices. Some attempts only have a few starts, so their results are noisy.
 - A pitcher who was pulled before 70 pitches in every start is not in the sample.
 - Recent relief seasons could still become conversions, since the sample allows a three-year gap.
 - Only pitchers teams chose to convert and who made starts in the majors are in the sample.
 
 ## Data
 
-FanGraphs (role splits and minor league lines), Baseball Savant (Statcast pitches), Baseball-Reference (WPA and WAA), the MLB Stats API (game logs), and the Chadwick Bureau register (player IDs). FanGraphs gave permission to scrape their data for this project. The data is not included since it belongs to those sites.
+FanGraphs (role splits and minor league lines), Baseball Savant (Statcast pitches), Baseball-Reference (WPA), the MLB Stats API (game logs), and the Chadwick Bureau register (player IDs). FanGraphs gave permission to scrape their data for this project. The data is not included since it belongs to those sites.
 
 ## Running the Code
 
@@ -80,4 +79,4 @@ Create the `data/savant` folder in the main project folder, then run the noteboo
 
 ## Technologies Used
 
-R and R Markdown (dplyr, readr, tidyr, ggplot2, gridExtra, glmnet, splines, rvest, chromote, processx, and jsonlite)
+R and R Markdown (dplyr, readr, tidyr, ggplot2, ggrepel, gridExtra, glmnet, splines, rvest, chromote, processx, and jsonlite)

@@ -15,39 +15,25 @@ library(ggplot2)
 The relief side is the FanGraphs reliever line and the starter side is the starter line.
 
 ```{r}
-role_seasons <- read_csv("../data/fg_role_seasons.csv", guess_max = 20000, show_col_types = FALSE)
+pitcher_seasons <- read_csv("../data/pitcher_seasons.csv", guess_max = 20000, show_col_types = FALSE)
 conversions <- read_csv("../data/conversions.csv", show_col_types = FALSE) |>
-  select(playerid, PlayerName, Throws, rp_season, sp_season, sp_GS, sp_IP, rp_SIERA_vs_lg, sp_SIERA_vs_lg, stuck)
+  select(playerid, xMLBAMID, PlayerName, Throws, rp_season, sp_season, sp_GS, sp_IP, rp_SIERA_vs_lg, sp_SIERA_vs_lg,
+         stuck) |>
+  mutate(Success = ifelse(sp_SIERA_vs_lg <= 0, "league average or better", "worse than average"))
 expected <- read_csv("../data/value_attempts.csv", show_col_types = FALSE) |>
   select(playerid, sp_season, WAR_gain)
 
-# Pitch groups. Sweepers are already in the slider column, knuckle curves go with curves, splitters with changeups
-for (column in c("pfxFA%", "pfxSI%", "pfxFC%", "pfxSL%", "pfxCU%", "pfxKC%", "pfxCV%", "pfxCH%", "pfxFS%",
-                 "pfxFO%", "pfxSC%")) {
-  role_seasons[[column]][is.na(role_seasons[[column]])] <- 0
-}
-role_seasons <- role_seasons |>
-  mutate(FourSeam = `pfxFA%`,
-         Sinker = `pfxSI%`,
-         Cutter = `pfxFC%`,
-         Slider = `pfxSL%`,
-         Curve = `pfxCU%` + `pfxKC%` + `pfxCV%`,
-         Changeup = `pfxCH%` + `pfxFS%` + `pfxFO%` + `pfxSC%`,
-         NumPitches10 = (FourSeam >= 0.1) + (Sinker >= 0.1) + (Cutter >= 0.1) + (Slider >= 0.1) +
-           (Curve >= 0.1) + (Changeup >= 0.1),
-         FBVelo = ifelse(Sinker > FourSeam, pfxvSI, pfxvFA),
-         FB_Stuff = ifelse(Sinker > FourSeam, sp_s_SI, sp_s_FF))
-
+# Sweepers are already in the slider column, knuckle curves go with curves, splitters with changeups
 pitch_groups <- c("FourSeam", "Sinker", "Cutter", "Slider", "Curve", "Changeup")
 process_measures <- c(pitch_groups, "NumPitches10", "FBVelo", "pfxvSL", "pfxvCH", "sp_stuff", "FB_Stuff",
                       "sp_s_SL", "sp_s_CH", "sp_s_CU", "sp_location", "sp_pitching", "Zone%", "F-Strike%")
 result_measures <- c("K%", "BB%", "K-BB%", "SwStr%", "O-Swing%", "Z-Contact%", "GB%", "HardHit%", "SIERA")
 all_measures <- c(process_measures, result_measures)
 
-relief_side <- role_seasons |>
+relief_side <- pitcher_seasons |>
   filter(role == "rel") |>
   select(playerid, rp_season = Season, all_of(all_measures))
-starter_side <- role_seasons |>
+starter_side <- pitcher_seasons |>
   filter(role == "sta") |>
   select(playerid, sp_season = Season, all_of(all_measures))
 ```
@@ -61,23 +47,20 @@ changes <- conversions |>
   inner_join(starter_side |> pivot_longer(-c(playerid, sp_season), names_to = "measure", values_to = "starter"),
              by = c("playerid", "sp_season", "measure")) |>
   mutate(change = starter - relief,
-         type = ifelse(measure %in% result_measures, "result", "process"),
-         Success = ifelse(sp_SIERA_vs_lg <= 0, "league average or better", "worse than average"))
+         type = ifelse(measure %in% result_measures, "result", "process"))
 write_csv(changes, "results/conversion_changes.csv")
 ```
 
 ```{r}
-# Pitches added and dropped: under 5% in relief to 8%+ as a starter, and the reverse
+# A pitch is added when it goes from under 5% (too rare to get a Stuff+ rating) to 10% or more (a regular pitch,
+# as in NumPitches10), and dropped in the other direction
 mix <- changes |>
   filter(measure %in% pitch_groups) |>
-  mutate(added = relief < 0.05 & starter >= 0.08,
-         dropped = relief >= 0.08 & starter < 0.05)
+  mutate(added = relief < 0.05 & starter >= 0.10,
+         dropped = relief >= 0.10 & starter < 0.05)
 per_pitcher <- mix |>
   group_by(playerid, sp_season, PlayerName, sp_SIERA_vs_lg, WAR_gain, stuck, rp_SIERA_vs_lg) |>
-  summarize(added_any = any(added), dropped_any = any(dropped),
-            added_pitches = paste(measure[added], collapse = " "),
-            dropped_pitches = paste(measure[dropped], collapse = " "),
-            biggest_gain = measure[which.max(change)], biggest_gain_pp = max(change) * 100, .groups = "drop")
+  summarize(added_any = any(added), .groups = "drop")
 
 cat("Relief vs starter lines for", n_distinct(paste(changes$playerid, changes$sp_season)), "conversions\n\n")
 
@@ -85,11 +68,10 @@ cat("Average change from relief to starter (usage in percentage points, velo in 
 change_summary <- changes |>
   group_by(type, measure) |>
   summarize(n = sum(!is.na(change)), relief = mean(relief, na.rm = TRUE), starter = mean(starter, na.rm = TRUE),
-            share_up = mean(change > 0, na.rm = TRUE), median_change = median(change, na.rm = TRUE),
-            change = mean(change, na.rm = TRUE), .groups = "drop")
+            share_up = mean(change > 0, na.rm = TRUE), change = mean(change, na.rm = TRUE), .groups = "drop")
 print(as.data.frame(change_summary), digits = 3)
 
-cat("\nPitches added (under 5% to 8%+) and dropped (8%+ to under 5%), number of conversions\n")
+cat("\nPitches added (under 5% to 10%+) and dropped (10%+ to under 5%), number of conversions\n")
 print(mix |> group_by(measure) |> summarize(added = sum(added), dropped = sum(dropped)) |> as.data.frame())
 
 cat("\nAdded a pitch or not\n")
@@ -99,18 +81,9 @@ per_pitcher |>
             sp_SIERA_vs_lg = mean(sp_SIERA_vs_lg), WAR_gain = mean(WAR_gain, na.rm = TRUE),
             stuck = mean(stuck, na.rm = TRUE)) |>
   as.data.frame() |> print(digits = 3)
-cat("\nWho added a pitch\n")
-print(as.data.frame(per_pitcher |> filter(added_any) |>
-                      transmute(PlayerName, sp_season, added_pitches, dropped_pitches,
-                                sp_SIERA_vs_lg = round(sp_SIERA_vs_lg, 2), WAR_gain = round(WAR_gain, 2))))
-
-cat("\nAverage change by outcome (starter SIERA vs league at or below 0 = success)\n")
-by_success <- changes |>
-  group_by(type, measure, Success) |>
-  summarize(n = sum(!is.na(change)), change = mean(change, na.rm = TRUE), .groups = "drop") |>
-  pivot_wider(names_from = Success, values_from = c(n, change))
-print(as.data.frame(by_success), digits = 3)
 ```
+
+Moving to the rotation costs about 1.1 mph of fastball velocity (93.7 to 92.5 mph, and 86% of the 145 pitchers lost velocity). Pitchers throw fewer four-seamers (down 5.7 percentage points) and more changeups (up 3.0), and their results get worse (SIERA rises 0.61, and 77% got worse). Stuff+ falls 5.1 points while Location+ rises 2.1, which is consistent with starters giving up some stuff to throw more strikes. The 58 pitchers who added a pitch did only slightly better as starters (SIERA of 0.14 versus 0.23 above league, and 38% versus 30% stuck in the rotation).
 
 ```{r}
 # Does each change relate to the starter result once relief SIERA is known
@@ -122,12 +95,16 @@ for (m in all_measures) {
   effect_table <- bind_rows(effect_table, data.frame(
     measure = m, type = ifelse(m %in% result_measures, "result", "process"), n = nrow(one),
     spearman_SIERA = round(cor(one$change, one$sp_SIERA_vs_lg, method = "spearman"), 3),
-    spearman_WAR_gain = round(cor(one$change, one$WAR_gain, method = "spearman", use = "complete.obs"), 3),
     beta_after_rp_SIERA = round(coef(summary(fit))[3, 1], 3),
-    p = round(coef(summary(fit))[3, 4], 3)))
+    p = coef(summary(fit))[3, 4]))
 }
+# Adjust for testing many measures (Benjamini-Hochberg)
+effect_table$q <- round(p.adjust(effect_table$p, method = "BH"), 3)
+effect_table$p <- round(effect_table$p, 3)
 print(effect_table)
 ```
+
+Changes in pitch mix do not predict how a pitcher did as a starter once relief SIERA is known (every usage change has p above 0.1). Holding up velocity, Stuff+, and command does. Pitchers who held or gained Pitching+ (beta -0.39), Stuff+ (-0.29), first pitch strike rate (-0.26), Location+ (-0.23), and fastball velocity (-0.19) had better starter SIERA, and all of them stay significant (q of 0.03 or lower) after adjusting for the 28 measures tested (67 pitchers for the Stuff+ and Location+ measures). The result measures such as K-BB% are strongly related, but SIERA is built from them, so that relationship is partly mechanical.
 
 ```{r, fig.width=9, fig.height=5.5}
 # usage change by pitch group, successes vs the rest
@@ -149,11 +126,9 @@ ggsave("charts/usage_change.png", width = 9, height = 5.5, dpi = 150)
 
 ## Statcast changes
 
-Platoon results, velocity within outings, and times through the order. The relief season platoon K-BB% and whiff rate are saved to `statcast_changes.csv` for notebook 04.
+Platoon results, velocity within starts, and times through the order. The relief season platoon K-BB% and whiff rate are saved to `statcast_changes.csv` for notebook 04.
 
 ```{r}
-conversions <- read_csv("../data/conversions.csv", show_col_types = FALSE) |>
-  select(xMLBAMID, PlayerName, rp_season, sp_season, rp_SIERA_vs_lg, sp_SIERA_vs_lg, stuck)
 relief_pitches <- read_csv("../data/savant/relief_season_pitches.csv", guess_max = 50000, show_col_types = FALSE)
 starter_pitches <- read_csv("../data/savant/starter_season_pitches.csv", guess_max = 50000, show_col_types = FALSE)
 
@@ -212,74 +187,49 @@ season_measures <- pitches |>
             Opp_Offspeed = mean(Offspeed[OppHand]),
             Opp_Breaking = mean(Breaking[OppHand]),
             Opp_Fastball = mean(Fastball[OppHand]),
-            Same_Breaking = mean(Breaking[!OppHand]),
-            Velo_first15 = mean(release_speed[pitch_type == primary_fb & GamePitchNum <= 15], na.rm = TRUE),
-            Velo_61plus = mean(release_speed[pitch_type == primary_fb & GamePitchNum > 60], na.rm = TRUE),
-            FB_61plus = sum(pitch_type == primary_fb & GamePitchNum > 60, na.rm = TRUE),
-            wOBA_1st = sum(woba_value[n_thruorder_pitcher == 1], na.rm = TRUE) /
-              sum(woba_denom[n_thruorder_pitcher == 1], na.rm = TRUE),
-            wOBA_2nd = sum(woba_value[n_thruorder_pitcher == 2], na.rm = TRUE) /
-              sum(woba_denom[n_thruorder_pitcher == 2], na.rm = TRUE),
-            wOBA_3rd = sum(woba_value[n_thruorder_pitcher == 3], na.rm = TRUE) /
-              sum(woba_denom[n_thruorder_pitcher == 3], na.rm = TRUE),
-            PA_3rd = sum(PA & n_thruorder_pitcher == 3),
+            # Primary fastball velocity lost per 10 pitches thrown in a game (the slope of velocity on pitch number)
+            Velo_per10 = cov(GamePitchNum[pitch_type == primary_fb], release_speed[pitch_type == primary_fb],
+                             use = "complete.obs") / var(GamePitchNum[pitch_type == primary_fb]) * 10,
             .groups = "drop") |>
-  mutate(Platoon_KBB_gap = Same_KBB - Opp_KBB,
-         Velo_fade_in_start = ifelse(FB_61plus >= 30, Velo_61plus - Velo_first15, NA),
-         TTO_penalty = ifelse(PA_3rd >= 40, wOBA_3rd - wOBA_1st, NA))
+  mutate(Platoon_KBB_gap = Same_KBB - Opp_KBB)
 ```
 
 ```{r}
 # Wide: relief and starter side by side for each conversion
-relief_side <- season_measures |> filter(role == "relief") |> select(-role)
-starter_side <- season_measures |> filter(role == "starter") |> select(-role)
-names(relief_side)[-(1:2)] <- paste0("rp_", names(relief_side)[-(1:2)])
-names(starter_side)[-(1:2)] <- paste0("sp_", names(starter_side)[-(1:2)])
+relief_statcast <- season_measures |> filter(role == "relief") |> select(-role)
+starter_statcast <- season_measures |> filter(role == "starter") |> select(-role)
+names(relief_statcast)[-(1:2)] <- paste0("rp_", names(relief_statcast)[-(1:2)])
+names(starter_statcast)[-(1:2)] <- paste0("sp_", names(starter_statcast)[-(1:2)])
 
 statcast_changes <- conversions |>
-  inner_join(relief_side, by = c("xMLBAMID" = "pitcher", "rp_season" = "game_year")) |>
-  inner_join(starter_side, by = c("xMLBAMID" = "pitcher", "sp_season" = "game_year")) |>
+  inner_join(relief_statcast, by = c("xMLBAMID" = "pitcher", "rp_season" = "game_year")) |>
+  inner_join(starter_statcast, by = c("xMLBAMID" = "pitcher", "sp_season" = "game_year")) |>
   mutate(Opp_KBB_change = sp_Opp_KBB - rp_Opp_KBB,
          Same_KBB_change = sp_Same_KBB - rp_Same_KBB,
          Opp_Whiff_change = sp_Opp_Whiff - rp_Opp_Whiff,
          Opp_Offspeed_change = sp_Opp_Offspeed - rp_Opp_Offspeed,
          Opp_Breaking_change = sp_Opp_Breaking - rp_Opp_Breaking,
          Opp_Fastball_change = sp_Opp_Fastball - rp_Opp_Fastball,
-         OppShare_change = sp_OppShare_PA - rp_OppShare_PA,
-         Velo_first15_change = sp_Velo_first15 - rp_Velo_first15,
-         Success = ifelse(sp_SIERA_vs_lg <= 0, "league average or better", "worse than average"))
+         OppShare_change = sp_OppShare_PA - rp_OppShare_PA)
 write_csv(statcast_changes, "../data/statcast_changes.csv")
 
 cat("Conversions with Statcast in both seasons:", nrow(statcast_changes), "\n\n")
 
 cat("Averages, relief season vs starter season (starts only)\n")
 statcast_changes |>
-  summarize(n_fade = sum(!is.na(sp_Velo_fade_in_start)), n_tto = sum(!is.na(sp_TTO_penalty)),
-            rp_PitchesPerOuting = mean(rp_PitchesPerOuting), sp_PitchesPerOuting = mean(sp_PitchesPerOuting),
+  summarize(rp_PitchesPerOuting = mean(rp_PitchesPerOuting), sp_PitchesPerOuting = mean(sp_PitchesPerOuting),
             rp_OppShare = mean(rp_OppShare_PA), sp_OppShare = mean(sp_OppShare_PA),
             rp_Opp_KBB = mean(rp_Opp_KBB), sp_Opp_KBB = mean(sp_Opp_KBB),
             rp_Same_KBB = mean(rp_Same_KBB), sp_Same_KBB = mean(sp_Same_KBB),
             rp_Opp_Offspeed = mean(rp_Opp_Offspeed), sp_Opp_Offspeed = mean(sp_Opp_Offspeed),
             rp_Opp_Breaking = mean(rp_Opp_Breaking), sp_Opp_Breaking = mean(sp_Opp_Breaking),
-            rp_Velo_first15 = mean(rp_Velo_first15, na.rm = TRUE), sp_Velo_first15 = mean(sp_Velo_first15,
-              na.rm = TRUE),
-            sp_Velo_fade_in_start = mean(sp_Velo_fade_in_start, na.rm = TRUE),
-            sp_wOBA_1st = mean(sp_wOBA_1st, na.rm = TRUE), sp_wOBA_2nd = mean(sp_wOBA_2nd, na.rm = TRUE),
-            sp_wOBA_3rd = mean(sp_wOBA_3rd, na.rm = TRUE), sp_TTO_penalty = mean(sp_TTO_penalty, na.rm = TRUE)) |>
+            sp_Velo_per10 = mean(sp_Velo_per10, na.rm = TRUE)) |>
   pivot_longer(everything()) |>
   as.data.frame() |> print(digits = 3)
 
 change_measures <- c("Opp_KBB_change", "Same_KBB_change", "Opp_Whiff_change", "Opp_Offspeed_change",
-                     "Opp_Breaking_change", "Opp_Fastball_change", "OppShare_change", "Velo_first15_change",
-                     "sp_Velo_fade_in_start", "sp_TTO_penalty", "rp_Platoon_KBB_gap", "sp_Platoon_KBB_gap")
-
-cat("\nAverage by outcome\n")
-statcast_changes |>
-  group_by(Success) |>
-  summarize(n = n(), across(all_of(change_measures), ~ mean(.x, na.rm = TRUE))) |>
-  pivot_longer(-c(Success, n)) |>
-  pivot_wider(names_from = Success, values_from = c(n, value)) |>
-  as.data.frame() |> print(digits = 3)
+                     "Opp_Breaking_change", "Opp_Fastball_change", "OppShare_change", "sp_Velo_per10",
+                     "rp_Platoon_KBB_gap", "sp_Platoon_KBB_gap")
 
 cat("\nEach measure vs starter SIERA vs league (Spearman), and its effect after relief SIERA (SD units)\n")
 effect_table <- NULL
@@ -290,19 +240,29 @@ for (m in change_measures) {
     measure = m, n = nrow(one),
     spearman_SIERA = round(cor(one[[m]], one$sp_SIERA_vs_lg, method = "spearman"), 3),
     beta_after_rp_SIERA = round(coef(summary(fit))[3, 1], 3),
-    p = round(coef(summary(fit))[3, 4], 3)))
+    p = coef(summary(fit))[3, 4]))
 }
+effect_table$q <- round(p.adjust(effect_table$p, method = "BH"), 3)
+effect_table$p <- round(effect_table$p, 3)
 print(effect_table)
+
+# wOBA by time through the order as a starter, pooling every plate appearance
+tto <- pitches |>
+  filter(role == "starter", n_thruorder_pitcher %in% 1:3) |>
+  inner_join(statcast_changes |> select(xMLBAMID, sp_season, Success),
+             by = c("pitcher" = "xMLBAMID", "game_year" = "sp_season")) |>
+  group_by(Success, time = n_thruorder_pitcher) |>
+  summarize(PA = sum(woba_denom, na.rm = TRUE), wOBA = sum(woba_value, na.rm = TRUE) / sum(woba_denom, na.rm = TRUE),
+            .groups = "drop")
+cat("\nwOBA allowed by time through the order\n")
+print(as.data.frame(tto), digits = 3)
 ```
 
+Starters face more opposite-handed batters (58.5% of plate appearances versus 50.1% in relief) and throw 81 pitches per start versus 26 per relief outing. Fastball velocity falls only 0.08 mph per 10 pitches within a start, and that slope does not predict the starter result once relief SIERA is known (p = 0.75). The change in K-BB% against opposite-handed hitters is the strongest signal (beta -0.62), though like the other result measures it is partly mechanical. wOBA allowed rises from the first to the second time through the order for both groups, but the converts who did well fall back the third time (.298, .332, and .317) while the others keep rising (.335, .355, and .362).
+
 ```{r, fig.width=8, fig.height=5.5}
-# wOBA by time through the order as a starter, and velo fade within starts, by outcome
-tto_plot <- statcast_changes |>
-  select(Success, sp_wOBA_1st, sp_wOBA_2nd, sp_wOBA_3rd) |>
-  pivot_longer(-Success, names_to = "time", values_to = "wOBA") |>
-  mutate(time = case_when(time == "sp_wOBA_1st" ~ "1st", time == "sp_wOBA_2nd" ~ "2nd", TRUE ~ "3rd")) |>
-  group_by(Success, time) |>
-  summarize(wOBA = mean(wOBA, na.rm = TRUE), .groups = "drop")
+# wOBA by time through the order as a starter, by outcome
+tto_plot <- tto |> mutate(time = c("1st", "2nd", "3rd")[time])
 ggplot(tto_plot, aes(time, wOBA, color = Success, group = Success)) +
   geom_line(linewidth = 0.8) +
   geom_point(size = 3) +
