@@ -66,7 +66,7 @@ season_next <- season_values |>
 ```
 
 ``` r
-# Same relief season definition as 01_data.Rmd
+# Same relief season definition as 01_data_and_sample.Rmd
 relief_seasons <- role_seasons |>
   filter(role == "rel", TBF >= 100) |>
   left_join(lg_rp, by = "Season") |>
@@ -297,7 +297,7 @@ ggplot(attempts, aes(pen_WAR, next_WAR, color = attempt)) +
   theme_classic()
 ```
 
-![](02_value_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
+![](02_conversion_value_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
 
 ``` r
 ggsave("charts/war_vs_pen_baseline.png", width = 8, height = 6, dpi = 150)
@@ -321,7 +321,7 @@ ggsave("charts/value_gain_by_archetype.png", grid.arrange(war_plot, wpa_plot, nc
        width = 11, height = 6, dpi = 150)
 ```
 
-![](02_value_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
+![](02_conversion_value_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
 
 ## WAA
 
@@ -473,7 +473,7 @@ cat("(r_with_skill_wins_same_season shows how much of each measure is the SIERA 
     ## (r_with_skill_wins_same_season shows how much of each measure is the SIERA based skill signal)
 
 ``` r
-# Conversion gains: actual next season minus the stay-in-the-pen projection, same method as 02_value.Rmd
+# Conversion gains: actual next season minus the stay-in-the-pen projection, same method as 02_conversion_value.Rmd
 cat("3. Conversion gain by measure (actual starter season minus the stay-in-the-pen projection)\n")
 ```
 
@@ -511,12 +511,12 @@ for (m in gain_measures) {
   attempts[[paste0("pen_", m)]] <- predict(fit, newdata = newdata)
   attempts[[paste0(m, "_gain")]] <- attempts[[paste0("sp_", m)]] - attempts[[paste0("pen_", m)]]
 }
-cat("Check against 02_value.Rmd: mean WAR gain here", round(mean(attempts$WAR_gain), 3), " there",
+cat("Check against 02_conversion_value.Rmd: mean WAR gain here", round(mean(attempts$WAR_gain), 3), " there",
     round(mean(attempts$WAR_gain_06), 3),
     " (n =", nrow(attempts), ")\n\n")
 ```
 
-    ## Check against 02_value.Rmd: mean WAR gain here 0.479  there 0.478  (n = 145 )
+    ## Check against 02_conversion_value.Rmd: mean WAR gain here 0.479  there 0.478  (n = 145 )
 
 ``` r
 # Summary of gains for a group of attempts
@@ -667,7 +667,7 @@ relief_info <- role_seasons |>
 ```
 
 ``` r
-# Stayers, same definition as 02_value.Rmd
+# Stayers, same definition as 02_conversion_value.Rmd
 next_year <- fg_season |> transmute(playerid, Season, next_G = G, next_GS = GS, next_IP = IP, next_WAR = WAR,
     next_WAA_fg = WAA_fg)
 stayers <- fg_season |>
@@ -817,11 +817,11 @@ attempts$pen_flex <- predict(fit_flex_all, newdata = new_att)
 attempts <- attempts |> mutate(gain_linear = sp_WAR - pen_linear, gain_flex = sp_WAR - pen_flex,
     gain_matched = sp_WAR - control_WAR)
 
-cat("\nConversion WAR gain under three baselines (mean, standard error). Linear is the one in 02_value.Rmd.\n")
+cat("\nConversion WAR gain under three baselines (mean, standard error). Linear is the one in 02_conversion_value.Rmd.\n")
 ```
 
     ## 
-    ## Conversion WAR gain under three baselines (mean, standard error). Linear is the one in 02_value.Rmd.
+    ## Conversion WAR gain under three baselines (mean, standard error). Linear is the one in 02_conversion_value.Rmd.
 
 ``` r
 gain_summary <- function(data, label) {

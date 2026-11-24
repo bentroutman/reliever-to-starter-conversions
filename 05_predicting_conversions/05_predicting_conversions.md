@@ -448,7 +448,7 @@ ggplot(plot_data, aes(diff_in_SD, trait)) +
   theme_classic()
 ```
 
-![](05_selection_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
+![](05_predicting_conversions_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
 
 ``` r
 ggsave("charts/convert_profile.png", width = 8, height = 8, dpi = 150)

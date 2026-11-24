@@ -348,7 +348,7 @@ ggplot(conversions, aes(rp_KBB * 100, sp_KBB * 100)) +
   theme_classic()
 ```
 
-![](04_success_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
+![](04_predicting_success_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
 
 ``` r
 ggsave("charts/kbb_relief_vs_starter.png", width = 8, height = 6, dpi = 150)
@@ -366,7 +366,7 @@ ggplot(conversions, aes(ArsenalGroup, sp_SIERA_vs_lg)) +
   theme_classic()
 ```
 
-![](04_success_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
+![](04_predicting_success_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
 
 ``` r
 ggsave("charts/arsenal_depth.png", width = 7, height = 5, dpi = 150)
@@ -389,7 +389,7 @@ ggplot(plot_correlations, aes(SIERA_vs_lg, indicator)) +
   theme_classic()
 ```
 
-![](04_success_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
+![](04_predicting_success_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
 
 ``` r
 ggsave("charts/indicator_correlations.png", width = 8, height = 9, dpi = 150)
@@ -409,7 +409,7 @@ ggplot(conversions, aes(rp_FBVelo, Velo_change)) +
 
     ## `geom_smooth()` using formula = 'y ~ x'
 
-![](04_success_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
+![](04_predicting_success_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
 
 ``` r
 ggsave("charts/velo_change.png", width = 8, height = 6, dpi = 150)
@@ -438,7 +438,7 @@ ggplot(conversions, aes(Opp_KBB * 100, sp_SIERA_vs_lg)) +
     ## Warning: Removed 9 rows containing missing values or values outside the scale range
     ## (`geom_point()`).
 
-![](04_success_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
+![](04_predicting_success_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
 
 ``` r
 ggsave("charts/opposite_hand_kbb.png", width = 8, height = 6, dpi = 150)
@@ -462,7 +462,7 @@ ggplot(conversions, aes(StarterHistory, sp_SIERA_vs_lg)) +
   theme_classic()
 ```
 
-![](04_success_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
+![](04_predicting_success_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
 
 ``` r
 ggsave("charts/prior_starts.png", width = 7, height = 5, dpi = 150)
@@ -484,7 +484,7 @@ ggplot(conversions |> filter(!is.na(rp_SecondSecondary_Stuff)), aes(rp_SecondSec
 
     ## `geom_smooth()` using formula = 'y ~ x'
 
-![](04_success_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
+![](04_predicting_success_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
 
 ``` r
 ggsave("charts/third_pitch_stuff.png", width = 8, height = 6, dpi = 150)
@@ -507,7 +507,7 @@ ggplot(conversions, aes(MiLB_GS, sp_SIERA_vs_lg)) +
 
     ## `geom_smooth()` using formula = 'y ~ x'
 
-![](04_success_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
+![](04_predicting_success_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
 
 ``` r
 ggsave("charts/minor_league_starts.png", width = 8, height = 6, dpi = 150)
@@ -619,7 +619,7 @@ game_logs <- read_csv("../data/game_logs.csv", show_col_types = FALSE) |>
 ```
 
 ``` r
-# Same pairing rules as 01_data.Rmd, with the cutoffs as inputs
+# Same pairing rules as 01_data_and_sample.Rmd, with the cutoffs as inputs
 build_variant <- function(min_pitches, min_long_starts, max_relief_gs_share, min_relief_tbf, max_gap) {
   long_starts <- game_logs |>
     filter(Pitches >= min_pitches) |>
@@ -985,13 +985,13 @@ SIERA, so positive means room to spare.
 ``` r
 role_seasons <- read_csv("../data/fg_role_seasons.csv", guess_max = 20000, show_col_types = FALSE)
 
-# League average starter SIERA each season, same as 01_data.Rmd
+# League average starter SIERA each season, same as 01_data_and_sample.Rmd
 league_sp <- role_seasons |>
   filter(role == "sta") |>
   group_by(Season) |>
   summarize(lg_sp_siera = weighted.mean(SIERA, TBF, na.rm = TRUE))
 
-# value_attempts.csv from 02_value.Rmd already has the relief SIERA and the cushion for each attempt
+# value_attempts.csv from 02_conversion_value.Rmd already has the relief SIERA and the cushion for each attempt
 attempts <- read_csv("../data/value_attempts.csv", show_col_types = FALSE)
 
 conversions <- read_csv("../data/conversions.csv", show_col_types = FALSE) |>
@@ -1198,7 +1198,7 @@ ggsave("charts/cushion_bins.png", grid.arrange(siera_plot, war_plot, wpa_plot, n
        width = 8, height = 9, dpi = 150)
 ```
 
-![](04_success_files/figure-gfm/unnamed-chunk-23-1.png)<!-- -->
+![](04_predicting_success_files/figure-gfm/unnamed-chunk-23-1.png)<!-- -->
 
 ## Comparing predictors
 
@@ -1493,7 +1493,7 @@ role_seasons <- read_csv("../data/fg_role_seasons.csv", guess_max = 20000, show_
   mutate(IP = floor(IP) + (IP %% 1) * 10 / 3)
 conversions <- read_csv("../data/conversions.csv", show_col_types = FALSE)
 
-# Pitch groups, same as 03_changes.Rmd
+# Pitch groups, same as 03_changes_after_conversion.Rmd
 for (column in c("pfxFA%", "pfxSI%", "pfxFC%", "pfxSL%", "pfxCU%", "pfxKC%", "pfxCV%", "pfxCH%", "pfxFS%",
                  "pfxFO%", "pfxSC%", "pfxST%")) {
   role_seasons[[column]][is.na(role_seasons[[column]])] <- 0
@@ -1955,7 +1955,7 @@ ggplot(plot_data, aes(pred_full, sp_SIERA_vs_lg)) +
 
     ## `geom_smooth()` using formula = 'y ~ x'
 
-![](04_success_files/figure-gfm/unnamed-chunk-36-1.png)<!-- -->
+![](04_predicting_success_files/figure-gfm/unnamed-chunk-36-1.png)<!-- -->
 
 ``` r
 ggsave("charts/proxy_vs_actual.png", width = 8, height = 6, dpi = 150)
@@ -1974,7 +1974,7 @@ conversions <- read_csv("../data/conversions.csv", show_col_types = FALSE) |>
   mutate(lg_sp_siera = sp_SIERA - sp_SIERA_vs_lg, Cushion = lg_sp_siera - rp_SIERA,
       Success = as.numeric(sp_SIERA_vs_lg <= 0))
 
-# Swingmen features, same as 04_success.Rmd
+# Swingmen features, same as 04_predicting_success.Rmd
 for (column in c("pfxFA%", "pfxSI%", "pfxFC%", "pfxSL%", "pfxCU%", "pfxKC%", "pfxCV%", "pfxCH%", "pfxFS%",
     "pfxFO%", "pfxSC%", "pfxST%")) {
   role_seasons[[column]][is.na(role_seasons[[column]])] <- 0

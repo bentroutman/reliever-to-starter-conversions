@@ -318,7 +318,7 @@ game_logs <- read_csv("../data/game_logs.csv", show_col_types = FALSE) |>
 ```
 
 ```{r}
-# Same pairing rules as 01_data.Rmd, with the cutoffs as inputs
+# Same pairing rules as 01_data_and_sample.Rmd, with the cutoffs as inputs
 build_variant <- function(min_pitches, min_long_starts, max_relief_gs_share, min_relief_tbf, max_gap) {
   long_starts <- game_logs |>
     filter(Pitches >= min_pitches) |>
@@ -485,13 +485,13 @@ Cushion is the league average starter SIERA minus the pitcher's relief SIERA, so
 ```{r}
 role_seasons <- read_csv("../data/fg_role_seasons.csv", guess_max = 20000, show_col_types = FALSE)
 
-# League average starter SIERA each season, same as 01_data.Rmd
+# League average starter SIERA each season, same as 01_data_and_sample.Rmd
 league_sp <- role_seasons |>
   filter(role == "sta") |>
   group_by(Season) |>
   summarize(lg_sp_siera = weighted.mean(SIERA, TBF, na.rm = TRUE))
 
-# value_attempts.csv from 02_value.Rmd already has the relief SIERA and the cushion for each attempt
+# value_attempts.csv from 02_conversion_value.Rmd already has the relief SIERA and the cushion for each attempt
 attempts <- read_csv("../data/value_attempts.csv", show_col_types = FALSE)
 
 conversions <- read_csv("../data/conversions.csv", show_col_types = FALSE) |>
@@ -752,7 +752,7 @@ role_seasons <- read_csv("../data/fg_role_seasons.csv", guess_max = 20000, show_
   mutate(IP = floor(IP) + (IP %% 1) * 10 / 3)
 conversions <- read_csv("../data/conversions.csv", show_col_types = FALSE)
 
-# Pitch groups, same as 03_changes.Rmd
+# Pitch groups, same as 03_changes_after_conversion.Rmd
 for (column in c("pfxFA%", "pfxSI%", "pfxFC%", "pfxSL%", "pfxCU%", "pfxKC%", "pfxCV%", "pfxCH%", "pfxFS%",
                  "pfxFO%", "pfxSC%", "pfxST%")) {
   role_seasons[[column]][is.na(role_seasons[[column]])] <- 0
@@ -984,7 +984,7 @@ conversions <- read_csv("../data/conversions.csv", show_col_types = FALSE) |>
   mutate(lg_sp_siera = sp_SIERA - sp_SIERA_vs_lg, Cushion = lg_sp_siera - rp_SIERA,
       Success = as.numeric(sp_SIERA_vs_lg <= 0))
 
-# Swingmen features, same as 04_success.Rmd
+# Swingmen features, same as 04_predicting_success.Rmd
 for (column in c("pfxFA%", "pfxSI%", "pfxFC%", "pfxSL%", "pfxCU%", "pfxKC%", "pfxCV%", "pfxCH%", "pfxFS%",
     "pfxFO%", "pfxSC%", "pfxST%")) {
   role_seasons[[column]][is.na(role_seasons[[column]])] <- 0
