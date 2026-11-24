@@ -3,7 +3,7 @@ title: "Step 3: What Changed After the Move"
 output: github_document
 ---
 
-```{r}
+```{r, message=FALSE}
 library(dplyr)
 library(readr)
 library(tidyr)
@@ -130,7 +130,7 @@ for (m in all_measures) {
 print(effect_table)
 ```
 
-```{r}
+```{r, fig.width=9, fig.height=5.5}
 # usage change by pitch group, successes vs the rest
 usage_plot <- changes |>
   filter(measure %in% pitch_groups) |>
@@ -299,7 +299,7 @@ for (m in change_measures) {
 print(effect_table)
 ```
 
-```{r}
+```{r, fig.width=8, fig.height=5.5}
 # wOBA by time through the order as a starter, and velo fade within starts, by outcome
 tto_plot <- statcast_changes |>
   select(Success, sp_wOBA_1st, sp_wOBA_2nd, sp_wOBA_3rd) |>

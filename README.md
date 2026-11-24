@@ -12,13 +12,13 @@ Across 79 MLB reliever to starter conversions from 2015 to 2026, SIERA rose by 0
 4. Test which relief season traits predict a good starter
 5. Predict which 2026 relievers look most like past conversions
 
-Each step is one R Markdown notebook.
+Each step is one R Markdown notebook, and the links below open the knitted version.
 
-## 1. Building the Sample (`01_data.Rmd`)
+## 1. Building the Sample ([01_data](01_data.md))
 
 A conversion is a season with 5+ starts, at least half of games as starts, and 3.5+ innings per start, within three years of a season with 100+ batters faced in relief and starts in 20% or less of games. Shorter attempts had 1 to 4 starts of the same length the year after. SIERA is compared to the league average for that role and season.
 
-## 2. How Conversions Went (`02_value.Rmd`)
+## 2. How Conversions Went ([02_value](02_value.md))
 
 Each attempt is compared to the expected next season of a similar reliever who stayed in the bullpen. WAR went up because starters throw more innings. Measures compared to an average pitcher (WPA and WAA) went down.
 
@@ -30,18 +30,18 @@ Each attempt is compared to the expected next season of a similar reliever who s
 
 A flexible baseline and matched controls gave similar WAR gains (0.45 and 0.52).
 
-## 3. What Changed (`03_changes.Rmd`)
+## 3. What Changed ([03_changes](03_changes.md))
 
 Fastball velocity fell 1.2 mph. For the 38 conversions with Stuff+ (2020 on), Stuff+ fell 5.7 points while Location+ rose 1.1 points. Pitchers also threw more sinkers, changeups, and cutters and fewer four-seamers.
 
-## 4. What Predicts Success (`04_success.Rmd`)
+## 4. What Predicts Success ([04_success](04_success.md))
 
 - Relief SIERA was the strongest single predictor of starter SIERA, both relative to the league (Spearman correlation of 0.48). No model I tested clearly improved on it, and it held in all 14 versions of the sample I tried.
 - Pitchers with a cushion of at least 1 run (league starter SIERA minus relief SIERA) were league average or better as starters 75% of the time, compared to 37% for the rest.
 
 ![SIERA, WAR, and WPA by cushion](charts/04_cushion_bins.png)
 
-## 5. Who Gets Converted (`05_selection.Rmd`)
+## 5. Who Gets Converted ([05_selection](05_selection.md))
 
 Teams mostly chose relievers by role and starting history. Those traits separated converts much better than skill did (cross-validated AUC of 0.79 and 0.76, compared to 0.56).
 

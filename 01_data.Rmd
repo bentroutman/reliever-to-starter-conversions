@@ -3,7 +3,7 @@ title: "Step 1: Data and Sample"
 output: github_document
 ---
 
-```{r}
+```{r, message=FALSE}
 library(chromote)
 library(dplyr)
 library(jsonlite)

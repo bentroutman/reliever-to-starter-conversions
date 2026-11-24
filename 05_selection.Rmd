@@ -3,7 +3,7 @@ title: "Step 5: Who Gets Converted"
 output: github_document
 ---
 
-```{r}
+```{r, message=FALSE}
 library(dplyr)
 library(readr)
 library(ggplot2)
@@ -227,7 +227,7 @@ cat("Made a start in the relief season: converts",
     round(mean(population$GS_same_season[population$converted == 0] > 0) * 100), "%\n")
 ```
 
-```{r}
+```{r, fig.width=8, fig.height=8}
 # how the converts differ from other relievers, in SD units
 plot_data <- univariate |>
   filter(n_converts >= 30) |>

@@ -3,7 +3,7 @@ title: "Step 4: What Predicts Success"
 output: github_document
 ---
 
-```{r}
+```{r, message=FALSE}
 library(dplyr)
 library(readr)
 library(ggplot2)
@@ -123,7 +123,7 @@ known <- c("Garrett Crochet", "Reynaldo López", "Jordan Hicks", "Michael King",
 labeled <- conversions |> filter(PlayerName %in% known)
 ```
 
-```{r}
+```{r, fig.width=8, fig.height=6}
 # relief K-BB% vs starter K-BB%
 ggplot(conversions, aes(rp_KBB * 100, sp_KBB * 100)) +
   geom_abline(slope = 1, intercept = 0, color = "gray", linetype = "dashed") +
@@ -136,7 +136,7 @@ ggplot(conversions, aes(rp_KBB * 100, sp_KBB * 100)) +
 ggsave("charts/04_kbb_relief_vs_starter.png", width = 8, height = 6, dpi = 150)
 ```
 
-```{r}
+```{r, fig.width=7, fig.height=5}
 # arsenal depth
 ggplot(conversions, aes(ArsenalGroup, sp_SIERA_vs_lg)) +
   geom_hline(yintercept = 0, color = "gray", linetype = "dashed") +
@@ -149,7 +149,7 @@ ggplot(conversions, aes(ArsenalGroup, sp_SIERA_vs_lg)) +
 ggsave("charts/04_arsenal_depth.png", width = 7, height = 5, dpi = 150)
 ```
 
-```{r}
+```{r, fig.width=8, fig.height=9}
 # correlation of every indicator with starter SIERA vs league
 plot_correlations <- correlations |>
   filter(n >= 30) |>
@@ -167,7 +167,7 @@ ggplot(plot_correlations, aes(SIERA_vs_lg, indicator)) +
 ggsave("charts/04_indicator_correlations.png", width = 8, height = 9, dpi = 150)
 ```
 
-```{r}
+```{r, fig.width=8, fig.height=6}
 # velocity lost when stretched out
 ggplot(conversions, aes(rp_FBVelo, Velo_change)) +
   geom_hline(yintercept = 0, color = "gray", linetype = "dashed") +
@@ -180,7 +180,7 @@ ggplot(conversions, aes(rp_FBVelo, Velo_change)) +
 ggsave("charts/04_velo_change.png", width = 8, height = 6, dpi = 150)
 ```
 
-```{r}
+```{r, fig.width=8, fig.height=6}
 # results vs opposite-handed hitters
 ggplot(conversions, aes(Opp_KBB * 100, sp_SIERA_vs_lg)) +
   geom_hline(yintercept = 0, color = "gray", linetype = "dashed") +
@@ -194,7 +194,7 @@ ggplot(conversions, aes(Opp_KBB * 100, sp_SIERA_vs_lg)) +
 ggsave("charts/04_opposite_hand_kbb.png", width = 8, height = 6, dpi = 150)
 ```
 
-```{r}
+```{r, fig.width=7, fig.height=5}
 # prior MLB starting experience
 ggplot(conversions, aes(StarterHistory, sp_SIERA_vs_lg)) +
   geom_hline(yintercept = 0, color = "gray", linetype = "dashed") +
@@ -207,7 +207,7 @@ ggplot(conversions, aes(StarterHistory, sp_SIERA_vs_lg)) +
 ggsave("charts/04_prior_starts.png", width = 7, height = 5, dpi = 150)
 ```
 
-```{r}
+```{r, fig.width=8, fig.height=6}
 # quality of the third pitch (second best secondary by Stuff+), 2020 on
 ggplot(conversions |> filter(!is.na(rp_SecondSecondary_Stuff)), aes(rp_SecondSecondary_Stuff, sp_SIERA_vs_lg)) +
   geom_hline(yintercept = 0, color = "gray", linetype = "dashed") +
@@ -222,7 +222,7 @@ ggplot(conversions |> filter(!is.na(rp_SecondSecondary_Stuff)), aes(rp_SecondSec
 ggsave("charts/04_third_pitch_stuff.png", width = 8, height = 6, dpi = 150)
 ```
 
-```{r}
+```{r, fig.width=8, fig.height=6}
 # minor league starts before the relief season
 ggplot(conversions, aes(MiLB_GS, sp_SIERA_vs_lg)) +
   geom_hline(yintercept = 0, color = "gray", linetype = "dashed") +
@@ -515,7 +515,7 @@ att_bins <- attempts |>
 print(as.data.frame(att_bins), digits = 3)
 ```
 
-```{r}
+```{r, fig.width=8, fig.height=9}
 # Does the cushion still matter once you know the relief season value
 cat("\nCushion as a predictor of the gain (all 114 attempts)\n")
 cat("WAR gain on cushion: slope", round(coef(lm(WAR_gain ~ Cushion, data = attempts))[2], 3),
@@ -911,7 +911,7 @@ print(as.data.frame(projection |> filter(PlayerName %in% c("Adrian Morejon", "Da
                                                            "Evan Phillips"))), digits = 3)
 ```
 
-```{r}
+```{r, fig.width=8, fig.height=6}
 # proxy prediction vs actual starter SIERA vs league for the conversions
 labels <- c("Garrett Crochet", "Reynaldo López", "Jordan Hicks", "Michael King", "Seth Lugo", "Clay Holmes",
             "Zack Littell", "Jeffrey Springs")
