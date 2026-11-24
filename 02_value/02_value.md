@@ -15,7 +15,7 @@ The comparison is each pitcher’s next season to what a similar reliever
 who stayed in the bullpen did the next season.
 
 ``` r
-role_seasons <- read_csv("data/fg_role_seasons.csv", guess_max = 20000, show_col_types = FALSE) |>
+role_seasons <- read_csv("../data/fg_role_seasons.csv", guess_max = 20000, show_col_types = FALSE) |>
   mutate(IP = floor(IP) + (IP %% 1) * 10 / 3)
 
 # FanGraphs season totals (starter and reliever rows added together)
@@ -28,12 +28,12 @@ season_values <- role_seasons |>
 ``` r
 # Traded pitchers have TOT rows plus one row per team. Pitchers traded across leagues also get
 # AL and NL subtotals labeled TOT, so the full season is the TOT row with the most innings
-bref <- read_csv("data/bref_win_probability.csv", show_col_types = FALSE) |>
+bref <- read_csv("../data/bref_win_probability.csv", show_col_types = FALSE) |>
   group_by(bref_id, Season) |>
   filter(n() == 1 | team_ID == "TOT") |>
   filter(IP == max(IP)) |>
   ungroup()
-id_map <- read_csv("data/id_map.csv", show_col_types = FALSE) |>
+id_map <- read_csv("../data/id_map.csv", show_col_types = FALSE) |>
   distinct(bref_id, .keep_all = TRUE)
 bref <- bref |>
   inner_join(id_map, by = "bref_id") |>
@@ -77,7 +77,7 @@ relief_seasons <- role_seasons |>
 # Baseline group: relievers who stayed relievers the next season and threw 20+ IP (not counting attempts)
 stayers <- relief_seasons |>
   mutate(next_season = rp_season + 1) |>
-  anti_join(read_csv("data/conversions.csv", show_col_types = FALSE),
+  anti_join(read_csv("../data/conversions.csv", show_col_types = FALSE),
             by = c("playerid", "next_season" = "sp_season")) |>
   inner_join(season_next, by = c("playerid", "next_season")) |>
   filter(next_GS / next_G <= 0.2, next_IP >= 20)
@@ -95,7 +95,7 @@ wpa_model <- lm(next_WPA ~ N_WPA + rp_SIERA_vs_lg + N_IP + rp_age, data = stayer
 archetype_cols <- c("playerid", "PlayerName", "rp_season", "sp_season", "sp_GS", "sp_IP",
                     "rp_FBVelo", "rp_NumPitches10", "rp_gmLI", "rp_TBFPerG", "rp_StuffPlus",
                     "rp_NumPlusPitches", "rp_KBB")
-conversions <- read_csv("data/conversions.csv", show_col_types = FALSE) |>
+conversions <- read_csv("../data/conversions.csv", show_col_types = FALSE) |>
   select(all_of(archetype_cols)) |>
   mutate(attempt = ifelse(sp_GS >= 5, "5+ starts", "2 to 4 starts"))
 
@@ -114,7 +114,7 @@ attempts <- attempts |>
 
 ``` r
 # Starting history before the relief season (MLB from 2014, minors from 2006)
-minors <- read_csv("data/fg_minors.csv", show_col_types = FALSE)
+minors <- read_csv("../data/fg_minors.csv", show_col_types = FALSE)
 attempts$prev_MLB_GS <- 0
 attempts$MiLB_GS <- 0
 for (i in 1:nrow(attempts)) {
@@ -125,7 +125,7 @@ for (i in 1:nrow(attempts)) {
   attempts$MiLB_GS[i] <- sum(player_minors$GS)
 }
 
-write_csv(attempts, "data/value_attempts.csv")
+write_csv(attempts, "../data/value_attempts.csv")
 
 cat("Stay-in-pen models fit on", nrow(stayers), "reliever seasons followed by another relief season (20+ IP)\n")
 ```
@@ -235,7 +235,7 @@ for (archetype in archetypes) {
   archetype_table <- bind_rows(archetype_table, group_summary)
 }
 archetype_table <- archetype_table |> mutate(across(where(is.numeric), ~ round(.x, 3)))
-write_csv(archetype_table, "results/02_value_by_archetype.csv")
+write_csv(archetype_table, "results/value_by_archetype.csv")
 print(as.data.frame(archetype_table))
 ```
 
@@ -300,7 +300,7 @@ ggplot(attempts, aes(pen_WAR, next_WAR, color = attempt)) +
 ![](02_value_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
 
 ``` r
-ggsave("charts/02_war_vs_pen_baseline.png", width = 8, height = 6, dpi = 150)
+ggsave("charts/war_vs_pen_baseline.png", width = 8, height = 6, dpi = 150)
 ```
 
 ``` r
@@ -317,7 +317,7 @@ wpa_plot <- ggplot(archetype_table, aes(WPA_gain, label)) +
   geom_col(fill = "steelblue") +
   labs(title = "WPA gain by archetype", x = "Average gain (wins)", y = NULL) +
   theme_classic()
-ggsave("charts/02_value_gain_by_archetype.png", grid.arrange(war_plot, wpa_plot, ncol = 2),
+ggsave("charts/value_gain_by_archetype.png", grid.arrange(war_plot, wpa_plot, ncol = 2),
        width = 11, height = 6, dpi = 150)
 ```
 
@@ -331,7 +331,7 @@ average pace for the same role and season. `WAA_br` is from
 Baseball-Reference.
 
 ``` r
-role_seasons <- read_csv("data/fg_role_seasons.csv", guess_max = 20000, show_col_types = FALSE) |>
+role_seasons <- read_csv("../data/fg_role_seasons.csv", guess_max = 20000, show_col_types = FALSE) |>
   mutate(IP = floor(IP) + (IP %% 1) * 10 / 3)
 
 # FanGraphs WAA by role: WAR minus what an average pitcher in the same role and season earns per inning
@@ -363,7 +363,7 @@ fg_season <- role_seasons |>
 
 ``` r
 # Baseball-Reference value (WAA, leverage adjustment) and win probability (WPA, aLI)
-bref_value <- read_csv("data/bref_value_pitching.csv", show_col_types = FALSE) |>
+bref_value <- read_csv("../data/bref_value_pitching.csv", show_col_types = FALSE) |>
   mutate(IP_br = floor(p_ip) + (p_ip %% 1) * 10 / 3) |>
   group_by(bref_id, Season) |>
   filter(n() == 1 | team_ID == "TOT" | grepl("^[0-9]TM$", team_ID)) |>
@@ -373,14 +373,14 @@ bref_value <- read_csv("data/bref_value_pitching.csv", show_col_types = FALSE) |
   transmute(bref_id, Season, br_G = p_g, br_GS = p_gs, br_IP = IP_br, WAA_br = p_waa,
       WAA_adj_br = coalesce(p_waa_adj, 0),
             RAA_br = p_raa, WAR_br = p_war, RA9role_br = p_ra9_role)
-bref_wp <- read_csv("data/bref_win_probability.csv", show_col_types = FALSE) |>
+bref_wp <- read_csv("../data/bref_win_probability.csv", show_col_types = FALSE) |>
   group_by(bref_id, Season) |>
   filter(n() == 1 | team_ID == "TOT") |>
   filter(IP == max(IP)) |>
   slice(1) |>
   ungroup() |>
   select(bref_id, Season, WPA = wpa_def, aLI = leverage_index_avg)
-id_map <- read_csv("data/id_map.csv", show_col_types = FALSE) |> distinct(bref_id, .keep_all = TRUE)
+id_map <- read_csv("../data/id_map.csv", show_col_types = FALSE) |> distinct(bref_id, .keep_all = TRUE)
 
 seasons <- fg_season |>
   inner_join(id_map |> select(xMLBAMID, bref_id), by = "xMLBAMID") |>
@@ -426,7 +426,7 @@ next_year <- seasons |>
             next_WAA_br = WAA_br, next_WAA_br_adj = WAA_br_adj, next_WPA = WPA)
 stayers <- relievers |>
   mutate(next_season = Season + 1) |>
-  anti_join(read_csv("data/conversions.csv", show_col_types = FALSE),
+  anti_join(read_csv("../data/conversions.csv", show_col_types = FALSE),
             by = c("playerid", "next_season" = "sp_season")) |>
   inner_join(next_year, by = c("playerid", "next_season" = "Season")) |>
   filter(next_GS / next_G <= 0.2, next_IP >= 20)
@@ -487,7 +487,7 @@ relief_info <- role_seasons |>
   transmute(playerid, Season, rp_SIERA_vs_lg = SIERA - lg_rp_siera, rp_age = Age)
 stay_fit <- stayers |>
   left_join(relief_info, by = c("playerid", "Season"))
-attempts <- read_csv("data/value_attempts.csv", show_col_types = FALSE) |>
+attempts <- read_csv("../data/value_attempts.csv", show_col_types = FALSE) |>
   select(playerid, PlayerName, rp_season, sp_season, attempt, rp_StuffPlus, Cushion, WAR_gain_06 = WAR_gain)
 N_values <- seasons |>
   left_join(relief_info, by = c("playerid", "Season")) |>
@@ -545,7 +545,7 @@ for (g in c("cushion under 0.5", "cushion 0.5 to 1", "cushion 1+")) {
 for (g in c("Stuff+ 100+", "Stuff+ under 100")) {
   gain_table <- bind_rows(gain_table, gain_summary(attempts |> filter(StuffGroup == g), g))
 }
-write_csv(gain_table, "results/02_waa_gains.csv")
+write_csv(gain_table, "results/waa_gains.csv")
 print(as.data.frame(gain_table |> tidyr::pivot_wider(names_from = measure, values_from = c(mean_gain, se,
     share_gaining)) |>
                       select(group, n, starts_with("mean_gain"))), row.names = FALSE)
@@ -637,7 +637,7 @@ The gains depend on the baseline, so I compared the linear model to a
 flexible model and to matched controls.
 
 ``` r
-role_seasons <- read_csv("data/fg_role_seasons.csv", guess_max = 20000, show_col_types = FALSE) |>
+role_seasons <- read_csv("../data/fg_role_seasons.csv", guess_max = 20000, show_col_types = FALSE) |>
   mutate(IP = floor(IP) + (IP %% 1) * 10 / 3)
 
 role_pace <- role_seasons |> group_by(Season, role) |> summarize(war_per_ip = sum(WAR, na.rm = TRUE) / sum(IP,
@@ -674,7 +674,7 @@ stayers <- fg_season |>
   filter(GS / G <= 0.2, TBF >= 100) |>
   left_join(relief_info, by = c("playerid", "Season")) |>
   mutate(next_season = Season + 1) |>
-  anti_join(read_csv("data/conversions.csv", show_col_types = FALSE),
+  anti_join(read_csv("../data/conversions.csv", show_col_types = FALSE),
             by = c("playerid", "next_season" = "sp_season")) |>
   inner_join(next_year, by = c("playerid", "next_season" = "Season")) |>
   filter(next_GS / next_G <= 0.2, next_IP >= 20) |>
@@ -682,7 +682,7 @@ stayers <- fg_season |>
   mutate(cushion = lg_sp_siera - SIERA, rp_age = Age) |>
   filter(!is.na(rp_SIERA_vs_lg), !is.na(rp_gmLI))
 
-attempts <- read_csv("data/value_attempts.csv", show_col_types = FALSE) |>
+attempts <- read_csv("../data/value_attempts.csv", show_col_types = FALSE) |>
   select(playerid, PlayerName, rp_season, sp_season, attempt, rp_StuffPlus, Cushion) |>
   inner_join(fg_season |> left_join(relief_info, by = c("playerid", "Season")) |>
                transmute(playerid, rp_season = Season, rp_SIERA_vs_lg, rp_gmLI, rp_age = Age, N_IP = IP,

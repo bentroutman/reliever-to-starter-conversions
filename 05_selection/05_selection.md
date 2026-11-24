@@ -14,9 +14,9 @@ The relief season of each conversion compared to every other qualifying
 relief season from 2016 to 2025.
 
 ``` r
-role_seasons <- read_csv("data/fg_role_seasons.csv", guess_max = 20000, show_col_types = FALSE) |>
+role_seasons <- read_csv("../data/fg_role_seasons.csv", guess_max = 20000, show_col_types = FALSE) |>
   mutate(IP = floor(IP) + (IP %% 1) * 10 / 3)
-conversions <- read_csv("data/conversions.csv", show_col_types = FALSE)
+conversions <- read_csv("../data/conversions.csv", show_col_types = FALSE)
 
 for (column in c("pfxFA%", "pfxSI%", "pfxFC%", "pfxSL%", "pfxCU%", "pfxKC%", "pfxCV%", "pfxCH%", "pfxFS%",
                  "pfxFO%", "pfxSC%", "pfxST%")) {
@@ -73,7 +73,7 @@ prior_mlb <- population |>
   filter(mSeason < Season) |>
   group_by(playerid, Season) |>
   summarize(prior_MLB_GS = sum(GS_total), .groups = "drop")
-minors <- read_csv("data/fg_minors.csv", show_col_types = FALSE) |>
+minors <- read_csv("../data/fg_minors.csv", show_col_types = FALSE) |>
   mutate(playerid = suppressWarnings(as.numeric(playerid))) |>
   filter(!is.na(playerid)) |>
   group_by(playerid, mSeason = Season) |>
@@ -149,7 +149,7 @@ for (f in features) {
     p_value = ifelse(sum(!is.na(convert_x)) > 5, wilcox.test(convert_x, other_x)$p.value, NA)))
 }
 univariate <- univariate |> arrange(desc(abs(AUC - 0.5)))
-write_csv(univariate, "results/05_convert_vs_population.csv")
+write_csv(univariate, "results/convert_vs_population.csv")
 print(univariate, digits = 3)
 ```
 
@@ -451,7 +451,7 @@ ggplot(plot_data, aes(diff_in_SD, trait)) +
 ![](05_selection_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
 
 ``` r
-ggsave("charts/05_convert_profile.png", width = 8, height = 8, dpi = 150)
+ggsave("charts/convert_profile.png", width = 8, height = 8, dpi = 150)
 ```
 
 ## Predicting conversions
@@ -460,8 +460,8 @@ Four models tested by rolling origin, then the 2026 relievers scored
 with ridge.
 
 ``` r
-role_seasons <- read_csv("data/fg_role_seasons.csv", guess_max = 20000, show_col_types = FALSE)
-conversions <- read_csv("data/conversions.csv", show_col_types = FALSE)
+role_seasons <- read_csv("../data/fg_role_seasons.csv", guess_max = 20000, show_col_types = FALSE)
+conversions <- read_csv("../data/conversions.csv", show_col_types = FALSE)
 
 # Usage columns are NA when a pitch is not thrown
 for (column in c("pfxFA%", "pfxSI%", "pfxFC%", "pfxSL%", "pfxCU%", "pfxKC%", "pfxCV%", "pfxCH%", "pfxFS%",
@@ -506,7 +506,7 @@ prior_mlb <- relievers |>
   filter(StartSeason < Season) |>
   group_by(playerid, Season) |>
   summarize(prior_MLB_GS = sum(GS_total), .groups = "drop")
-minors <- read_csv("data/fg_minors.csv", show_col_types = FALSE) |>
+minors <- read_csv("../data/fg_minors.csv", show_col_types = FALSE) |>
   mutate(playerid = suppressWarnings(as.numeric(playerid))) |>  # IDs with letters never reached MLB
   filter(!is.na(playerid))
 prior_minors <- relievers |>
@@ -696,7 +696,7 @@ likelihood <- current |>
   arrange(desc(Prob)) |>
   transmute(PlayerName, Team, Age, TBF_per_G = round(TBF_per_G, 1), SIERA_vs_lg = round(SIERA_vs_lg, 2),
             prior_MLB_GS, MiLB_GS, ProbPct = round(Prob * 100, 1))
-write_csv(likelihood, "results/05_conversion_likelihood_2026.csv")
+write_csv(likelihood, "results/conversion_likelihood_2026.csv")
 cat("\n2026 relievers scored:", nrow(current), " expected conversions:", round(sum(current$Prob), 1), "\n")
 ```
 

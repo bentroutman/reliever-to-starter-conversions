@@ -13,8 +13,8 @@ library(gridExtra)
 Each relief season trait compared to how the starter season went.
 
 ``` r
-conversions <- read_csv("data/conversions.csv", show_col_types = FALSE)
-savant_features <- read_csv("data/savant_features.csv", show_col_types = FALSE)
+conversions <- read_csv("../data/conversions.csv", show_col_types = FALSE)
+savant_features <- read_csv("../data/savant_features.csv", show_col_types = FALSE)
 
 conversions <- conversions |>
   left_join(savant_features, by = c("xMLBAMID", "rp_season"))
@@ -59,7 +59,7 @@ for (i in 1:length(indicators)) {
   }
 }
 correlations[, 3:9] <- round(correlations[, 3:9], 3)
-write_csv(correlations, "results/04_indicator_correlations.csv")
+write_csv(correlations, "results/indicator_correlations.csv")
 print(correlations)
 ```
 
@@ -351,7 +351,7 @@ ggplot(conversions, aes(rp_KBB * 100, sp_KBB * 100)) +
 ![](04_success_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
 
 ``` r
-ggsave("charts/04_kbb_relief_vs_starter.png", width = 8, height = 6, dpi = 150)
+ggsave("charts/kbb_relief_vs_starter.png", width = 8, height = 6, dpi = 150)
 ```
 
 ``` r
@@ -369,7 +369,7 @@ ggplot(conversions, aes(ArsenalGroup, sp_SIERA_vs_lg)) +
 ![](04_success_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
 
 ``` r
-ggsave("charts/04_arsenal_depth.png", width = 7, height = 5, dpi = 150)
+ggsave("charts/arsenal_depth.png", width = 7, height = 5, dpi = 150)
 ```
 
 ``` r
@@ -392,7 +392,7 @@ ggplot(plot_correlations, aes(SIERA_vs_lg, indicator)) +
 ![](04_success_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
 
 ``` r
-ggsave("charts/04_indicator_correlations.png", width = 8, height = 9, dpi = 150)
+ggsave("charts/indicator_correlations.png", width = 8, height = 9, dpi = 150)
 ```
 
 ``` r
@@ -412,7 +412,7 @@ ggplot(conversions, aes(rp_FBVelo, Velo_change)) +
 ![](04_success_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
 
 ``` r
-ggsave("charts/04_velo_change.png", width = 8, height = 6, dpi = 150)
+ggsave("charts/velo_change.png", width = 8, height = 6, dpi = 150)
 ```
 
     ## `geom_smooth()` using formula = 'y ~ x'
@@ -441,7 +441,7 @@ ggplot(conversions, aes(Opp_KBB * 100, sp_SIERA_vs_lg)) +
 ![](04_success_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
 
 ``` r
-ggsave("charts/04_opposite_hand_kbb.png", width = 8, height = 6, dpi = 150)
+ggsave("charts/opposite_hand_kbb.png", width = 8, height = 6, dpi = 150)
 ```
 
     ## `geom_smooth()` using formula = 'y ~ x'
@@ -465,7 +465,7 @@ ggplot(conversions, aes(StarterHistory, sp_SIERA_vs_lg)) +
 ![](04_success_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
 
 ``` r
-ggsave("charts/04_prior_starts.png", width = 7, height = 5, dpi = 150)
+ggsave("charts/prior_starts.png", width = 7, height = 5, dpi = 150)
 ```
 
 ``` r
@@ -487,7 +487,7 @@ ggplot(conversions |> filter(!is.na(rp_SecondSecondary_Stuff)), aes(rp_SecondSec
 ![](04_success_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
 
 ``` r
-ggsave("charts/04_third_pitch_stuff.png", width = 8, height = 6, dpi = 150)
+ggsave("charts/third_pitch_stuff.png", width = 8, height = 6, dpi = 150)
 ```
 
     ## `geom_smooth()` using formula = 'y ~ x'
@@ -510,7 +510,7 @@ ggplot(conversions, aes(MiLB_GS, sp_SIERA_vs_lg)) +
 ![](04_success_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
 
 ``` r
-ggsave("charts/04_minor_league_starts.png", width = 8, height = 6, dpi = 150)
+ggsave("charts/minor_league_starts.png", width = 8, height = 6, dpi = 150)
 ```
 
     ## `geom_smooth()` using formula = 'y ~ x'
@@ -522,7 +522,7 @@ is noisy. I repeated the main relationship with each attempt weighted by
 its batters faced as a starter.
 
 ``` r
-conversions <- read_csv("data/conversions.csv", show_col_types = FALSE)
+conversions <- read_csv("../data/conversions.csv", show_col_types = FALSE)
 weighted_model <- lm(sp_SIERA_vs_lg ~ rp_SIERA_vs_lg, data = conversions, weights = sp_TBF)
 cat("SIERA change, mean:", round(mean(conversions$SIERA_change), 2),
     " weighted:", round(weighted.mean(conversions$SIERA_change, conversions$sp_TBF), 2),
@@ -581,7 +581,7 @@ cat("Weighted slope through 2021:", round(coef(early_model)[2], 2), " 2022 on:",
 Whether the main results depend on the cutoffs.
 
 ``` r
-role_seasons <- read_csv("data/fg_role_seasons.csv", guess_max = 20000, show_col_types = FALSE) |>
+role_seasons <- read_csv("../data/fg_role_seasons.csv", guess_max = 20000, show_col_types = FALSE) |>
   mutate(IP = floor(IP) + (IP %% 1) * 10 / 3)
 
 season_totals <- role_seasons |>
@@ -614,7 +614,7 @@ starter_all <- role_seasons |>
   transmute(playerid, PlayerName, sp_season = Season, sp_GS = GS, sp_IP = IP,
       sp_starter_share = GS_total / G_total,
             sp_SIERA = SIERA, sp_SIERA_vs_lg = SIERA - lg_sp_siera, lg_sp_siera, xMLBAMID)
-game_logs <- read_csv("data/game_logs.csv", show_col_types = FALSE) |>
+game_logs <- read_csv("../data/game_logs.csv", show_col_types = FALSE) |>
   filter(GS == 1)
 ```
 
@@ -697,7 +697,7 @@ results <- NULL
 for (label in names(versions)) {
   results <- bind_rows(results, summarize_variant(label, versions[[label]]))
 }
-write_csv(results, "results/04_definition_sensitivity.csv")
+write_csv(results, "results/definition_sensitivity.csv")
 
 cat("1. Headline results under different definitions of a conversion\n")
 ```
@@ -944,7 +944,7 @@ cat("\n3. Indicator correlations with starter SIERA vs league, adjusted for test
     ## 3. Indicator correlations with starter SIERA vs league, adjusted for testing many indicators at once
 
 ``` r
-correlations <- read_csv("results/04_indicator_correlations.csv", show_col_types = FALSE) |>
+correlations <- read_csv("results/indicator_correlations.csv", show_col_types = FALSE) |>
   filter(!is.na(SIERA_vs_lg)) |>
   mutate(t_stat = SIERA_vs_lg * sqrt((n - 2) / (1 - SIERA_vs_lg^2)),
          p_raw = 2 * pt(-abs(t_stat), df = n - 2),
@@ -983,7 +983,7 @@ Cushion is the league average starter SIERA minus the pitcher’s relief
 SIERA, so positive means room to spare.
 
 ``` r
-role_seasons <- read_csv("data/fg_role_seasons.csv", guess_max = 20000, show_col_types = FALSE)
+role_seasons <- read_csv("../data/fg_role_seasons.csv", guess_max = 20000, show_col_types = FALSE)
 
 # League average starter SIERA each season, same as 01_data.Rmd
 league_sp <- role_seasons |>
@@ -992,9 +992,9 @@ league_sp <- role_seasons |>
   summarize(lg_sp_siera = weighted.mean(SIERA, TBF, na.rm = TRUE))
 
 # value_attempts.csv from 02_value.Rmd already has the relief SIERA and the cushion for each attempt
-attempts <- read_csv("data/value_attempts.csv", show_col_types = FALSE)
+attempts <- read_csv("../data/value_attempts.csv", show_col_types = FALSE)
 
-conversions <- read_csv("data/conversions.csv", show_col_types = FALSE) |>
+conversions <- read_csv("../data/conversions.csv", show_col_types = FALSE) |>
   left_join(league_sp, by = c("sp_season" = "Season")) |>
   mutate(Cushion = lg_sp_siera - rp_SIERA,
          SIERA_vs_lg_change = sp_SIERA_vs_lg - (rp_SIERA - lg_sp_siera))
@@ -1194,7 +1194,7 @@ wpa_plot <- ggplot(att_bins, aes(CushionBin, WPA_gain)) +
   geom_text(aes(label = paste0("n=", n)), vjust = -1.2, size = 3) +
   labs(title = "WPA gain by cushion", x = "Relief SIERA cushion (runs)", y = "Wins") +
   theme_classic()
-ggsave("charts/04_cushion_bins.png", grid.arrange(siera_plot, war_plot, wpa_plot, ncol = 1),
+ggsave("charts/cushion_bins.png", grid.arrange(siera_plot, war_plot, wpa_plot, ncol = 1),
        width = 8, height = 9, dpi = 150)
 ```
 
@@ -1205,10 +1205,10 @@ ggsave("charts/04_cushion_bins.png", grid.arrange(siera_plot, war_plot, wpa_plot
 Whether any predictor beats picking the best relievers by relief SIERA.
 
 ``` r
-conversions <- read_csv("data/conversions.csv", show_col_types = FALSE)
-statcast <- read_csv("data/statcast_changes.csv", show_col_types = FALSE) |>
+conversions <- read_csv("../data/conversions.csv", show_col_types = FALSE)
+statcast <- read_csv("../data/statcast_changes.csv", show_col_types = FALSE) |>
   select(xMLBAMID, sp_season, rp_Opp_KBB, rp_Platoon_KBB_gap)
-expected <- read_csv("data/value_attempts.csv", show_col_types = FALSE) |>
+expected <- read_csv("../data/value_attempts.csv", show_col_types = FALSE) |>
   select(playerid, sp_season, WPA_gain, WAR_gain, Cushion)
 conversions <- conversions |>
   left_join(statcast, by = c("xMLBAMID", "sp_season")) |>
@@ -1452,7 +1452,7 @@ cat("\n\nPART 3. Same comparison for value gained (all attempts with a gain, WAR
     ## PART 3. Same comparison for value gained (all attempts with a gain, WAR and WPA)
 
 ``` r
-attempts <- read_csv("data/value_attempts.csv", show_col_types = FALSE) |>
+attempts <- read_csv("../data/value_attempts.csv", show_col_types = FALSE) |>
   select(playerid, sp_season, rp_StuffPlus, Cushion, WPA_gain, WAR_gain, sp_IP, rp_SIERA_vs_lg, rp_age)
 for (outcome in c("WAR_gain", "WPA_gain")) {
   data_one <- attempts |> filter(!is.na(.data[[outcome]]), !is.na(rp_SIERA_vs_lg))
@@ -1489,9 +1489,9 @@ Pitchers who did both roles in one season, and are not in the conversion
 sample, give a projection for relievers who never converted.
 
 ``` r
-role_seasons <- read_csv("data/fg_role_seasons.csv", guess_max = 20000, show_col_types = FALSE) |>
+role_seasons <- read_csv("../data/fg_role_seasons.csv", guess_max = 20000, show_col_types = FALSE) |>
   mutate(IP = floor(IP) + (IP %% 1) * 10 / 3)
-conversions <- read_csv("data/conversions.csv", show_col_types = FALSE)
+conversions <- read_csv("../data/conversions.csv", show_col_types = FALSE)
 
 # Pitch groups, same as 03_changes.Rmd
 for (column in c("pfxFA%", "pfxSI%", "pfxFC%", "pfxSL%", "pfxCU%", "pfxKC%", "pfxCV%", "pfxCH%", "pfxFS%",
@@ -1828,7 +1828,7 @@ projection <- current |>
             proj_starter_SIERA_stuff = round(pred_stuff + lg_sp_2026, 2),
             proj_vs_league_stuff = round(pred_stuff, 2)) |>
   arrange(proj_starter_SIERA_stuff)
-write_csv(projection, "results/04_swingman_projection_2026.csv")
+write_csv(projection, "results/swingman_projection_2026.csv")
 cat("\n4. 2026 relievers projected as starters. League starter SIERA in 2026:", round(lg_sp_2026, 2), "\n")
 ```
 
@@ -1958,7 +1958,7 @@ ggplot(plot_data, aes(pred_full, sp_SIERA_vs_lg)) +
 ![](04_success_files/figure-gfm/unnamed-chunk-36-1.png)<!-- -->
 
 ``` r
-ggsave("charts/04_proxy_vs_actual.png", width = 8, height = 6, dpi = 150)
+ggsave("charts/proxy_vs_actual.png", width = 8, height = 6, dpi = 150)
 ```
 
     ## `geom_smooth()` using formula = 'y ~ x'
@@ -1968,9 +1968,9 @@ ggsave("charts/04_proxy_vs_actual.png", width = 8, height = 6, dpi = 150)
 Fit on conversions through 2021 and tested on 2022 to 2026.
 
 ``` r
-role_seasons <- read_csv("data/fg_role_seasons.csv", guess_max = 20000, show_col_types = FALSE) |>
+role_seasons <- read_csv("../data/fg_role_seasons.csv", guess_max = 20000, show_col_types = FALSE) |>
   mutate(IP = floor(IP) + (IP %% 1) * 10 / 3)
-conversions <- read_csv("data/conversions.csv", show_col_types = FALSE) |>
+conversions <- read_csv("../data/conversions.csv", show_col_types = FALSE) |>
   mutate(lg_sp_siera = sp_SIERA - sp_SIERA_vs_lg, Cushion = lg_sp_siera - rp_SIERA,
       Success = as.numeric(sp_SIERA_vs_lg <= 0))
 
@@ -2253,8 +2253,8 @@ start, and starting is every start from that one on. K-BB% is compared
 to the league average for the role.
 
 ``` r
-midseason <- read_csv("data/midseason_attempts.csv", show_col_types = FALSE)
-league_kbb <- read_csv("data/fg_role_seasons.csv", guess_max = 20000, show_col_types = FALSE) |>
+midseason <- read_csv("../data/midseason_attempts.csv", show_col_types = FALSE)
+league_kbb <- read_csv("../data/fg_role_seasons.csv", guess_max = 20000, show_col_types = FALSE) |>
   group_by(Season, role) |>
   summarize(lg_KBB = weighted.mean(`K-BB%`, TBF, na.rm = TRUE), .groups = "drop")
 league_rp <- league_kbb |> filter(role == "rel") |> select(Season, lg_rp_KBB = lg_KBB)

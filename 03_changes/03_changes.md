@@ -14,10 +14,10 @@ The relief side is the FanGraphs reliever line and the starter side is
 the starter line.
 
 ``` r
-role_seasons <- read_csv("data/fg_role_seasons.csv", guess_max = 20000, show_col_types = FALSE)
-conversions <- read_csv("data/conversions.csv", show_col_types = FALSE) |>
+role_seasons <- read_csv("../data/fg_role_seasons.csv", guess_max = 20000, show_col_types = FALSE)
+conversions <- read_csv("../data/conversions.csv", show_col_types = FALSE) |>
   select(playerid, PlayerName, Throws, rp_season, sp_season, sp_GS, sp_IP, rp_SIERA_vs_lg, sp_SIERA_vs_lg, stuck)
-expected <- read_csv("data/value_attempts.csv", show_col_types = FALSE) |>
+expected <- read_csv("../data/value_attempts.csv", show_col_types = FALSE) |>
   select(playerid, sp_season, WAR_gain)
 
 # Pitch groups. Sweepers go with sliders, knuckle curves with curves, splitters with changeups
@@ -63,7 +63,7 @@ changes <- conversions |>
   mutate(change = starter - relief,
          type = ifelse(measure %in% result_measures, "result", "process"),
          Success = ifelse(sp_SIERA_vs_lg <= 0, "league average or better", "worse than average"))
-write_csv(changes, "results/03_conversion_changes.csv")
+write_csv(changes, "results/conversion_changes.csv")
 ```
 
 ``` r
@@ -498,7 +498,7 @@ ggplot(usage_plot, aes(measure, change, fill = Success)) +
 ![](03_changes_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
 
 ``` r
-ggsave("charts/03_usage_change.png", width = 9, height = 5.5, dpi = 150)
+ggsave("charts/usage_change.png", width = 9, height = 5.5, dpi = 150)
 ```
 
 ## Statcast changes
@@ -506,10 +506,10 @@ ggsave("charts/03_usage_change.png", width = 9, height = 5.5, dpi = 150)
 Platoon results, velocity within outings, and times through the order.
 
 ``` r
-conversions <- read_csv("data/conversions.csv", show_col_types = FALSE) |>
+conversions <- read_csv("../data/conversions.csv", show_col_types = FALSE) |>
   select(xMLBAMID, PlayerName, rp_season, sp_season, rp_SIERA_vs_lg, sp_SIERA_vs_lg, stuck)
-relief_pitches <- read_csv("data/savant/relief_season_pitches.csv", guess_max = 50000, show_col_types = FALSE)
-starter_pitches <- read_csv("data/savant/starter_season_pitches.csv", guess_max = 50000, show_col_types = FALSE)
+relief_pitches <- read_csv("../data/savant/relief_season_pitches.csv", guess_max = 50000, show_col_types = FALSE)
+starter_pitches <- read_csv("../data/savant/starter_season_pitches.csv", guess_max = 50000, show_col_types = FALSE)
 
 swing_types <- c("swinging_strike", "swinging_strike_blocked", "foul", "foul_tip", "hit_into_play",
                  "foul_bunt", "missed_bunt")
@@ -605,7 +605,7 @@ statcast_changes <- conversions |>
          OppShare_change = sp_OppShare_PA - rp_OppShare_PA,
          Velo_first15_change = sp_Velo_first15 - rp_Velo_first15,
          Success = ifelse(sp_SIERA_vs_lg <= 0, "league average or better", "worse than average"))
-write_csv(statcast_changes, "data/statcast_changes.csv")
+write_csv(statcast_changes, "../data/statcast_changes.csv")
 
 cat("Conversions with Statcast in both seasons:", nrow(statcast_changes), "\n\n")
 ```
@@ -762,5 +762,5 @@ ggplot(tto_plot, aes(time, wOBA, color = Success, group = Success)) +
 ![](03_changes_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
 
 ``` r
-ggsave("charts/03_tto_by_outcome.png", width = 8, height = 5.5, dpi = 150)
+ggsave("charts/tto_by_outcome.png", width = 8, height = 5.5, dpi = 150)
 ```

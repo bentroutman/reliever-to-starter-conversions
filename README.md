@@ -14,11 +14,11 @@ Across 145 MLB reliever to starter conversion attempts from 2015 to 2026, SIERA 
 
 Each step is one R Markdown notebook, and the links below open the knitted version.
 
-## 1. Building the Sample ([01_data](01_data.md))
+## 1. Building the Sample ([01_data](01_data/01_data.md))
 
 A conversion attempt is a season with at least 2 starts of 70+ pitches, within three years of a season with 100+ batters faced in relief and starts in 20% or less of games. There is no minimum number of innings or share of games started, since those rules drop attempts that went badly. All of a pitcher's starts that season count toward his results. Pitchers who moved to the rotation during a season are a separate group (133 moves).
 
-## 2. How Conversions Went ([02_value](02_value.md))
+## 2. How Conversions Went ([02_value](02_value/02_value.md))
 
 Each attempt is compared to the expected next season of a similar reliever who stayed in the bullpen. WAR went up because starters throw more innings. Measures compared to an average pitcher (WPA and WAA) went down.
 
@@ -30,23 +30,23 @@ Each attempt is compared to the expected next season of a similar reliever who s
 
 A flexible baseline and matched controls gave similar WAR gains (0.45 and 0.51). Attempts with 5+ starts gained 0.65 WAR, and the 23 attempts with 2 to 4 starts lost 0.46.
 
-## 3. What Changed ([03_changes](03_changes.md))
+## 3. What Changed ([03_changes](03_changes/03_changes.md))
 
 Fastball velocity fell 1.1 mph. For the 67 attempts with Stuff+ (2020 on), Stuff+ fell 5.1 points while Location+ rose 2.1 points. Pitchers also threw more changeups, sinkers, and cutters and fewer four-seamers.
 
-## 4. What Predicts Success ([04_success](04_success.md))
+## 4. What Predicts Success ([04_success](04_success/04_success.md))
 
 - Relief K-BB% and relief SIERA were the strongest predictors of starter SIERA, relative to the league (Spearman correlations of -0.43 and 0.42). No model I tested clearly improved on them, and the relief SIERA relationship held in all 15 versions of the sample I tried (0.34 to 0.59).
 - Pitchers with a cushion of at least 1 run (league starter SIERA minus relief SIERA) were league average or better as starters 70% of the time, compared to 33% for the rest.
 - For mid-season moves, K-BB% before and after the move had a correlation of 0.20.
 
-![SIERA, WAR, and WPA by cushion](charts/04_cushion_bins.png)
+![SIERA, WAR, and WPA by cushion](04_success/charts/cushion_bins.png)
 
-## 5. Who Gets Converted ([05_selection](05_selection.md))
+## 5. Who Gets Converted ([05_selection](05_selection/05_selection.md))
 
 Teams mostly chose relievers by role and starting history. Those traits separated converts much better than skill did (cross-validated AUC of 0.79 for both, compared to 0.59).
 
-![How converts differ from other relievers](charts/05_convert_profile.png)
+![How converts differ from other relievers](05_selection/charts/convert_profile.png)
 
 To predict conversions, I tested each model on 1,398 relief seasons from 2021 to 2025 (64 conversions). Each test year only uses earlier relief seasons and conversions that had already happened.
 
@@ -76,7 +76,7 @@ FanGraphs (role splits and minor league lines), Baseball Savant (Statcast pitche
 
 ## Running the Code
 
-Create the `data/savant` folder, then run the notebooks in number order. The pull chunks in `01_data.Rmd` are set to `eval=FALSE` so knitting does not download everything again. Run those by hand the first time (the FanGraphs pull opens a Chrome window). Files in `results/` and `charts/` start with the number of the notebook that made them.
+Create the `data/savant` folder in the main project folder, then run the notebooks in number order. The pull chunks in `01_data.Rmd` are set to `eval=FALSE` so knitting does not download everything again. Run those by hand the first time (the FanGraphs pull opens a Chrome window). Each step has its own folder with the notebook, the knitted page, and its `results` and `charts`.
 
 ## Technologies Used
 
