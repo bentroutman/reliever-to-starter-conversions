@@ -36,7 +36,9 @@ role_seasons <- role_seasons |>
          Changeup = `pfxCH%` + `pfxFS%` + `pfxFO%` + `pfxSC%`,
          NumPitches10 = (FourSeam >= 0.1) + (Sinker >= 0.1) + (Cutter >= 0.1) + (Slider >= 0.1) +
            (Curve >= 0.1) + (Changeup >= 0.1),
-         FBVelo = ifelse(Sinker > FourSeam, pfxvSI, pfxvFA),
+         FBVelo = case_when(Sinker > FourSeam ~ pfxvSI,
+                            FourSeam > 0 ~ pfxvFA,
+                            TRUE ~ pfxvFC),
          FB_Stuff = ifelse(Sinker > FourSeam, sp_s_SI, sp_s_FF))
 
 pitch_groups <- c("FourSeam", "Sinker", "Cutter", "Slider", "Curve", "Changeup")
@@ -180,7 +182,7 @@ pitches <- bind_rows(relief_pitches, starter_pitches) |>
          Whiff = description %in% whiff_types,
          PA = !is.na(events) & events != "truncated_pa",
          K = PA & events %in% c("strikeout", "strikeout_double_play"),
-         BB = PA & events %in% c("walk", "hit_by_pitch"),
+         BB = PA & events %in% c("walk", "intent_walk"),
          Offspeed = pitch_type %in% c("CH", "FS", "FO", "SC"),
          Breaking = pitch_type %in% c("SL", "ST", "SV", "CU", "KC", "CS"),
          Fastball = pitch_type %in% c("FF", "SI"))

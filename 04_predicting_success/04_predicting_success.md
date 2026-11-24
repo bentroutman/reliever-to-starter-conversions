@@ -101,10 +101,10 @@ print(correlations)
     ## 35        Opp_OffspeedUsage 136      -0.069            0.001      0.174 -0.043
     ## 36           Opp_CurveUsage 136       0.020            0.026      0.018 -0.073
     ## 37   Opp_BestSecondaryWhiff 124      -0.119           -0.195     -0.116  0.039
-    ## 38                  Opp_KBB 136      -0.269           -0.430     -0.483  0.072
+    ## 38                  Opp_KBB 136      -0.269           -0.427     -0.490  0.088
     ## 39                Opp_Whiff 136      -0.223           -0.377     -0.261  0.069
     ## 40                 Opp_wOBA 136       0.235            0.305      0.267 -0.248
-    ## 41          Platoon_KBB_gap 136      -0.122            0.044      0.141  0.036
+    ## 41          Platoon_KBB_gap 136      -0.098            0.026      0.150 -0.005
     ## 42         Platoon_wOBA_gap 136       0.091            0.200      0.113 -0.149
     ## 43           rp_PitchesPerG 145      -0.062            0.055      0.204 -0.061
     ## 44               rp_TBFPerG 145      -0.041            0.079      0.224 -0.060
@@ -155,10 +155,10 @@ print(correlations)
     ## 35          0.117              -0.101            0.139
     ## 36         -0.070              -0.021            0.755
     ## 37          0.108               0.040            0.602
-    ## 38          0.207               0.073            0.469
+    ## 38          0.204               0.053            0.601
     ## 39          0.194               0.010            0.898
     ## 40         -0.137               0.025            0.748
-    ## 41         -0.010              -0.100            0.141
+    ## 41         -0.035              -0.091            0.183
     ## 42         -0.068               0.033            0.632
     ## 43          0.038              -0.109            0.100
     ## 44          0.009              -0.124            0.063
@@ -312,13 +312,13 @@ for (group_name in c("ArsenalGroup", "StarterHistory", "MinorsGroup", "WorkloadG
     ## 
     ##  PlatoonGroup 
     ##        PlatoonGroup  n rp_SIERA_vs_lg sp_SIERA_vs_lg KBB_change Velo_change
-    ## 1 big gap (10+ pts) 35        -0.0316        -0.0209    0.00134       -1.26
-    ## 2   reverse or none 44        -0.0866         0.1413   -0.01241       -1.06
-    ## 3         small gap 57         0.0429         0.3098   -0.01414       -1.04
+    ## 1 big gap (10+ pts) 39         0.0998         0.0749    0.00514      -1.240
+    ## 2   reverse or none 38        -0.0988         0.1349   -0.01598      -1.206
+    ## 3         small gap 59        -0.0441         0.2560   -0.01523      -0.943
     ##   sp_IP sp_WAR_per_150 stuck
-    ## 1  65.0          1.461 0.235
-    ## 2  71.5          1.663 0.300
-    ## 3  70.4          0.907 0.423
+    ## 1  64.5           1.36 0.270
+    ## 2  74.8           1.56 0.314
+    ## 3  69.1           1.08 0.389
     ## 
     ##  LengthGroup 
     ##           LengthGroup  n rp_SIERA_vs_lg sp_SIERA_vs_lg KBB_change Velo_change
@@ -1284,16 +1284,16 @@ print(table_full)
     ## 1                                           rp_SIERA_vs_lg 0.094    0.796
     ## 2                                                   rp_KBB 0.097    0.796
     ## 3                                  rp_SIERA_vs_lg + rp_age 0.096    0.799
-    ## 4                              rp_SIERA_vs_lg + rp_Opp_KBB 0.097    0.799
+    ## 4                              rp_SIERA_vs_lg + rp_Opp_KBB 0.096    0.800
     ## 5           rp_SIERA_vs_lg + rp_SwStr + rp_age + rp_FBVelo 0.108    0.808
-    ## 6 rp_SIERA_vs_lg + rp_age + rp_Opp_KBB + rp_gmLI + MiLB_GS 0.112    0.807
+    ## 6 rp_SIERA_vs_lg + rp_age + rp_Opp_KBB + rp_gmLI + MiLB_GS 0.110    0.809
     ##   AUC_success
     ## 1       0.741
     ## 2       0.731
     ## 3       0.741
-    ## 4       0.738
+    ## 4       0.739
     ## 5       0.726
-    ## 6       0.746
+    ## 6       0.748
 
 ``` r
 cat("\nBest relievers rule (top third by relief SIERA vs league) vs the rest\n")
@@ -1343,8 +1343,8 @@ full |>
 ```
 
     ##   top_third_by_model  n share_avg_or_better sp_SIERA_vs_lg stuck WAR_gain
-    ## 1              FALSE 90               0.333         0.2927  0.25    0.378
-    ## 2               TRUE 46               0.609        -0.0694  0.50    0.687
+    ## 1              FALSE 90               0.333         0.2935 0.262    0.383
+    ## 2               TRUE 46               0.609        -0.0711 0.476    0.678
 
 ``` r
 cat("\n\nPART 2. Attempts with a relief season from 2020 on (Stuff+ exists). Outcome: starter SIERA vs league\n")
@@ -1503,7 +1503,9 @@ role_seasons <- role_seasons |>
          Curve = `pfxCU%` + `pfxKC%` + `pfxCV%`, Changeup = `pfxCH%` + `pfxFS%` + `pfxFO%` + `pfxSC%`,
          NumPitches10 = (FourSeam >= 0.1) + (Sinker >= 0.1) + (Cutter >= 0.1) + (Slider >= 0.1) +
            (Curve >= 0.1) + (Changeup >= 0.1),
-         FBVelo = ifelse(Sinker > FourSeam, pfxvSI, pfxvFA),
+         FBVelo = case_when(Sinker > FourSeam ~ pfxvSI,
+                            FourSeam > 0 ~ pfxvFA,
+                            TRUE ~ pfxvFC),
          FB_Stuff = ifelse(Sinker > FourSeam, sp_s_SI, sp_s_FF))
 
 league_sp <- role_seasons |>
@@ -1602,7 +1604,7 @@ print(effect_table, digits = 3)
     ## 3     SwStr        656       -0.009755        145        -0.00845
     ## 4   FStrike        656        0.000882        145         0.01481
     ## 5        GB        656       -0.017844        145        -0.02828
-    ## 6    FBVelo        654       -0.589931        145        -1.11636
+    ## 6    FBVelo        656       -0.585690        145        -1.11636
     ## 7 StuffPlus        338       -3.048464         67        -5.12821
     ## 8   LocPlus        338        0.571650         67         2.08512
 
@@ -1630,11 +1632,11 @@ swingmen |>
 
     ##    trait                    group   n SIERA_change FBVelo_change sp_vs_lg
     ## 1   Hand                    lefty 178        0.624        -0.566    0.420
-    ## 2   Hand                   righty 478        0.685        -0.599    0.460
+    ## 2   Hand                   righty 478        0.685        -0.593    0.460
     ## 3 Relief better than avg reliever 297        1.193        -0.741    0.263
-    ## 4 Relief  worse than avg reliever 359        0.235        -0.464    0.604
+    ## 4 Relief  worse than avg reliever 359        0.235        -0.457    0.604
     ## 5   Velo                  95+ mph 123        0.866        -0.812    0.362
-    ## 6   Velo                 under 95 531        0.626        -0.538    0.470
+    ## 6   Velo                 under 95 533        0.623        -0.533    0.470
 
 ``` r
 # Fit the proxy on swingmen: starter SIERA vs league from the relief line
@@ -1669,14 +1671,14 @@ print(round(summary(fit_full)$coefficients, 3))
 ```
 
     ##                 Estimate Std. Error t value Pr(>|t|)
-    ## (Intercept)       -1.331      1.566  -0.850    0.396
-    ## rp_SIERA_vs_lg     0.408      0.130   3.149    0.002
-    ## rp_KBB             2.724      1.632   1.670    0.096
-    ## rp_SwStr          -4.473      1.456  -3.073    0.002
-    ## rp_FBVelo          0.019      0.015   1.238    0.216
-    ## rp_Age             0.006      0.010   0.612    0.541
-    ## rp_NumPitches10   -0.006      0.036  -0.174    0.862
-    ## rp_ThrowsLTRUE    -0.082      0.075  -1.094    0.275
+    ## (Intercept)       -1.609      1.522  -1.057    0.291
+    ## rp_SIERA_vs_lg     0.415      0.129   3.207    0.001
+    ## rp_KBB             2.808      1.629   1.724    0.085
+    ## rp_SwStr          -4.480      1.455  -3.079    0.002
+    ## rp_FBVelo          0.022      0.015   1.449    0.148
+    ## rp_Age             0.006      0.010   0.650    0.516
+    ## rp_NumPitches10   -0.003      0.035  -0.089    0.929
+    ## rp_ThrowsLTRUE    -0.076      0.074  -1.020    0.308
 
 ``` r
 cat("Stuff+ model R2:", round(summary(fit_stuff)$r.squared, 3), " n =", nrow(swing_stuff), "\n")
@@ -1745,7 +1747,7 @@ print(score_table, digits = 3)
     ##   bias_actual_minus_pred spearman AUC_success
     ## 1                 -0.291       NA       0.500
     ## 2                 -0.259    0.421       0.727
-    ## 3                 -0.251    0.409       0.714
+    ## 3                 -0.251    0.407       0.713
 
 ``` r
 # Stuff+ version on the 2020 and later conversions
@@ -1804,8 +1806,8 @@ for (name in c("pred_simple", "pred_full")) {
     ## 1     FALSE 96               0.292         0.3376 pred_simple
     ## 2      TRUE 49               0.653        -0.0969 pred_simple
     ##   top_third  n share_avg_or_better sp_SIERA_vs_lg     model
-    ## 1     FALSE 96               0.302         0.3360 pred_full
-    ## 2      TRUE 49               0.633        -0.0937 pred_full
+    ## 1     FALSE 96               0.292         0.3281 pred_full
+    ## 2      TRUE 49               0.653        -0.0781 pred_full
 
 ``` r
 # Project 2026 relievers
@@ -1863,20 +1865,20 @@ print(as.data.frame(head(projection, 15)), digits = 3)
     ## 14       Jacob Latz  30 68.0         2.89              -1.09       114
     ## 15        Dylan Lee  31 67.0         2.90              -1.08       113
     ##    proj_starter_SIERA_simple proj_starter_SIERA_full proj_starter_SIERA_stuff
-    ## 1                       4.29                    4.10                     3.96
-    ## 2                       4.25                    4.08                     4.03
-    ## 3                       4.65                    4.51                     4.03
+    ## 1                       4.29                    4.12                     3.96
+    ## 2                       4.25                    4.09                     4.03
+    ## 3                       4.65                    4.47                     4.03
     ## 4                       4.16                    4.11                     4.04
-    ## 5                       4.58                    4.44                     4.05
-    ## 6                       4.06                    4.07                     4.06
+    ## 5                       4.58                    4.42                     4.05
+    ## 6                       4.06                    4.08                     4.06
     ## 7                       4.34                    4.16                     4.11
-    ## 8                       4.03                    4.09                     4.13
-    ## 9                       4.22                    4.30                     4.13
+    ## 8                       4.03                    4.11                     4.13
+    ## 9                       4.22                    4.31                     4.13
     ## 10                      4.58                    4.57                     4.16
-    ## 11                      4.19                    4.20                     4.18
-    ## 12                      4.38                    4.38                     4.18
-    ## 13                      4.42                    4.39                     4.18
-    ## 14                      4.38                    4.25                     4.19
+    ## 11                      4.19                    4.22                     4.18
+    ## 12                      4.38                    4.40                     4.18
+    ## 13                      4.42                    4.41                     4.18
+    ## 14                      4.38                    4.26                     4.19
     ## 15                      4.38                    4.15                     4.20
     ##    proj_vs_league_stuff
     ## 1                 -0.26
@@ -1919,14 +1921,14 @@ print(as.data.frame(projection |> filter(PlayerName %in% c("Adrian Morejon", "Da
     ## 7      David Bednar  31 69.3         2.96              -1.02       103
     ## 8 Jonathan Loáisiga  31 67.0         3.43              -0.54       106
     ##   proj_starter_SIERA_simple proj_starter_SIERA_full proj_starter_SIERA_stuff
-    ## 1                      4.29                    4.10                     3.96
+    ## 1                      4.29                    4.12                     3.96
     ## 2                      4.56                    4.35                     4.25
-    ## 3                      4.48                    4.58                     4.26
-    ## 4                      4.32                    4.54                     4.27
-    ## 5                      4.51                    4.52                     4.31
+    ## 3                      4.48                    4.59                     4.26
+    ## 4                      4.32                    4.55                     4.27
+    ## 5                      4.51                    4.54                     4.31
     ## 6                      4.53                    4.57                     4.36
     ## 7                      4.39                    4.32                     4.51
-    ## 8                      4.52                    4.56                     4.54
+    ## 8                      4.52                    4.57                     4.54
     ##   proj_vs_league_stuff
     ## 1                -0.26
     ## 2                 0.03
@@ -1984,7 +1986,9 @@ role_seasons <- role_seasons |>
       Curve = `pfxCU%` + `pfxKC%` + `pfxCV%`,
          Changeup = `pfxCH%` + `pfxFS%` + `pfxFO%` + `pfxSC%`,
          NumPitches10 = (FourSeam >= 0.1) + (Sinker >= 0.1) + (Cutter >= 0.1) + (Slider >= 0.1) + (Curve >= 0.1) + (Changeup >= 0.1),
-         FBVelo = ifelse(Sinker > FourSeam, pfxvSI, pfxvFA))
+         FBVelo = case_when(Sinker > FourSeam ~ pfxvSI,
+                            FourSeam > 0 ~ pfxvFA,
+                            TRUE ~ pfxvFC))
 league_sp <- role_seasons |> filter(role == "sta") |> group_by(Season) |>
     summarize(lg_sp_siera = weighted.mean(SIERA, TBF, na.rm = TRUE))
 league_rp <- role_seasons |> filter(role == "rel") |> group_by(Season) |>
@@ -2071,15 +2075,15 @@ print(results, row.names = FALSE)
     ##            linear on relief SIERA, fit on earlier conversions 65 0.756
     ##                            swingman proxy (relief SIERA only) 65 0.806
     ##  swingman proxy plus intercept shift from earlier conversions 65 0.753
-    ##                                           swingman full proxy 65 0.817
-    ##                      swingman full proxy plus intercept shift 65 0.758
+    ##                                           swingman full proxy 65 0.820
+    ##                      swingman full proxy plus intercept shift 65 0.760
     ##  bias_actual_minus_pred spearman AUC_success
     ##                  -0.324       NA       0.500
     ##                  -0.176     0.26       0.680
     ##                  -0.360     0.26       0.680
     ##                  -0.218     0.26       0.680
-    ##                  -0.379     0.24       0.651
-    ##                  -0.226     0.24       0.651
+    ##                  -0.386     0.24       0.648
+    ##                  -0.234     0.24       0.648
 
 ``` r
 cat("Intercept shift estimated on the earlier conversions (the swingman proxy runs this much too pessimistic):",

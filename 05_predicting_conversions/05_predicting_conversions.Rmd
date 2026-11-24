@@ -28,7 +28,9 @@ role_seasons <- role_seasons |>
          Curve = `pfxCU%` + `pfxKC%` + `pfxCV%`, Changeup = `pfxCH%` + `pfxFS%` + `pfxFO%` + `pfxSC%`,
          NumPitches10 = (FourSeam >= 0.1) + (Sinker >= 0.1) + (Cutter >= 0.1) + (Slider >= 0.1) +
            (Curve >= 0.1) + (Changeup >= 0.1),
-         FBVelo = ifelse(Sinker > FourSeam, pfxvSI, pfxvFA),
+         FBVelo = case_when(Sinker > FourSeam ~ pfxvSI,
+                            FourSeam > 0 ~ pfxvFA,
+                            TRUE ~ pfxvFC),
          FB_Stuff = ifelse(Sinker > FourSeam, sp_s_SI, sp_s_FF))
 
 league_rp <- role_seasons |>
@@ -260,7 +262,9 @@ role_seasons <- role_seasons |>
          Curve = `pfxCU%` + `pfxKC%` + `pfxCV%`, Changeup = `pfxCH%` + `pfxFS%` + `pfxFO%` + `pfxSC%`,
          NumPitches10 = (FourSeam >= 0.1) + (Sinker >= 0.1) + (Cutter >= 0.1) + (Slider >= 0.1) +
            (Curve >= 0.1) + (Changeup >= 0.1),
-         FBVelo = ifelse(Sinker > FourSeam, pfxvSI, pfxvFA))
+         FBVelo = case_when(Sinker > FourSeam ~ pfxvSI,
+                            FourSeam > 0 ~ pfxvFA,
+                            TRUE ~ pfxvFC))
 
 league_rp <- role_seasons |>
   filter(role == "rel") |>

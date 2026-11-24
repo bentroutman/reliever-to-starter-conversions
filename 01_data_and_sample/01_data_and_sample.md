@@ -28,7 +28,7 @@ columns <- c("playerid", "xMLBAMID", "PlayerName", "Throws", "Season", "Age", "T
              "Pitches", "WAR", "RAR", "SIERA", "xFIP", "FIP", "K%", "BB%", "K-BB%", "GB%", "Zone%", "F-Strike%",
              "SwStr%", "CStr%", "O-Swing%", "O-Contact%", "Z-Contact%", "gmLI", "HardHit%", "Barrel%",
              "pfxFA%", "pfxFC%", "pfxFS%", "pfxFO%", "pfxSI%", "pfxSL%", "pfxCU%", "pfxKC%", "pfxCH%", "pfxSC%",
-             "pfxKN%", "pfxST%", "pfxCV%", "pfxEP%", "pfxvFA", "pfxvSI", "pfxvSL", "pfxvCH", "pfxFA-Z",
+             "pfxKN%", "pfxST%", "pfxCV%", "pfxEP%", "pfxvFA", "pfxvSI", "pfxvFC", "pfxvSL", "pfxvCH", "pfxFA-Z",
              "sp_stuff", "sp_location", "sp_pitching", "sp_s_FF", "sp_s_SI", "sp_s_FC", "sp_s_SL", "sp_s_CU",
              "sp_s_CH", "sp_s_FS", "sp_s_KC", "sp_s_FO", "pb_stuff", "pb_command")
 
@@ -127,7 +127,7 @@ starts that season, including the short ones.
 ``` r
 role_seasons <- read_csv("../data/fg_role_seasons.csv", guess_max = 20000)
 
-# FanGraphs writes 64 1/3 innings as 64.1
+# Rewrite innings ending in .1 or .2 as 1/3 or 2/3
 role_seasons <- role_seasons |>
   mutate(IP = floor(IP) + (IP %% 1) * 10 / 3)
 
@@ -174,7 +174,6 @@ relief_seasons <- role_seasons |>
 ```
 
 ``` r
-# Usage is NA when a pitch is not thrown
 usage_cols <- c("pfxFA%", "pfxFC%", "pfxFS%", "pfxFO%", "pfxSI%", "pfxSL%", "pfxCU%", "pfxKC%",
                 "pfxCH%", "pfxSC%", "pfxKN%", "pfxST%", "pfxCV%", "pfxEP%")
 usage <- as.matrix(relief_seasons[, usage_cols])
@@ -228,13 +227,17 @@ for (i in 1:nrow(relief_seasons)) {
 ```
 
 ``` r
-# Primary fastball is the four-seam unless the sinker is thrown more
+# Primary fastball is the four-seam unless the sinker is thrown more (cutter if neither is thrown)
 relief_seasons <- relief_seasons |>
-  mutate(FBVelo = ifelse(coalesce(`pfxSI%`, 0) > coalesce(`pfxFA%`, 0), pfxvSI, pfxvFA),
+  mutate(FBVelo = case_when(coalesce(`pfxSI%`, 0) > coalesce(`pfxFA%`, 0) ~ pfxvSI,
+                            coalesce(`pfxFA%`, 0) > 0 ~ pfxvFA,
+                            TRUE ~ pfxvFC),
          PitchesPerG = Pitches / G,
          TBFPerG = TBF / G)
 starter_seasons <- starter_seasons |>
-  mutate(FBVelo = ifelse(coalesce(`pfxSI%`, 0) > coalesce(`pfxFA%`, 0), pfxvSI, pfxvFA))
+  mutate(FBVelo = case_when(coalesce(`pfxSI%`, 0) > coalesce(`pfxFA%`, 0) ~ pfxvSI,
+                            coalesce(`pfxFA%`, 0) > 0 ~ pfxvFA,
+                            TRUE ~ pfxvFC))
 
 relief_side <- relief_seasons |>
   left_join(league_rp, by = "Season") |>
@@ -283,7 +286,7 @@ for (i in 1:nrow(pairs)) {
   before <- player_totals |> filter(Season < pairs$rp_season[i])
   after <- player_totals |> filter(Season == pairs$sp_season[i] + 1)
   pairs$GS_between[i] <- sum(between$GS_total)
-  pairs$prev_MLB_GS[i] <- sum(before$GS_total)  # MLB starts only count from 2014
+  pairs$prev_MLB_GS[i] <- sum(before$GS_total)
   if (pairs$sp_season[i] < 2026) pairs$next_GS[i] <- sum(after$GS_total)
 }
 ```
@@ -346,10 +349,10 @@ print(table(conversions$sp_season))
     ##    7   12   16   10   16   10    9   13   15   15   12   10
 
 ``` r
-print(table(gap = conversions$gap))
+print(table(season_gap = conversions$gap))
 ```
 
-    ## gap
+    ## season_gap
     ##   1   2   3 
     ## 126  13   6
 
@@ -401,8 +404,6 @@ cat("Mid-season attempts not already in the sample:", nrow(midseason_attempts), 
 
     ## Mid-season attempts not already in the sample: 133
 
-That leaves 133 mid-season moves that are not already in the sample.
-
 ## Pull relief season pitches
 
 Every Statcast pitch from the relief season of each pitcher in the
@@ -438,8 +439,6 @@ cat("Saved", nrow(all_pitches), "pitches\n")
 ```
 
 ## Pull starter season pitches
-
-The same pull for the starter season.
 
 ``` r
 # Takes about 11 minutes
@@ -493,7 +492,7 @@ for (season in 2014:2026) {
   }
   cat(season, nrow(season_table), "rows\n")
   win_probability <- bind_rows(win_probability, season_table)
-  Sys.sleep(5)  # Baseball-Reference allows about 20 requests a minute
+  Sys.sleep(5)
 }
 write_csv(win_probability, "../data/bref_win_probability.csv", na = "")
 
@@ -512,7 +511,9 @@ cat("ID map:", nrow(id_map), "people\n")
 
 ## Pull pitching value
 
-WAA and its role and leverage adjustments from Baseball-Reference.
+Wins above average (WAA) and WAR from Baseball-Reference. The pull also
+includes the role adjustment and the WAA adjustment, which adds credit
+for relievers who pitched in high-leverage situations.
 
 ``` r
 # Takes about 1 minute
@@ -557,7 +558,7 @@ pitches <- pitches |>
          Whiff = description %in% whiff_types,
          PA = !is.na(events) & events != "truncated_pa",
          K = PA & events %in% c("strikeout", "strikeout_double_play"),
-         BB = PA & events %in% c("walk", "hit_by_pitch"))
+         BB = PA & events %in% c("walk", "intent_walk"))
 ```
 
 ``` r

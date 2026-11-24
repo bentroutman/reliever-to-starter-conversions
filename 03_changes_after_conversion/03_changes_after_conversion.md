@@ -35,7 +35,9 @@ role_seasons <- role_seasons |>
          Changeup = `pfxCH%` + `pfxFS%` + `pfxFO%` + `pfxSC%`,
          NumPitches10 = (FourSeam >= 0.1) + (Sinker >= 0.1) + (Cutter >= 0.1) + (Slider >= 0.1) +
            (Curve >= 0.1) + (Changeup >= 0.1),
-         FBVelo = ifelse(Sinker > FourSeam, pfxvSI, pfxvFA),
+         FBVelo = case_when(Sinker > FourSeam ~ pfxvSI,
+                            FourSeam > 0 ~ pfxvFA,
+                            TRUE ~ pfxvFC),
          FB_Stuff = ifelse(Sinker > FourSeam, sp_s_SI, sp_s_FF))
 
 pitch_groups <- c("FourSeam", "Sinker", "Cutter", "Slider", "Curve", "Changeup")
@@ -533,7 +535,7 @@ pitches <- bind_rows(relief_pitches, starter_pitches) |>
          Whiff = description %in% whiff_types,
          PA = !is.na(events) & events != "truncated_pa",
          K = PA & events %in% c("strikeout", "strikeout_double_play"),
-         BB = PA & events %in% c("walk", "hit_by_pitch"),
+         BB = PA & events %in% c("walk", "intent_walk"),
          Offspeed = pitch_type %in% c("CH", "FS", "FO", "SC"),
          Breaking = pitch_type %in% c("SL", "ST", "SV", "CU", "KC", "CS"),
          Fastball = pitch_type %in% c("FF", "SI"))
@@ -643,10 +645,10 @@ statcast_changes |>
     ## 4    sp_PitchesPerOuting  81.4413
     ## 5            rp_OppShare   0.5012
     ## 6            sp_OppShare   0.5852
-    ## 7             rp_Opp_KBB   0.1072
-    ## 8             sp_Opp_KBB   0.1030
-    ## 9            rp_Same_KBB   0.1486
-    ## 10           sp_Same_KBB   0.1347
+    ## 7             rp_Opp_KBB   0.1132
+    ## 8             sp_Opp_KBB   0.1112
+    ## 9            rp_Same_KBB   0.1620
+    ## 10           sp_Same_KBB   0.1484
     ## 11       rp_Opp_Offspeed   0.1661
     ## 12       sp_Opp_Offspeed   0.1878
     ## 13       rp_Opp_Breaking   0.2438
@@ -693,18 +695,18 @@ statcast_changes |>
     ## 11    rp_Platoon_KBB_gap                         58                   78
     ## 12    sp_Platoon_KBB_gap                         58                   78
     ##    value_league average or better value_worse than average
-    ## 1                         0.02813                 -0.02810
-    ## 2                         0.00373                 -0.02706
+    ## 1                         0.03128                 -0.02678
+    ## 2                         0.00272                 -0.02574
     ## 3                        -0.00925                 -0.01509
     ## 4                         0.01620                  0.02568
-    ## 5                        -0.00695                  0.00813
+    ## 5                        -0.00695                  0.00814
     ## 6                        -0.05672                 -0.03485
     ## 7                         0.08424                  0.08378
     ## 8                        -0.95900                 -1.01317
     ## 9                        -0.53448                 -0.55918
     ## 10                        0.01372                  0.03023
-    ## 11                        0.04336                  0.04005
-    ## 12                        0.01896                  0.04110
+    ## 11                        0.05165                  0.04664
+    ## 12                        0.02309                  0.04768
 
 ``` r
 cat("\nEach measure vs starter SIERA vs league (Spearman), and its effect after relief SIERA (SD units)\n")
@@ -728,8 +730,8 @@ print(effect_table)
 ```
 
     ##                  measure   n spearman_SIERA beta_after_rp_SIERA     p
-    ## 1         Opp_KBB_change 136         -0.385              -0.624 0.000
-    ## 2        Same_KBB_change 136         -0.196              -0.407 0.000
+    ## 1         Opp_KBB_change 136         -0.383              -0.616 0.000
+    ## 2        Same_KBB_change 136         -0.170              -0.405 0.000
     ## 3       Opp_Whiff_change 136         -0.152              -0.158 0.022
     ## 4    Opp_Offspeed_change 136         -0.010               0.052 0.447
     ## 5    Opp_Breaking_change 136         -0.009              -0.010 0.880
@@ -738,8 +740,8 @@ print(effect_table)
     ## 8    Velo_first15_change 136         -0.046              -0.145 0.036
     ## 9  sp_Velo_fade_in_start 116          0.043              -0.024 0.705
     ## 10        sp_TTO_penalty  72          0.142               0.093 0.162
-    ## 11    rp_Platoon_KBB_gap 136         -0.122              -0.100 0.141
-    ## 12    sp_Platoon_KBB_gap 136          0.076               0.061 0.374
+    ## 11    rp_Platoon_KBB_gap 136         -0.098              -0.091 0.183
+    ## 12    sp_Platoon_KBB_gap 136          0.108               0.079 0.246
 
 ``` r
 # wOBA by time through the order as a starter, and velo fade within starts, by outcome
