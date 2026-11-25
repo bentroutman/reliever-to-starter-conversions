@@ -83,11 +83,11 @@ AUC is averaged over the five test years. I used ridge for the final probabiliti
 
 ## Data
 
-FanGraphs (role splits and minor league lines), Baseball Savant (Statcast pitches), Baseball-Reference (WPA), the MLB Stats API (game logs), and the Chadwick Bureau register (player IDs).
+FanGraphs (role splits and minor league lines), Baseball Savant (Statcast pitches), Baseball-Reference (WPA), the MLB Stats API (game logs), and the Chadwick Bureau register (player IDs). The data the notebooks read is included in the `data` folder.
 
 ## Running the Code
 
-Create the data/savant folder in the main project folder, then run the notebooks in number order. The pull chunks in 01_data_and_sample.Rmd are set to eval=FALSE so knitting does not download everything again. Run those by hand the first time (the FanGraphs pull opens a Chrome window). Each step has its own folder with the notebook, the knitted page, and its results and charts.
+The data is already in the data folder, so the notebooks can be knitted in number order as they are. To pull it again, run the code chunks in 01_data_and_sample.Rmd that are set to eval=FALSE by hand (the FanGraphs pull opens a Chrome window). Each step has its own folder with the notebook, the knitted page, and its results and charts.
 
 ## Technologies Used
 

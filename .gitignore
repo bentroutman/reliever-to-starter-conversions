@@ -1,5 +1,20 @@
-# Pulled and derived data (see Data in the README)
-data/
+# Data: only the files the notebooks read are kept (backups, raw pulls, and unused files are not)
+data/*
+!data/bref_win_probability.csv
+!data/conversions.csv
+!data/fg_minors.csv
+!data/fg_role_seasons.csv
+!data/game_logs.csv
+!data/id_map.csv
+!data/league_siera.csv
+!data/midseason_attempts.csv
+!data/pitcher_seasons.csv
+!data/savant_features.csv
+!data/value_attempts.csv
+!data/savant/
+data/savant/*
+!data/savant/relief_season_pitches.csv
+!data/savant/starter_season_pitches.csv
 
 # R and macOS files
 Rplots.pdf
