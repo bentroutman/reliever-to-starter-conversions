@@ -355,8 +355,7 @@ relief SIERA is 0.40 for the earlier conversions and 0.15 for the later
 ones, and the average starter SIERA relative to the league went from
 0.34 above to 0.01 above, but the trend by season is not significant (a
 change of -0.013 per season, p = 0.50), so I would not read much into
-the drop. On the later seasons, 30.1 successes are expected against 31
-actual.
+the drop.
 
 ``` r
 # Calibration of the predicted probability of success, leaving one conversion out at a time
@@ -437,7 +436,8 @@ the average (RMSE of 0.756 vs. 0.792, success AUC of 0.68). The
 predicted probabilities are reasonably calibrated. By quartile,
 predicted and observed success rates are close (19% vs. 16%, 32%
 vs. 36%, 48% vs. 53%, and 67% vs. 61%), and the calibration slope is
-0.89, though its interval is wide (0.45 to 1.33) with 145 attempts.
+0.89, though its interval is wide (0.45 to 1.33) with 145 attempts. On
+the later seasons, 30.1 successes are expected against 31 actual.
 
 ## Which relief season traits correlate with success
 
@@ -681,7 +681,8 @@ WPA gain (p = 0.50).
 
 ## Whether any predictor beats relief SIERA
 
-Whether any predictor beats relief SIERA alone.
+Models of starter SIERA vs. league compared by leave one out error and
+by how well they pick out the successes.
 
 ``` r
 # The indicators with data for every attempt and a q under 0.05 in the screen, besides relief SIERA

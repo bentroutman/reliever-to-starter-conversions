@@ -227,7 +227,8 @@ that gap is not significant (p = 0.14).
 
 ## Platoon usage and times through the order
 
-Platoon usage and times through the order.
+Platoon usage, pitches per outing, and wOBA allowed each time through
+the order.
 
 ``` r
 relief_pitches <- read_csv("../data/savant/relief_season_pitches.csv", guess_max = 50000, show_col_types = FALSE)

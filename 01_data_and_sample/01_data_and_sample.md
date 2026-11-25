@@ -20,8 +20,8 @@ library(rvest)
 Pulls starter and reliever lines (2014 to 2026) and minor league lines
 (2006 to 2026) from FanGraphs. Statcast starts in 2015, so the first
 conversion attempts are in 2015 and the relief seasons start in 2014.
-This notebook has eval=FALSE, so knitting does not download everything
-again. Run the code blocks by hand the first time to download the data.
+The pull code blocks have eval=FALSE, so knitting does not download
+everything again. Run them by hand the first time to download the data.
 
 ``` r
 site <- "https://www.fangraphs.com"
@@ -162,9 +162,9 @@ cat("ID map:", nrow(id_map), "people\n")
 
 ## Prepare pitcher seasons
 
-Every FanGraphs pitcher season with the measures the later notebooks
-utilize (SIERA relative to the league, pitch mix, Stuff+, and starting
-history before each season).
+Every FanGraphs pitcher season with the measures the later notebooks use
+(SIERA relative to the league, pitch mix, Stuff+, and starting history
+before each season).
 
 ``` r
 role_seasons <- read_csv("../data/fg_role_seasons.csv", guess_max = 20000)
@@ -513,6 +513,9 @@ cat("Saved", nrow(all_pitches), "pitches\n")
 ```
 
 ## Pull Statcast pitches for starter seasons
+
+Every Statcast pitch from the starter season of each pitcher in the
+sample.
 
 ``` r
 # Takes about 11 minutes
