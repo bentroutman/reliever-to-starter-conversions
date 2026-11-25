@@ -248,7 +248,7 @@ print(as.data.frame(archetype_table))
 
 Stuff+ and leverage separate the groups most. Attempts with a Stuff+ of 100 or more gained 1.22 WAR on average vs. 0.19 for the rest, and relievers who entered at above average leverage gained 0.78 vs. 0.20. The Stuff+ 100+ attempts also stuck as starters more often (95% had 5 or more starts vs. 83%), so part of that gap is durability. Each group has 25 to 115 attempts and standard errors of 0.1 to 0.2 WAR, so smaller differences are noise, and the starting history groups move a lot when the cutoffs change.
 
-```{r, fig.width=8, fig.height=6}
+```{r, fig.show="hide", fig.width=8, fig.height=6}
 # Actual next season WAR vs. expected WAR in the pen
 # Labels the biggest gains, biggest failures, and high expectation conversions
 outliers <- attempts |>
@@ -269,7 +269,9 @@ ggplot(attempts, aes(pen_WAR, next_WAR, color = attempt)) +
 ggsave("charts/war_vs_pen_baseline.png", width = 8, height = 6, dpi = 150)
 ```
 
-```{r, fig.width=11, fig.height=6}
+![](charts/war_vs_pen_baseline.png)
+
+```{r, fig.show="hide", fig.width=11, fig.height=6}
 # Average WAR and WPA gain by archetype
 archetype_table <- archetype_table |>
   mutate(label = paste0(group, " (n=", n, ")"), label = factor(label, levels = rev(label)))
@@ -286,6 +288,8 @@ wpa_plot <- ggplot(archetype_table, aes(WPA_gain, label)) +
 ggsave("charts/value_gain_by_archetype.png", grid.arrange(war_plot, wpa_plot, ncol = 2),
        width = 11, height = 6, dpi = 150)
 ```
+
+![](charts/value_gain_by_archetype.png)
 
 Every archetype gains WAR, but only the two Stuff+ groups (Stuff+ 100+ and 2+ pitches with Stuff+ 100+) gain WPA. Leverage shows up in WPA too, as relievers who entered at above average leverage roughly break even (-0.01), while those at below average leverage lose 0.45.
 

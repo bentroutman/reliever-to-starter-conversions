@@ -79,13 +79,13 @@ ggplot(conversions, aes(rp_SIERA, sp_SIERA)) +
 
     ## `geom_smooth()` using formula = 'y ~ x'
 
-![](04_predicting_success_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
-
 ``` r
 ggsave("charts/relief_vs_starter_siera.png", width = 8, height = 6, dpi = 150)
 ```
 
     ## `geom_smooth()` using formula = 'y ~ x'
+
+![](charts/relief_vs_starter_siera.png)
 
 Relief SIERA relative to the league has a Spearman correlation of 0.42
 with starter SIERA, and the slope is 0.37, so a reliever’s SIERA
@@ -528,11 +528,11 @@ ggplot(plot_correlations, aes(SIERA_vs_lg, indicator)) +
   theme_classic()
 ```
 
-![](04_predicting_success_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
-
 ``` r
 ggsave("charts/indicator_correlations.png", width = 8, height = 9, dpi = 150)
 ```
+
+![](charts/indicator_correlations.png)
 
 ## SIERA cushion over the league average starter
 
@@ -666,7 +666,7 @@ ggsave("charts/cushion_bins.png", grid.arrange(siera_plot, war_plot, wpa_plot, n
        width = 8, height = 9, dpi = 150)
 ```
 
-![](04_predicting_success_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
+![](charts/cushion_bins.png)
 
 Success rates rise with cushion, but not evenly. Only 17% of the
 pitchers in the lowest quintile of cushion (below -0.26) finished as

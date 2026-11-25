@@ -102,7 +102,7 @@ print(effect_table)
 
 None of the pitch mix changes predict how a pitcher did as a starter once relief SIERA is known (every p is above 0.1). Changes to on-field process metrics like velocity or stuff could explain which conversions performed better, but they are outcomes of the move, not choices made by the player or team.
 
-```{r, fig.width=9, fig.height=5.5}
+```{r, fig.show="hide", fig.width=9, fig.height=5.5}
 # Usage change by pitch group, comparing successes vs. the rest
 usage_plot <- changes |>
   filter(measure %in% pitch_groups) |>
@@ -119,6 +119,8 @@ ggplot(usage_plot, aes(measure, change, fill = Success)) +
   theme_classic()
 ggsave("charts/usage_change.png", width = 9, height = 5.5, dpi = 150)
 ```
+
+![](charts/usage_change.png)
 
 Both groups reduce usage of four-seams and increase sinker and changeup usage. The one clear difference is the cutter, as the converts who did well increased usage by 3.5 points while the others slightly dropped it by 0.7 points. Even still, with only 60 and 85 pitchers in the groups, that gap is not significant (p = 0.14).
 
@@ -190,7 +192,7 @@ print(as.data.frame(tto), digits = 3)
 
 Converted starters face more opposite-handed batters (58.5% of plate appearances vs. 50.1% in relief) and throw 81 pitches per start vs. 26 per relief outing. wOBA allowed rises from the first to the second time through the order for both groups (.298 to .332 for the converts who did well and .335 to .355 for the others). The third time through, the converts who did well saw their wOBA fall to .317 while the others' keep rising to .362, but since the sample of PAs is smaller, that particular change may be noise.
 
-```{r, fig.width=8, fig.height=5.5}
+```{r, fig.show="hide", fig.width=8, fig.height=5.5}
 # wOBA by time through the order as a starter, by outcome
 tto_plot <- tto |> mutate(time = c("1st", "2nd", "3rd")[time])
 ggplot(tto_plot, aes(time, wOBA, color = Success, group = Success)) +
@@ -203,3 +205,5 @@ ggplot(tto_plot, aes(time, wOBA, color = Success, group = Success)) +
   theme_classic()
 ggsave("charts/tto_by_outcome.png", width = 8, height = 5.5, dpi = 150)
 ```
+
+![](charts/tto_by_outcome.png)

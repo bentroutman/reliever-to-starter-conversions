@@ -76,7 +76,7 @@ print(univariate, digits = 3)
 
 Converts are not better pitchers on average. Their relief SIERA relative to the league (-0.05) is about the same as other relievers (-0.11), and the skill traits barely separate the two groups. What separates them is role and starting history. Converts face 6.3 batters per game vs. 4.6, have more prior MLB starts (23 vs. 6), and are younger (27.0 vs. 29.1).
 
-```{r, fig.width=8, fig.height=8}
+```{r, fig.show="hide", fig.width=8, fig.height=8}
 # How the converts differ from other relievers, in SD units
 plot_data <- univariate |>
   mutate(trait = factor(trait, levels = trait[order(diff_in_SD)]))
@@ -89,6 +89,8 @@ ggplot(plot_data, aes(diff_in_SD, trait)) +
   theme_classic()
 ggsave("charts/convert_profile.png", width = 8, height = 8, dpi = 150)
 ```
+
+![](charts/convert_profile.png)
 
 ```{r}
 # Logistic regression with every trait held at once

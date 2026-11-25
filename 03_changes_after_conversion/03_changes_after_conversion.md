@@ -213,11 +213,11 @@ ggplot(usage_plot, aes(measure, change, fill = Success)) +
   theme_classic()
 ```
 
-![](03_changes_after_conversion_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
-
 ``` r
 ggsave("charts/usage_change.png", width = 9, height = 5.5, dpi = 150)
 ```
+
+![](charts/usage_change.png)
 
 Both groups reduce usage of four-seams and increase sinker and changeup
 usage. The one clear difference is the cutter, as the converts who did
@@ -348,8 +348,8 @@ ggplot(tto_plot, aes(time, wOBA, color = Success, group = Success)) +
   theme_classic()
 ```
 
-![](03_changes_after_conversion_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
-
 ``` r
 ggsave("charts/tto_by_outcome.png", width = 8, height = 5.5, dpi = 150)
 ```
+
+![](charts/tto_by_outcome.png)

@@ -27,7 +27,7 @@ conversions <- read_csv("../data/conversions.csv", show_col_types = FALSE) |>
 
 How well the relief season SIERA predicts the starter season.
 
-```{r, fig.width=8, fig.height=6}
+```{r, fig.show="hide", fig.width=8, fig.height=6}
 cat("Spearman correlation of relief and starter SIERA vs. league:",
     round(cor(conversions$rp_SIERA_vs_lg, conversions$sp_SIERA_vs_lg, method = "spearman"), 2), "\n")
 cat("Slope of starter SIERA on relief SIERA:", round(coef(lm(sp_SIERA ~ rp_SIERA, data = conversions))[2], 2), "\n\n")
@@ -55,6 +55,8 @@ ggplot(conversions, aes(rp_SIERA, sp_SIERA)) +
   theme_classic()
 ggsave("charts/relief_vs_starter_siera.png", width = 8, height = 6, dpi = 150)
 ```
+
+![](charts/relief_vs_starter_siera.png)
 
 Relief SIERA relative to the league has a Spearman correlation of 0.42 with starter SIERA, and the slope is 0.37, so a reliever's SIERA advantage shrinks to about a third in the rotation. Relievers who were better than the league average reliever went on to be league average or better starters 59% of the time vs. 25% for the rest, and 43% of them stuck as starters vs. 25%.
 
@@ -311,7 +313,7 @@ print(correlations)
 
 Relief K-BB% and relief SIERA have the strongest Spearman correlations with starter SIERA relative to the league (-0.43 and 0.42). After adjusting for the 28 indicators tested, 7 are still significant (q under 0.05), so fewer than 1 of them would be expected to be a false positive. They are mostly strikeout, whiff, and swing measures that overlap with SIERA, Stuff+, and results against opposite-handed hitters. Once relief SIERA is known, none of them adds anything to the model.
 
-```{r, fig.width=8, fig.height=9}
+```{r, fig.show="hide", fig.width=8, fig.height=9}
 plot_correlations <- correlations |> arrange(SIERA_vs_lg)
 plot_correlations$indicator <- factor(plot_correlations$indicator, levels = plot_correlations$indicator)
 ggplot(plot_correlations, aes(SIERA_vs_lg, indicator)) +
@@ -325,6 +327,8 @@ ggplot(plot_correlations, aes(SIERA_vs_lg, indicator)) +
   theme_classic()
 ggsave("charts/indicator_correlations.png", width = 8, height = 9, dpi = 150)
 ```
+
+![](charts/indicator_correlations.png)
 
 ## SIERA cushion over the league average starter
 
@@ -374,7 +378,7 @@ cat("\nSlope of each gain on cushion\n")
 print(cushion_slopes, row.names = FALSE)
 ```
 
-```{r, fig.width=8, fig.height=9}
+```{r, fig.show="hide", fig.width=8, fig.height=9}
 siera_plot <- ggplot(conv_bins, aes(CushionBin, SIERA_change)) +
   geom_hline(yintercept = 0, color = "gray", linetype = "dashed") +
   geom_errorbar(aes(ymin = SIERA_change - SIERA_change_se, ymax = SIERA_change + SIERA_change_se), width = 0.15,
@@ -403,6 +407,8 @@ wpa_plot <- ggplot(att_bins, aes(CushionBin, WPA_gain)) +
 ggsave("charts/cushion_bins.png", grid.arrange(siera_plot, war_plot, wpa_plot, ncol = 1),
        width = 8, height = 9, dpi = 150)
 ```
+
+![](charts/cushion_bins.png)
 
 Success rates rise with cushion, but not evenly. Only 17% of the pitchers in the lowest quintile of cushion (below -0.26) finished as league average or better starters, vs. 69% in the top quintile (above 1.1), with 55% and 45% in the two quintiles below the top. Pitchers with a cushion of at least 1 run succeeded 70% of the time vs. 33% for the rest, although they did see a larger increase in their SIERA on average (in part due to regression to the mean). The WAR gain is positive in every quintile (0.09 to 0.86), but cushion predicts it only weakly (slope of 0.20 per point of cushion, p = 0.11) and does not predict the WPA gain (p = 0.50).
 

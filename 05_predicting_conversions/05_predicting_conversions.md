@@ -143,11 +143,11 @@ ggplot(plot_data, aes(diff_in_SD, trait)) +
   theme_classic()
 ```
 
-![](05_predicting_conversions_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
-
 ``` r
 ggsave("charts/convert_profile.png", width = 8, height = 8, dpi = 150)
 ```
+
+![](charts/convert_profile.png)
 
 ``` r
 # Logistic regression with every trait held at once

@@ -396,11 +396,11 @@ ggplot(attempts, aes(pen_WAR, next_WAR, color = attempt)) +
   theme_classic()
 ```
 
-![](02_conversion_value_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
-
 ``` r
 ggsave("charts/war_vs_pen_baseline.png", width = 8, height = 6, dpi = 150)
 ```
+
+![](charts/war_vs_pen_baseline.png)
 
 ``` r
 # Average WAR and WPA gain by archetype
@@ -420,7 +420,7 @@ ggsave("charts/value_gain_by_archetype.png", grid.arrange(war_plot, wpa_plot, nc
        width = 11, height = 6, dpi = 150)
 ```
 
-![](02_conversion_value_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
+![](charts/value_gain_by_archetype.png)
 
 Every archetype gains WAR, but only the two Stuff+ groups (Stuff+ 100+
 and 2+ pitches with Stuff+ 100+) gain WPA. Leverage shows up in WPA too,

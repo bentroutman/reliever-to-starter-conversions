@@ -5,3 +5,6 @@ data/
 Rplots.pdf
 .Rhistory
 .DS_Store
+
+# Knit figure copies (charts are saved in each charts folder)
+*_files/
