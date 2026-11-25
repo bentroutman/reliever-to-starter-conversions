@@ -19,8 +19,8 @@ The comparison is each pitcher’s next season to what a similar reliever
 who stayed in the bullpen did the next season.
 
 ``` r
-pitcher_seasons <- read_csv("../data/pitcher_seasons.csv", guess_max = 20000, show_col_types = FALSE)
-lg_sp <- read_csv("../data/league_siera.csv", show_col_types = FALSE) |>
+pitcher_seasons <- read_csv("../data/processed/pitcher_seasons.csv", guess_max = 20000, show_col_types = FALSE)
+lg_sp <- read_csv("../data/processed/league_siera.csv", show_col_types = FALSE) |>
   select(Season, lg_sp_siera)
 
 # Average WAR per inning for each role and season
@@ -40,14 +40,14 @@ season_values <- pitcher_seasons |>
 
 ``` r
 # Baseball-Reference win probability (WPA and average leverage)
-bref_wp <- read_csv("../data/bref_win_probability.csv", show_col_types = FALSE) |>
+bref_wp <- read_csv("../data/baseball_reference/bref_win_probability.csv", show_col_types = FALSE) |>
   group_by(bref_id, Season) |>
   filter(n() == 1 | team_ID == "TOT") |>
   filter(IP == max(IP)) |>
   slice(1) |>
   ungroup() |>
   select(bref_id, Season, WPA = wpa_def, aLI = leverage_index_avg)
-id_map <- read_csv("../data/id_map.csv", show_col_types = FALSE) |>
+id_map <- read_csv("../data/chadwick/id_map.csv", show_col_types = FALSE) |>
   distinct(bref_id, .keep_all = TRUE)
 
 bref <- bref_wp |>
@@ -81,7 +81,7 @@ relief_seasons <- pitcher_seasons |>
 # Baseline group: relievers who stayed relievers the next season and threw 20+ IP (not counting conversion attempts)
 stayers <- relief_seasons |>
   mutate(next_season = rp_season + 1) |>
-  anti_join(read_csv("../data/conversions.csv", show_col_types = FALSE),
+  anti_join(read_csv("../data/processed/conversions.csv", show_col_types = FALSE),
             by = c("playerid", "next_season" = "sp_season")) |>
   inner_join(season_next, by = c("playerid", "next_season")) |>
   filter(next_GS / next_G <= 0.2, next_IP >= 20) |>
@@ -211,7 +211,7 @@ archetype_cols <- c("playerid", "PlayerName", "rp_season", "sp_season", "sp_GS",
                     "rp_NumPlusPitches", "prev_MLB_GS", "MiLB_GS")
 
 # Split by how many starts the attempt lasted
-conversions <- read_csv("../data/conversions.csv", show_col_types = FALSE) |>
+conversions <- read_csv("../data/processed/conversions.csv", show_col_types = FALSE) |>
   select(all_of(archetype_cols)) |>
   mutate(attempt = ifelse(sp_GS >= 5, "5+ starts", "2 to 4 starts"))
 
@@ -234,7 +234,7 @@ attempts |>
          rp_TBFPerG, rp_StuffPlus, rp_NumPlusPitches, attempt, rp_age, rp_SIERA, rp_SIERA_vs_lg, N_WAR, N_WPA,
          next_IP, next_WAR, next_WPA, lg_sp_siera, Cushion, pen_WAR, pen_WPA, WAR_gain, WPA_gain,
          prev_MLB_GS, MiLB_GS) |>
-  write_csv("../data/value_attempts.csv")
+  write_csv("../data/processed/value_attempts.csv")
 
 cat("Stay-in-pen models fit on", nrow(stayers), "reliever seasons followed by another relief season (20+ IP)\n")
 ```

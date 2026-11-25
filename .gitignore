@@ -1,20 +1,15 @@
-# Data: only the files the notebooks read are kept (backups, raw pulls, and unused files are not)
+# Data: only the files the notebooks read are kept, one folder per source (backups, raw pulls, and unused files are not)
 data/*
-!data/bref_win_probability.csv
-!data/conversions.csv
-!data/fg_minors.csv
-!data/fg_role_seasons.csv
-!data/game_logs.csv
-!data/id_map.csv
-!data/league_siera.csv
-!data/midseason_attempts.csv
-!data/pitcher_seasons.csv
-!data/savant_features.csv
-!data/value_attempts.csv
+!data/fangraphs/
+!data/baseball_reference/
+!data/mlb_stats_api/
+!data/chadwick/
+!data/processed/
 !data/savant/
 data/savant/*
 !data/savant/relief_season_pitches.csv
 !data/savant/starter_season_pitches.csv
+!data/savant/savant_features.csv
 
 # R and macOS files
 Rplots.pdf

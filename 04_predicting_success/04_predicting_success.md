@@ -23,9 +23,9 @@ average, and excludes poor relievers who held or slightly improved their
 SIERA.
 
 ``` r
-savant_features <- read_csv("../data/savant_features.csv", show_col_types = FALSE)
+savant_features <- read_csv("../data/savant/savant_features.csv", show_col_types = FALSE)
 
-conversions <- read_csv("../data/conversions.csv", show_col_types = FALSE) |>
+conversions <- read_csv("../data/processed/conversions.csv", show_col_types = FALSE) |>
   left_join(savant_features, by = c("xMLBAMID", "rp_season")) |>
   mutate(Success = as.numeric(sp_SIERA_vs_lg <= 0))
 ```
@@ -122,8 +122,8 @@ attempts are too few to say more.
 ### Testing different definitions of a conversion
 
 ``` r
-pitcher_seasons <- read_csv("../data/pitcher_seasons.csv", guess_max = 20000, show_col_types = FALSE)
-game_logs <- read_csv("../data/game_logs.csv", show_col_types = FALSE) |>
+pitcher_seasons <- read_csv("../data/processed/pitcher_seasons.csv", guess_max = 20000, show_col_types = FALSE)
+game_logs <- read_csv("../data/mlb_stats_api/game_logs.csv", show_col_types = FALSE) |>
   filter(GS == 1)
 
 # Starts before each season
@@ -565,7 +565,7 @@ units (the two are correlated at -0.92), so this section shows the same
 relationship in runs.
 
 ``` r
-attempts <- read_csv("../data/value_attempts.csv", show_col_types = FALSE)
+attempts <- read_csv("../data/processed/value_attempts.csv", show_col_types = FALSE)
 conversions <- conversions |>
   mutate(lg_sp_siera = sp_SIERA - sp_SIERA_vs_lg, Cushion = lg_sp_siera - rp_SIERA)
 
@@ -815,7 +815,7 @@ needs 100 or more batters faced, as in the main sample. K-BB% is
 compared to the league average for the role.
 
 ``` r
-midseason <- read_csv("../data/midseason_attempts.csv", show_col_types = FALSE)
+midseason <- read_csv("../data/processed/midseason_attempts.csv", show_col_types = FALSE)
 league_kbb <- pitcher_seasons |>
   group_by(Season, role) |>
   summarize(lg_KBB = weighted.mean(`K-BB%`, TBF, na.rm = TRUE), .groups = "drop")

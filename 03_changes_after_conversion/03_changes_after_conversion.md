@@ -16,12 +16,12 @@ starter line for the same pitcher), for pitch mix, velocity, Stuff+, and
 results.
 
 ``` r
-pitcher_seasons <- read_csv("../data/pitcher_seasons.csv", guess_max = 20000, show_col_types = FALSE)
-conversions <- read_csv("../data/conversions.csv", show_col_types = FALSE) |>
+pitcher_seasons <- read_csv("../data/processed/pitcher_seasons.csv", guess_max = 20000, show_col_types = FALSE)
+conversions <- read_csv("../data/processed/conversions.csv", show_col_types = FALSE) |>
   select(playerid, xMLBAMID, PlayerName, Throws, rp_season, sp_season, sp_GS, sp_IP, rp_SIERA_vs_lg, sp_SIERA_vs_lg,
          stuck) |>
   mutate(Success = ifelse(sp_SIERA_vs_lg <= 0, "league average or better", "worse than average"))
-expected <- read_csv("../data/value_attempts.csv", show_col_types = FALSE) |>
+expected <- read_csv("../data/processed/value_attempts.csv", show_col_types = FALSE) |>
   select(playerid, sp_season, WAR_gain)
 
 # Sweepers grouped with sliders, knuckle curves with curves, splitters with changeups

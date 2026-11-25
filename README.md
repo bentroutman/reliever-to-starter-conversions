@@ -83,7 +83,7 @@ AUC is averaged over the five test years. I used ridge for the final probabiliti
 
 ## Data
 
-FanGraphs (role splits and minor league lines), Baseball Savant (Statcast pitches), Baseball-Reference (WPA), the MLB Stats API (game logs), and the Chadwick Bureau register (player IDs). The data the notebooks read is included in the `data` folder.
+FanGraphs (role splits and minor league lines), Baseball Savant (Statcast pitches), Baseball-Reference (WPA), the MLB Stats API (game logs), and the Chadwick Bureau register (player IDs). The data the notebooks read is included in the `data` folder, with one subfolder per source (`fangraphs`, `savant`, `baseball_reference`, `mlb_stats_api`, and `chadwick`) and a `processed` folder for the tables built from them.
 
 ## Running the Code
 

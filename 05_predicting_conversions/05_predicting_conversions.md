@@ -16,8 +16,8 @@ The relief season of each conversion compared to every other qualifying
 relief season from 2016 to 2025.
 
 ``` r
-pitcher_seasons <- read_csv("../data/pitcher_seasons.csv", guess_max = 20000, show_col_types = FALSE)
-conversions <- read_csv("../data/conversions.csv", show_col_types = FALSE)
+pitcher_seasons <- read_csv("../data/processed/pitcher_seasons.csv", guess_max = 20000, show_col_types = FALSE)
+conversions <- read_csv("../data/processed/conversions.csv", show_col_types = FALSE)
 
 # I only pulled prior MLB starts starting in 2014, so earlier starts are missing and the measure is more complete from 2016 on
 relievers <- pitcher_seasons |>

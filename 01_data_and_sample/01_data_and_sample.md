@@ -80,8 +80,8 @@ for (season in setdiff(2006:2026, 2020)) {
   Sys.sleep(8)
 }
 
-write_csv(role_seasons, "../data/fg_role_seasons.csv", na = "")
-write_csv(minors, "../data/fg_minors.csv", na = "")
+write_csv(role_seasons, "../data/fangraphs/fg_role_seasons.csv", na = "")
+write_csv(minors, "../data/fangraphs/fg_minors.csv", na = "")
 chrome$kill()
 ```
 
@@ -93,7 +93,7 @@ start.
 
 ``` r
 # Takes about 30 minutes
-role_seasons <- read_csv("../data/fg_role_seasons.csv", guess_max = 20000)
+role_seasons <- read_csv("../data/fangraphs/fg_role_seasons.csv", guess_max = 20000)
 log_seasons <- role_seasons |>
   group_by(xMLBAMID, Season) |>
   summarize(GS_total = sum(GS), .groups = "drop") |>
@@ -111,7 +111,7 @@ for (i in 1:nrow(log_seasons)) {
   if (i %% 100 == 0) cat(i, "of", nrow(log_seasons), "seasons\n")
   Sys.sleep(0.2)
 }
-write_csv(game_logs, "../data/game_logs.csv")
+write_csv(game_logs, "../data/mlb_stats_api/game_logs.csv")
 cat("Appearances:", nrow(game_logs), "\n")
 ```
 
@@ -145,7 +145,7 @@ for (season in 2014:2026) {
   win_probability <- bind_rows(win_probability, season_table)
   Sys.sleep(5)
 }
-write_csv(win_probability, "../data/bref_win_probability.csv", na = "")
+write_csv(win_probability, "../data/baseball_reference/bref_win_probability.csv", na = "")
 
 # The register is split into 16 files by the first character of the person key
 id_map <- NULL
@@ -156,7 +156,7 @@ for (letter in c(0:9, "a", "b", "c", "d", "e", "f")) {
     select(xMLBAMID = key_mlbam, bref_id = key_bbref)
   id_map <- bind_rows(id_map, people)
 }
-write_csv(id_map, "../data/id_map.csv", na = "")
+write_csv(id_map, "../data/chadwick/id_map.csv", na = "")
 cat("ID map:", nrow(id_map), "people\n")
 ```
 
@@ -167,7 +167,7 @@ Every FanGraphs pitcher season with the measures the later notebooks use
 before each season).
 
 ``` r
-role_seasons <- read_csv("../data/fg_role_seasons.csv", guess_max = 20000)
+role_seasons <- read_csv("../data/fangraphs/fg_role_seasons.csv", guess_max = 20000)
 
 # Rewrite innings ending in .1 or .2 as 1/3 or 2/3
 role_seasons <- role_seasons |>
@@ -180,7 +180,7 @@ season_totals <- role_seasons |>
 ```
 
 ``` r
-minors <- read_csv("../data/fg_minors.csv") |>
+minors <- read_csv("../data/fangraphs/fg_minors.csv") |>
   mutate(IP = floor(IP) + (IP %% 1) * 10 / 3) |>
   group_by(playerid, Season) |>
   summarize(MiLB_G = sum(G), MiLB_GS = sum(GS), MiLB_IP = sum(IP), .groups = "drop")
@@ -196,7 +196,7 @@ league_rp <- role_seasons |>
   group_by(Season) |>
   summarize(lg_rp_siera = weighted.mean(SIERA, TBF, na.rm = TRUE))
 
-write_csv(left_join(league_rp, league_sp, by = "Season"), "../data/league_siera.csv")
+write_csv(left_join(league_rp, league_sp, by = "Season"), "../data/processed/league_siera.csv")
 ```
 
 ``` r
@@ -281,7 +281,7 @@ pitcher_seasons <- pitcher_seasons |>
   left_join(prior_milb, by = c("playerid", "Season")) |>
   mutate(prior_MLB_GS = coalesce(prior_MLB_GS, 0), MiLB_G = coalesce(MiLB_G, 0), MiLB_GS = coalesce(MiLB_GS, 0))
 
-write_csv(pitcher_seasons, "../data/pitcher_seasons.csv", na = "")
+write_csv(pitcher_seasons, "../data/processed/pitcher_seasons.csv", na = "")
 ```
 
 ## Build the conversion sample
@@ -295,7 +295,7 @@ starts in 20% or less of games). The starter results use all of his
 starts that season, including the short ones.
 
 ``` r
-game_logs <- read_csv("../data/game_logs.csv")
+game_logs <- read_csv("../data/mlb_stats_api/game_logs.csv")
 long_starts <- game_logs |>
   filter(GS == 1, Pitches >= 70) |>
   group_by(xMLBAMID, Season) |>
@@ -376,7 +376,7 @@ conversions <- pairs |>
          stuck = next_GS >= 10) |>
   arrange(sp_season, PlayerName)
 
-write_csv(conversions |> select(-GS_between, -gap, -MiLB_G, -sp_FBVelo, -sp_WAR), "../data/conversions.csv")
+write_csv(conversions |> select(-GS_between, -gap, -MiLB_G, -sp_FBVelo, -sp_WAR), "../data/processed/conversions.csv")
 
 cat("Conversion attempts:", nrow(conversions), "\n")
 ```
@@ -469,7 +469,7 @@ midseason_attempts <- before_move |>
   anti_join(conversions, by = c("xMLBAMID", "Season" = "sp_season")) |>
   select(xMLBAMID, playerid, PlayerName, Season, before_KBB, after_GS, after_KBB, GS_last_year)
 
-write_csv(midseason_attempts, "../data/midseason_attempts.csv")
+write_csv(midseason_attempts, "../data/processed/midseason_attempts.csv")
 cat("Mid-season attempts not already in the sample:", nrow(midseason_attempts), "\n")
 ```
 
@@ -490,7 +490,7 @@ keep_columns <- c("pitcher", "game_year", "game_pk", "pitch_type", "release_spee
                   "woba_value", "woba_denom")
 
 # Statcast starts in 2015
-pull_seasons <- read_csv("../data/conversions.csv") |>
+pull_seasons <- read_csv("../data/processed/conversions.csv") |>
   filter(rp_season >= 2015) |>
   distinct(xMLBAMID, rp_season, PlayerName)
 
@@ -523,7 +523,7 @@ keep_columns <- c("pitcher", "game_year", "game_pk", "pitch_type", "release_spee
                   "description", "events", "inning", "at_bat_number", "pitch_number", "n_thruorder_pitcher",
                   "woba_value", "woba_denom")
 
-pull_seasons <- read_csv("../data/conversions.csv") |>
+pull_seasons <- read_csv("../data/processed/conversions.csv") |>
   distinct(xMLBAMID, sp_season, PlayerName)
 
 all_pitches <- NULL
@@ -636,7 +636,7 @@ savant_features <- platoon |>
   left_join(velo_fade, by = c("pitcher", "game_year")) |>
   rename(xMLBAMID = pitcher, rp_season = game_year)
 
-write_csv(savant_features, "../data/savant_features.csv")
+write_csv(savant_features, "../data/savant/savant_features.csv")
 cat("Pitcher relief seasons with Statcast features:", nrow(savant_features), "\n")
 ```
 
