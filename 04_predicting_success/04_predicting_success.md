@@ -94,6 +94,29 @@ better than the league average reliever went on to be league average or
 better starters 59% of the time vs. 25% for the rest, and 43% of them
 stuck as starters vs. 25%.
 
+``` r
+# Elite relievers are at least a run better than the league average reliever
+conversions |>
+  mutate(relief_group = ifelse(rp_SIERA_vs_lg <= -1, "elite (1+ better than league)",
+                        ifelse(rp_SIERA_vs_lg < 0, "better than league (under 1)", "worse than league")),
+         relief_group = factor(relief_group, levels = c("elite (1+ better than league)", "better than league (under 1)",
+                                                         "worse than league"))) |>
+  group_by(relief_group) |>
+  summarize(attempts = n(), success_rate = round(mean(Success), 2),
+            starter_SIERA_vs_lg = round(mean(sp_SIERA_vs_lg), 2), SIERA_change = round(mean(sp_SIERA - rp_SIERA), 2)) |>
+  as.data.frame() |> print(row.names = FALSE)
+```
+
+    ##                   relief_group attempts success_rate starter_SIERA_vs_lg SIERA_change
+    ##  elite (1+ better than league)       13         0.77               -0.16         1.51
+    ##   better than league (under 1)       56         0.55               -0.02         0.84
+    ##              worse than league       76         0.25                0.41         0.29
+
+Only 13 attempts came from elite relievers. Ten of them (77%) were
+league average or better starters and their starter SIERA averaged 0.16
+better than the league, but their SIERA rose the most (by 1.51), and 13
+attempts are too few to say more.
+
 ## Checking the SIERA relationship
 
 ### Testing different definitions of a conversion

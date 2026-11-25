@@ -4,6 +4,14 @@ Across 145 MLB reliever to starter conversion attempts from 2015 to 2026, SIERA 
 
 ---
 
+## Takeaway
+
+Conversions look most useful for teams whose alternative is a replacement level fifth starter or very thin starting depth. Converted pitchers added about 0.48 WAR over staying in the bullpen because they throw more innings, and the typical conversion was only a little worse than the league average starter (0.19 SIERA worse). I did not model team depth, so this part is my interpretation of the results and not something I tested.
+
+For teams with decent starting depth, conversions are generally not worth it. SIERA rose by 0.61 on average, 77% of pitchers got worse, WPA and WAA went down, and only 41% finished as league average or better starters.
+
+Elite relievers may be the best conversion candidates. In the 13 attempts by relievers at least a run better than the league average reliever, 10 were league average or better starters and their starter SIERA averaged 0.16 better than the league. That is too few historical comps to judge whether converting an elite reliever pays off without extrapolating, so I treat it as upside to watch and not a conclusion.
+
 ## Overview
 
 1. Build a sample of conversions
