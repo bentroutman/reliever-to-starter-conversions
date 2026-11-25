@@ -33,7 +33,7 @@ relievers <- pitcher_seasons |>
          MiLB_GS_share = ifelse(MiLB_G > 0, MiLB_GS / MiLB_G * 100, NA),
          log_prior_MLB_GS = log1p(prior_MLB_GS), log_MiLB_GS = log1p(MiLB_GS))
 
-# A relief season counts as converted if the pitcher starts the next season, which isn't known for 2026 yet
+# A relief season counts as converted if the pitcher becomes a starter within the next three years, which isn't known for 2026 yet
 # Teams did not choose the other relief seasons of pitchers who converted, so those are left out
 population <- relievers |>
   filter(Season <= 2025, Converted == 1 | !playerid %in% conversions$playerid)
@@ -50,10 +50,10 @@ cat("Qualifying relief seasons 2016 to 2025 (100+ TBF, starts in 20% or less of 
     ## Qualifying relief seasons 2016 to 2025 (100+ TBF, starts in 20% or less of games): 2415
 
 ``` r
-cat("Converted the next season: ", sum(population$Converted), " (", round(mean(population$Converted) * 100, 1), "%)\n\n", sep = "")
+cat("Converted within three years: ", sum(population$Converted), " (", round(mean(population$Converted) * 100, 1), "%)\n\n", sep = "")
 ```
 
-    ## Converted the next season: 125 (5.2%)
+    ## Converted within three years: 125 (5.2%)
 
 ``` r
 cat("Converts vs. every other reliever season, one trait at a time\n")
