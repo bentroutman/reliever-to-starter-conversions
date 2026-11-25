@@ -10,8 +10,10 @@ library(ggplot2)
 
 ## Results and pitch mix
 
-The relief side is the FanGraphs reliever line and the starter side is
-the starter line.
+Each converted pitcher’s relief season is compared to his starter
+season, using the FanGraphs role lines (the reliever line and the
+starter line for the same pitcher), for pitch mix, velocity, Stuff+, and
+results.
 
 ``` r
 pitcher_seasons <- read_csv("../data/pitcher_seasons.csv", guess_max = 20000, show_col_types = FALSE)
@@ -22,7 +24,7 @@ conversions <- read_csv("../data/conversions.csv", show_col_types = FALSE) |>
 expected <- read_csv("../data/value_attempts.csv", show_col_types = FALSE) |>
   select(playerid, sp_season, WAR_gain)
 
-# Sweepers are already in the slider column, knuckle curves go with curves, splitters with changeups
+# Sweepers grouped with sliders, knuckle curves with curves, splitters with changeups
 pitch_groups <- c("FourSeam", "Sinker", "Cutter", "Slider", "Curve", "Changeup")
 process_measures <- c(pitch_groups, "NumPitches10", "FBVelo", "pfxvSL", "pfxvCH", "sp_stuff", "FB_Stuff",
                       "sp_s_SL", "sp_s_CH", "sp_s_CU", "sp_location", "sp_pitching", "Zone%", "F-Strike%")
@@ -51,8 +53,7 @@ write_csv(changes, "results/conversion_changes.csv")
 ```
 
 ``` r
-# A pitch is added when it goes from under 5% (too rare to get a Stuff+ rating) to 10% or more (a regular pitch,
-# as in NumPitches10), and dropped in the other direction
+# Added pitches were under 5% usage as a reliever and 10%+ usage as a starter
 mix <- changes |>
   filter(measure %in% pitch_groups) |>
   mutate(added = relief < 0.05 & starter >= 0.10,
@@ -111,11 +112,11 @@ print(as.data.frame(change_summary), digits = 3)
     ## 28  result   Z-Contact% 145   0.8587   0.8685    0.634  0.009753
 
 ``` r
-cat("\nPitches added (under 5% to 10%+) and dropped (10%+ to under 5%), number of conversions\n")
+cat("\nPitches added (under 5% to 10%+) and dropped (10%+ to under 5%)\n")
 ```
 
     ## 
-    ## Pitches added (under 5% to 10%+) and dropped (10%+ to under 5%), number of conversions
+    ## Pitches added (under 5% to 10%+) and dropped (10%+ to under 5%)
 
 ``` r
 print(mix |> group_by(measure) |> summarize(added = sum(added), dropped = sum(dropped)) |> as.data.frame())
@@ -150,83 +151,53 @@ per_pitcher |>
     ## 2      TRUE 58         0.0897               0.414          0.139    0.618 0.375
 
 Moving to the rotation costs about 1.1 mph of fastball velocity (93.7 to
-92.5 mph, and 86% of the 145 pitchers lost velocity). Pitchers throw
-fewer four-seamers (down 5.7 percentage points) and more changeups (up
-3.0), and their results get worse (SIERA rises 0.61, and 77% got worse).
-Stuff+ falls 5.1 points while Location+ rises 2.1, which is consistent
-with starters giving up some stuff to throw more strikes. The 58
-pitchers who added a pitch did only slightly better as starters (SIERA
-of 0.14 versus 0.23 above league, and 38% versus 30% stuck in the
-rotation).
+92.5 mph), and 86% of the 145 pitchers lost velocity. Converted pitchers
+throw fewer four-seamers (-5.7 percentage points) and more changeups
+(+3.0), and their results get worse (SIERA +0.61, 77% got worse). Stuff+
+falls 5.1 points while Location+ rises 2.1, which is consistent with
+starters giving up some stuff to throw more strikes. The 58 pitchers who
+added a pitch did slightly better as starters (SIERA 0.14 above league
+average versus 0.23, and 38% stuck in the rotation versus 30%).
 
 ``` r
-# Does each change relate to the starter result once relief SIERA is known
-cat("\nChange vs starter SIERA vs league (Spearman), and the change's effect after relief SIERA (SD units)\n")
+# Does a change in pitch mix relate to starter performance once relief SIERA is known?
+cat("\nPitch mix change vs starter SIERA: Spearman correlation and effect after controlling for relief SIERA\n")
 ```
 
     ## 
-    ## Change vs starter SIERA vs league (Spearman), and the change's effect after relief SIERA (SD units)
+    ## Pitch mix change vs starter SIERA: Spearman correlation and effect after controlling for relief SIERA
 
 ``` r
 effect_table <- NULL
-for (m in all_measures) {
+for (m in c(pitch_groups, "NumPitches10")) {
   one <- changes |> filter(measure == m, !is.na(change))
   fit <- lm(sp_SIERA_vs_lg ~ rp_SIERA_vs_lg + scale(change), data = one)
   effect_table <- bind_rows(effect_table, data.frame(
-    measure = m, type = ifelse(m %in% result_measures, "result", "process"), n = nrow(one),
+    measure = m, n = nrow(one),
     spearman_SIERA = round(cor(one$change, one$sp_SIERA_vs_lg, method = "spearman"), 3),
     beta_after_rp_SIERA = round(coef(summary(fit))[3, 1], 3),
-    p = coef(summary(fit))[3, 4]))
+    p = round(coef(summary(fit))[3, 4], 3)))
 }
-# Adjust for testing many measures (Benjamini-Hochberg)
-effect_table$q <- round(p.adjust(effect_table$p, method = "BH"), 3)
-effect_table$p <- round(effect_table$p, 3)
 print(effect_table)
 ```
 
-    ##         measure    type   n spearman_SIERA beta_after_rp_SIERA     p     q
-    ## 1      FourSeam process 145          0.032               0.042 0.527 0.689
-    ## 2        Sinker process 145         -0.048               0.005 0.935 0.970
-    ## 3        Cutter process 145         -0.084              -0.098 0.136 0.201
-    ## 4        Slider process 145          0.049               0.007 0.910 0.970
-    ## 5         Curve process 145         -0.007              -0.002 0.970 0.970
-    ## 6      Changeup process 145          0.004               0.015 0.817 0.954
-    ## 7  NumPitches10 process 145         -0.084              -0.097 0.137 0.201
-    ## 8        FBVelo process 145         -0.081              -0.188 0.005 0.014
-    ## 9        pfxvSL process 105          0.000              -0.006 0.937 0.970
-    ## 10       pfxvCH process 125          0.101               0.034 0.628 0.764
-    ## 11     sp_stuff process  67         -0.072              -0.293 0.002 0.005
-    ## 12     FB_Stuff process  67          0.019              -0.189 0.048 0.089
-    ## 13      sp_s_SL process  54         -0.158              -0.209 0.043 0.087
-    ## 14      sp_s_CH process  53         -0.223              -0.124 0.135 0.201
-    ## 15      sp_s_CU process  37          0.054              -0.061 0.542 0.689
-    ## 16  sp_location process  67         -0.264              -0.234 0.010 0.024
-    ## 17  sp_pitching process  67         -0.198              -0.392 0.000 0.000
-    ## 18        Zone% process 145         -0.083              -0.176 0.007 0.019
-    ## 19    F-Strike% process 145         -0.264              -0.262 0.000 0.000
-    ## 20           K%  result 145         -0.360              -0.654 0.000 0.000
-    ## 21          BB%  result 145          0.325               0.589 0.000 0.000
-    ## 22        K-BB%  result 145         -0.427              -0.875 0.000 0.000
-    ## 23       SwStr%  result 145         -0.215              -0.428 0.000 0.000
-    ## 24     O-Swing%  result 145         -0.314              -0.362 0.000 0.000
-    ## 25   Z-Contact%  result 145          0.054               0.169 0.012 0.026
-    ## 26          GB%  result 145         -0.184              -0.119 0.069 0.120
-    ## 27     HardHit%  result 136          0.020              -0.043 0.528 0.689
-    ## 28        SIERA  result 145          0.493               0.829 0.000 0.000
+    ##        measure   n spearman_SIERA beta_after_rp_SIERA     p
+    ## 1     FourSeam 145          0.032               0.042 0.527
+    ## 2       Sinker 145         -0.048               0.005 0.935
+    ## 3       Cutter 145         -0.084              -0.098 0.136
+    ## 4       Slider 145          0.049               0.007 0.910
+    ## 5        Curve 145         -0.007              -0.002 0.970
+    ## 6     Changeup 145          0.004               0.015 0.817
+    ## 7 NumPitches10 145         -0.084              -0.097 0.137
 
-Changes in pitch mix do not predict how a pitcher did as a starter once
-relief SIERA is known (every usage change has p above 0.1). Holding up
-velocity, Stuff+, and command does. Pitchers who held or gained
-Pitching+ (beta -0.39), Stuff+ (-0.29), first pitch strike rate (-0.26),
-Location+ (-0.23), and fastball velocity (-0.19) had better starter
-SIERA, and all of them stay significant (q of 0.03 or lower) after
-adjusting for the 28 measures tested (67 pitchers for the Stuff+ and
-Location+ measures). The result measures such as K-BB% are strongly
-related, but SIERA is built from them, so that relationship is partly
-mechanical.
+None of the pitch mix changes predict how a pitcher did as a starter
+once relief SIERA is known (every p is above 0.1). Changes to on-field
+process metrics like velocity or stuff could explain which conversions
+performed better, but they are outcomes of the move, not choices made by
+the player or team.
 
 ``` r
-# usage change by pitch group, successes vs the rest
+# Usage change by pitch group, comparing successes vs the rest
 usage_plot <- changes |>
   filter(measure %in% pitch_groups) |>
   group_by(measure, Success) |>
@@ -237,7 +208,7 @@ ggplot(usage_plot, aes(measure, change, fill = Success)) +
   geom_col(position = "dodge") +
   scale_fill_manual(values = c("league average or better" = "steelblue", "worse than average" = "red")) +
   labs(title = "Pitch mix change from the relief season to the starter season",
-       subtitle = "Conversion attempts, split by starter SIERA vs league. Sliders include sweepers, changeups include splitters",
+       subtitle = "Conversion attempts, split by starter SIERA vs league.",
        x = NULL, y = "Usage change (percentage points)", fill = "As a starter") +
   theme_classic()
 ```
@@ -248,11 +219,15 @@ ggplot(usage_plot, aes(measure, change, fill = Success)) +
 ggsave("charts/usage_change.png", width = 9, height = 5.5, dpi = 150)
 ```
 
+Both groups reduce usage of four-seams and increase sinker and changeup
+usage. The one clear difference is the cutter, as the converts who did
+well increased usage by 3.5 points while the others slightly dropped it
+by 0.7 points. Even still, with only 60 and 85 pitchers in the groups,
+that gap is not significant (p = 0.14).
+
 ## Statcast changes
 
-Platoon results, velocity within starts, and times through the order.
-The relief season platoon K-BB% and whiff rate are saved to
-`statcast_changes.csv` for notebook 04.
+Platoon results and times through the order.
 
 ``` r
 relief_pitches <- read_csv("../data/savant/relief_season_pitches.csv", guess_max = 50000, show_col_types = FALSE)
@@ -264,8 +239,7 @@ whiff_types <- c("swinging_strike", "swinging_strike_blocked")
 ```
 
 ``` r
-# Starter season pitches include any relief outings, so keep only games where he pitched in the 1st inning (his
-# starts)
+# Starter season pitches include any relief outings, so keep only starts
 starts <- starter_pitches |>
   filter(inning == 1) |>
   distinct(pitcher, game_pk)
@@ -284,26 +258,10 @@ pitches <- bind_rows(relief_pitches, starter_pitches) |>
          Offspeed = pitch_type %in% c("CH", "FS", "FO", "SC"),
          Breaking = pitch_type %in% c("SL", "ST", "SV", "CU", "KC", "CS"),
          Fastball = pitch_type %in% c("FF", "SI"))
-
-pitches <- pitches |>
-  arrange(pitcher, game_year, game_pk, at_bat_number, pitch_number) |>
-  group_by(pitcher, game_year, game_pk) |>
-  mutate(GamePitchNum = row_number()) |>
-  ungroup()
 ```
 
 ``` r
-# Primary fastball each season and role
-primary_fb <- pitches |>
-  filter(Fastball) |>
-  count(pitcher, game_year, role, pitch_type) |>
-  group_by(pitcher, game_year, role) |>
-  filter(n == max(n)) |>
-  slice(1) |>
-  select(pitcher, game_year, role, primary_fb = pitch_type)
-
 season_measures <- pitches |>
-  left_join(primary_fb, by = c("pitcher", "game_year", "role")) |>
   group_by(pitcher, game_year, role) |>
   summarize(PitchesPerOuting = n() / n_distinct(game_pk),
             OppShare_PA = sum(PA & OppHand) / sum(PA),
@@ -313,15 +271,12 @@ season_measures <- pitches |>
             Opp_Offspeed = mean(Offspeed[OppHand]),
             Opp_Breaking = mean(Breaking[OppHand]),
             Opp_Fastball = mean(Fastball[OppHand]),
-            # Primary fastball velocity lost per 10 pitches thrown in a game (the slope of velocity on pitch number)
-            Velo_per10 = cov(GamePitchNum[pitch_type == primary_fb], release_speed[pitch_type == primary_fb],
-                             use = "complete.obs") / var(GamePitchNum[pitch_type == primary_fb]) * 10,
             .groups = "drop") |>
   mutate(Platoon_KBB_gap = Same_KBB - Opp_KBB)
 ```
 
 ``` r
-# Wide: relief and starter side by side for each conversion
+# Puts relief and starter side by side for each conversion
 relief_statcast <- season_measures |> filter(role == "relief") |> select(-role)
 starter_statcast <- season_measures |> filter(role == "starter") |> select(-role)
 names(relief_statcast)[-(1:2)] <- paste0("rp_", names(relief_statcast)[-(1:2)])
@@ -329,14 +284,7 @@ names(starter_statcast)[-(1:2)] <- paste0("sp_", names(starter_statcast)[-(1:2)]
 
 statcast_changes <- conversions |>
   inner_join(relief_statcast, by = c("xMLBAMID" = "pitcher", "rp_season" = "game_year")) |>
-  inner_join(starter_statcast, by = c("xMLBAMID" = "pitcher", "sp_season" = "game_year")) |>
-  mutate(Opp_KBB_change = sp_Opp_KBB - rp_Opp_KBB,
-         Same_KBB_change = sp_Same_KBB - rp_Same_KBB,
-         Opp_Whiff_change = sp_Opp_Whiff - rp_Opp_Whiff,
-         Opp_Offspeed_change = sp_Opp_Offspeed - rp_Opp_Offspeed,
-         Opp_Breaking_change = sp_Opp_Breaking - rp_Opp_Breaking,
-         Opp_Fastball_change = sp_Opp_Fastball - rp_Opp_Fastball,
-         OppShare_change = sp_OppShare_PA - rp_OppShare_PA)
+  inner_join(starter_statcast, by = c("xMLBAMID" = "pitcher", "sp_season" = "game_year"))
 write_csv(statcast_changes, "../data/statcast_changes.csv")
 
 cat("Conversions with Statcast in both seasons:", nrow(statcast_changes), "\n\n")
@@ -357,65 +305,24 @@ statcast_changes |>
             rp_Opp_KBB = mean(rp_Opp_KBB), sp_Opp_KBB = mean(sp_Opp_KBB),
             rp_Same_KBB = mean(rp_Same_KBB), sp_Same_KBB = mean(sp_Same_KBB),
             rp_Opp_Offspeed = mean(rp_Opp_Offspeed), sp_Opp_Offspeed = mean(sp_Opp_Offspeed),
-            rp_Opp_Breaking = mean(rp_Opp_Breaking), sp_Opp_Breaking = mean(sp_Opp_Breaking),
-            sp_Velo_per10 = mean(sp_Velo_per10, na.rm = TRUE)) |>
+            rp_Opp_Breaking = mean(rp_Opp_Breaking), sp_Opp_Breaking = mean(sp_Opp_Breaking)) |>
   pivot_longer(everything()) |>
   as.data.frame() |> print(digits = 3)
 ```
 
-    ##                   name   value
-    ## 1  rp_PitchesPerOuting 26.1312
-    ## 2  sp_PitchesPerOuting 81.4413
-    ## 3          rp_OppShare  0.5012
-    ## 4          sp_OppShare  0.5852
-    ## 5           rp_Opp_KBB  0.1132
-    ## 6           sp_Opp_KBB  0.1112
-    ## 7          rp_Same_KBB  0.1620
-    ## 8          sp_Same_KBB  0.1484
-    ## 9      rp_Opp_Offspeed  0.1661
-    ## 10     sp_Opp_Offspeed  0.1878
-    ## 11     rp_Opp_Breaking  0.2438
-    ## 12     sp_Opp_Breaking  0.2455
-    ## 13       sp_Velo_per10 -0.0822
-
-``` r
-change_measures <- c("Opp_KBB_change", "Same_KBB_change", "Opp_Whiff_change", "Opp_Offspeed_change",
-                     "Opp_Breaking_change", "Opp_Fastball_change", "OppShare_change", "sp_Velo_per10",
-                     "rp_Platoon_KBB_gap", "sp_Platoon_KBB_gap")
-
-cat("\nEach measure vs starter SIERA vs league (Spearman), and its effect after relief SIERA (SD units)\n")
-```
-
-    ## 
-    ## Each measure vs starter SIERA vs league (Spearman), and its effect after relief SIERA (SD units)
-
-``` r
-effect_table <- NULL
-for (m in change_measures) {
-  one <- statcast_changes |> filter(!is.na(.data[[m]]))
-  fit <- lm(sp_SIERA_vs_lg ~ rp_SIERA_vs_lg + scale(one[[m]]), data = one)
-  effect_table <- bind_rows(effect_table, data.frame(
-    measure = m, n = nrow(one),
-    spearman_SIERA = round(cor(one[[m]], one$sp_SIERA_vs_lg, method = "spearman"), 3),
-    beta_after_rp_SIERA = round(coef(summary(fit))[3, 1], 3),
-    p = coef(summary(fit))[3, 4]))
-}
-effect_table$q <- round(p.adjust(effect_table$p, method = "BH"), 3)
-effect_table$p <- round(effect_table$p, 3)
-print(effect_table)
-```
-
-    ##                measure   n spearman_SIERA beta_after_rp_SIERA     p     q
-    ## 1       Opp_KBB_change 136         -0.383              -0.616 0.000 0.000
-    ## 2      Same_KBB_change 136         -0.170              -0.405 0.000 0.000
-    ## 3     Opp_Whiff_change 136         -0.152              -0.158 0.022 0.074
-    ## 4  Opp_Offspeed_change 136         -0.010               0.052 0.447 0.639
-    ## 5  Opp_Breaking_change 136         -0.009              -0.010 0.880 0.880
-    ## 6  Opp_Fastball_change 136          0.101               0.083 0.220 0.410
-    ## 7      OppShare_change 136         -0.028              -0.043 0.531 0.664
-    ## 8        sp_Velo_per10 136          0.035              -0.022 0.747 0.831
-    ## 9   rp_Platoon_KBB_gap 136         -0.098              -0.091 0.183 0.410
-    ## 10  sp_Platoon_KBB_gap 136          0.108               0.079 0.246 0.410
+    ##                   name  value
+    ## 1  rp_PitchesPerOuting 26.131
+    ## 2  sp_PitchesPerOuting 81.441
+    ## 3          rp_OppShare  0.501
+    ## 4          sp_OppShare  0.585
+    ## 5           rp_Opp_KBB  0.113
+    ## 6           sp_Opp_KBB  0.111
+    ## 7          rp_Same_KBB  0.162
+    ## 8          sp_Same_KBB  0.148
+    ## 9      rp_Opp_Offspeed  0.166
+    ## 10     sp_Opp_Offspeed  0.188
+    ## 11     rp_Opp_Breaking  0.244
+    ## 12     sp_Opp_Breaking  0.246
 
 ``` r
 # wOBA by time through the order as a starter, pooling every plate appearance
@@ -444,16 +351,14 @@ print(as.data.frame(tto), digits = 3)
     ## 5       worse than average    2 8331 0.355
     ## 6       worse than average    3 3878 0.362
 
-Starters face more opposite-handed batters (58.5% of plate appearances
-versus 50.1% in relief) and throw 81 pitches per start versus 26 per
-relief outing. Fastball velocity falls only 0.08 mph per 10 pitches
-within a start, and that slope does not predict the starter result once
-relief SIERA is known (p = 0.75). The change in K-BB% against
-opposite-handed hitters is the strongest signal (beta -0.62), though
-like the other result measures it is partly mechanical. wOBA allowed
-rises from the first to the second time through the order for both
-groups, but the converts who did well fall back the third time (.298,
-.332, and .317) while the others keep rising (.335, .355, and .362).
+Converted starters face more opposite-handed batters (58.5% of plate
+appearances vs 50.1% in relief) and throw 81 pitches per start versus 26
+per relief outing. wOBA allowed rises from the first to the second time
+through the order for both groups (.298 to .332 for the converts who did
+well and .335 to .355 for the others). The third time looks different,
+with the converts who did well falling back (.317) while the others keep
+rising (.362), but those gaps are small for a sample of 58 and 78
+pitchers, so they may be noise.
 
 ``` r
 # wOBA by time through the order as a starter, by outcome
