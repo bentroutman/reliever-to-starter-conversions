@@ -17,7 +17,7 @@ library(readr)
 library(rvest)
 ```
 
-## Pull FanGraphs
+## Pull FanGraphs role and minor league lines
 
 Pulls starter and reliever lines (2014 to 2026) and minor league lines (2006 to 2026) from FanGraphs. Statcast starts in 2015, so the first conversion attempts are in 2015 and the relief seasons start in 2014. This notebook has eval=FALSE, so knitting does not download everything again. Run the code blocks by hand the first time to download the data.
 
@@ -82,7 +82,7 @@ write_csv(minors, "../data/fg_minors.csv", na = "")
 chrome$kill()
 ```
 
-## Pull game logs
+## Pull MLB game logs
 
 Pitches, batters faced, strikeouts, and walks for every appearance, from the MLB Stats API. Includes each season since 2015 with at least one start.
 
@@ -110,9 +110,51 @@ write_csv(game_logs, "../data/game_logs.csv")
 cat("Appearances:", nrow(game_logs), "\n")
 ```
 
-## Build the conversion sample
+## Pull win probability and player IDs
 
-I counted a season as a conversion attempt when the pitcher made at least 2 starts of 70+ pitches. I did not require a minimum share of games started or innings per start, since those rules drop attempts that went badly or ended early. Each attempt is paired with the most recent relief season in the three years before it (100+ batters faced, with starts in 20% or less of games). The starter results use all of his starts that season, including the short ones.
+Win probability added (WPA) and average leverage index for every pitcher season from Baseball-Reference. The Chadwick register converts Baseball-Reference player IDs to MLBAM IDs so these match the rest of the data.
+
+```{r, eval=FALSE}
+# Takes about 2 minutes
+stat_columns <- c("age", "team_ID", "IP", "wpa_def", "leverage_index_avg")
+
+win_probability <- NULL
+for (season in 2014:2026) {
+  url <- paste0("https://www.baseball-reference.com/leagues/majors/", season, "-win_probability-pitching.shtml")
+  # The table is inside an HTML comment
+  page <- paste(read_lines(url), collapse = "\n")
+  page <- gsub("<!--|-->", "", page)
+  rows <- read_html(page) |>
+    html_elements("#players_win_probability_pitching tr:has([data-append-csv])")
+
+  season_table <- data.frame(bref_id = rows |> html_element("[data-append-csv]") |> html_attr("data-append-csv"),
+                             Season = season)
+  for (column in stat_columns) {
+    season_table[[column]] <- rows |> html_element(paste0("[data-stat='", column, "']")) |> html_text()
+    season_table[[column]] <- gsub("%", "", gsub(" ", " ", season_table[[column]]))
+  }
+  cat(season, nrow(season_table), "rows\n")
+  win_probability <- bind_rows(win_probability, season_table)
+  Sys.sleep(5)
+}
+write_csv(win_probability, "../data/bref_win_probability.csv", na = "")
+
+# The register is split into 16 files by the first character of the person key
+id_map <- NULL
+for (letter in c(0:9, "a", "b", "c", "d", "e", "f")) {
+  url <- paste0("https://raw.githubusercontent.com/chadwickbureau/register/master/data/people-", letter, ".csv")
+  people <- read_csv(url, col_types = cols(.default = "c")) |>
+    filter(!is.na(key_mlbam), !is.na(key_bbref)) |>
+    select(xMLBAMID = key_mlbam, bref_id = key_bbref)
+  id_map <- bind_rows(id_map, people)
+}
+write_csv(id_map, "../data/id_map.csv", na = "")
+cat("ID map:", nrow(id_map), "people\n")
+```
+
+## Prepare pitcher seasons
+
+Every FanGraphs pitcher season with the measures the later notebooks utilize (SIERA relative to the league, pitch mix, Stuff+, and starting history before each season).
 
 ```{r}
 role_seasons <- read_csv("../data/fg_role_seasons.csv", guess_max = 20000)
@@ -148,12 +190,6 @@ write_csv(left_join(league_rp, league_sp, by = "Season"), "../data/league_siera.
 ```
 
 ```{r}
-game_logs <- read_csv("../data/game_logs.csv")
-long_starts <- game_logs |>
-  filter(GS == 1, Pitches >= 70) |>
-  group_by(xMLBAMID, Season) |>
-  summarize(LongStarts = n(), .groups = "drop")
-
 # Usage columns are NA when a pitch is not thrown
 for (column in c("pfxFA%", "pfxSI%", "pfxFC%", "pfxSL%", "pfxCU%", "pfxKC%", "pfxCV%", "pfxCH%", "pfxFS%",
                  "pfxFO%", "pfxSC%")) {
@@ -236,6 +272,18 @@ pitcher_seasons <- pitcher_seasons |>
   mutate(prior_MLB_GS = coalesce(prior_MLB_GS, 0), MiLB_G = coalesce(MiLB_G, 0), MiLB_GS = coalesce(MiLB_GS, 0))
 
 write_csv(pitcher_seasons, "../data/pitcher_seasons.csv", na = "")
+```
+
+## Build the conversion sample
+
+I counted a season as a conversion attempt when the pitcher made at least 2 starts of 70+ pitches. I did not require a minimum share of games started or innings per start, since those rules drop attempts that went badly or ended early. Each attempt is paired with the most recent relief season in the three years before it (100+ batters faced, with starts in 20% or less of games). The starter results use all of his starts that season, including the short ones.
+
+```{r}
+game_logs <- read_csv("../data/game_logs.csv")
+long_starts <- game_logs |>
+  filter(GS == 1, Pitches >= 70) |>
+  group_by(xMLBAMID, Season) |>
+  summarize(LongStarts = n(), .groups = "drop")
 
 starter_seasons <- pitcher_seasons |>
   filter(role == "sta") |>
@@ -317,13 +365,17 @@ write_csv(conversions |> select(-GS_between, -gap, -MiLB_G, -sp_FBVelo, -sp_WAR)
 cat("Conversion attempts:", nrow(conversions), "\n")
 cat("Unique pitchers:", n_distinct(conversions$playerid), "\n")
 cat("Attempts with 5+ starts:", sum(conversions$sp_GS >= 5), "\n")
+cat("\nConversion attempts by starter season\n")
 print(table(conversions$sp_season))
-print(table(season_gap = conversions$gap))
+cat("\nConversion attempts by years between the relief season and the starter season\n")
+print(table(conversions$gap))
 ```
 
 This gives 145 conversion attempts from 129 pitchers, and 122 of them have 5 or more starts. The relief season was the year before for 126 attempts, two years before for 13, and three years before for 6.
 
-Some pitchers moved to the rotation in the middle of a season, so they are not in the sample above. I counted a mid-season move when the pitcher faced 50+ batters in relief with starts in 20% or less of his games, and then made at least 2 starts of 70+ pitches. His relief numbers are the games before the first long start and his starter numbers are every start from then on.
+## Find mid-season attempts
+
+Some pitchers moved to the rotation in the middle of a season, so they are not in the sample above. I counted a mid-season move when the pitcher faced 100+ batters in relief with starts in 20% or less of his games, and then made at least 2 starts of 70+ pitches. His relief numbers are the games before the first long start and his starter numbers are every start from then on.
 
 ```{r}
 appearances <- game_logs |>
@@ -338,7 +390,7 @@ before_move <- appearances |>
   group_by(xMLBAMID, Season) |>
   summarize(start_share_before = mean(GS), before_TBF = sum(TBF[GS == 0]),
             before_KBB = sum((SO - BB)[GS == 0]) / before_TBF, .groups = "drop") |>
-  filter(before_TBF >= 50, start_share_before <= 0.2)
+  filter(before_TBF >= 100, start_share_before <= 0.2)
 
 after_move <- appearances |>
   filter(date >= FirstLongStart, GS == 1) |>
@@ -360,9 +412,9 @@ write_csv(midseason_attempts, "../data/midseason_attempts.csv")
 cat("Mid-season attempts not already in the sample:", nrow(midseason_attempts), "\n")
 ```
 
-That is nearly as many as the 145 attempts in the main sample, which is why the mid-season moves get their own analysis in notebook 04.
+That is about a third as many as the 145 attempts in the main sample, which is enough for a separate look in notebook 04.
 
-## Pull relief season pitches
+## Pull Statcast pitches for relief seasons
 
 Every Statcast pitch from the relief season of each pitcher in the sample.
 
@@ -395,7 +447,7 @@ write_csv(all_pitches, "../data/savant/relief_season_pitches.csv", na = "")
 cat("Saved", nrow(all_pitches), "pitches\n")
 ```
 
-## Pull starter season pitches
+## Pull Statcast pitches for starter seasons
 
 ```{r, eval=FALSE}
 # Takes about 11 minutes
@@ -423,58 +475,25 @@ write_csv(all_pitches, "../data/savant/starter_season_pitches.csv", na = "")
 cat("Saved", nrow(all_pitches), "pitches\n")
 ```
 
-## Pull win probability
+## Build relief season Statcast features
 
-Win probability added (WPA) and average leverage index for every pitcher season from Baseball-Reference. The Chadwick register converts Baseball-Reference player IDs to MLBAM IDs so these match the rest of the data.
-
-```{r, eval=FALSE}
-# Takes about 2 minutes
-stat_columns <- c("age", "team_ID", "IP", "wpa_def", "leverage_index_avg")
-
-win_probability <- NULL
-for (season in 2014:2026) {
-  url <- paste0("https://www.baseball-reference.com/leagues/majors/", season, "-win_probability-pitching.shtml")
-  # The table is inside an HTML comment
-  page <- paste(read_lines(url), collapse = "\n")
-  page <- gsub("<!--|-->", "", page)
-  rows <- read_html(page) |>
-    html_elements("#players_win_probability_pitching tr:has([data-append-csv])")
-
-  season_table <- data.frame(bref_id = rows |> html_element("[data-append-csv]") |> html_attr("data-append-csv"),
-                             Season = season)
-  for (column in stat_columns) {
-    season_table[[column]] <- rows |> html_element(paste0("[data-stat='", column, "']")) |> html_text()
-    season_table[[column]] <- gsub("%", "", gsub(" ", " ", season_table[[column]]))
-  }
-  cat(season, nrow(season_table), "rows\n")
-  win_probability <- bind_rows(win_probability, season_table)
-  Sys.sleep(5)
-}
-write_csv(win_probability, "../data/bref_win_probability.csv", na = "")
-
-# The register is split into 16 files by the first character of the person key
-id_map <- NULL
-for (letter in c(0:9, "a", "b", "c", "d", "e", "f")) {
-  url <- paste0("https://raw.githubusercontent.com/chadwickbureau/register/master/data/people-", letter, ".csv")
-  people <- read_csv(url, col_types = cols(.default = "c")) |>
-    filter(!is.na(key_mlbam), !is.na(key_bbref)) |>
-    select(xMLBAMID = key_mlbam, bref_id = key_bbref)
-  id_map <- bind_rows(id_map, people)
-}
-write_csv(id_map, "../data/id_map.csv", na = "")
-cat("ID map:", nrow(id_map), "people\n")
-```
-
-## Pitch features
-
-Platoon wOBA, arsenal against opposite-handed hitters, and velocity fade from the relief season pitches.
+Platoon wOBA, K-BB%, and whiff rate, arsenal against opposite-handed hitters, and velocity fade from the relief season pitches.
 
 ```{r}
 pitches <- read_csv("../data/savant/relief_season_pitches.csv", guess_max = 50000)
 
+swing_types <- c("swinging_strike", "swinging_strike_blocked", "foul", "foul_tip", "hit_into_play",
+                 "foul_bunt", "missed_bunt")
+whiff_types <- c("swinging_strike", "swinging_strike_blocked")
+
 pitches <- pitches |>
   filter(!is.na(pitch_type)) |>
-  mutate(OppHand = stand != p_throws)
+  mutate(OppHand = stand != p_throws,
+         Swing = description %in% swing_types,
+         Whiff = description %in% whiff_types,
+         PA = !is.na(events) & events != "truncated_pa",
+         K = PA & events %in% c("strikeout", "strikeout_double_play"),
+         BB = PA & events %in% c("walk", "intent_walk"))
 ```
 
 ```{r}
@@ -492,6 +511,16 @@ platoon <- pitches |>
             .groups = "drop") |>
   mutate(Platoon_wOBA_gap = Opp_wOBA - Same_wOBA) |>
   select(-Same_wOBA)
+
+# K-BB% and whiff rate against same-handed and opposite-handed hitters
+handedness <- pitches |>
+  group_by(pitcher, game_year) |>
+  summarize(Opp_KBB = (sum(K & OppHand) - sum(BB & OppHand)) / sum(PA & OppHand),
+            Same_KBB = (sum(K & !OppHand) - sum(BB & !OppHand)) / sum(PA & !OppHand),
+            Opp_Whiff = sum(Whiff & OppHand) / sum(Swing & OppHand),
+            .groups = "drop") |>
+  mutate(Platoon_KBB_gap = Same_KBB - Opp_KBB) |>
+  select(-Same_KBB)
 ```
 
 ```{r}
@@ -509,7 +538,7 @@ opp_arsenal <- opp_usage |>
 ```
 
 ```{r}
-# Fastball velo on the first 15 pitches of an outing vs pitch 26 and later
+# Fastball velo on the first 15 pitches of an outing vs. pitch 26 and later
 primary_fb <- pitches |>
   filter(pitch_type %in% c("FF", "SI")) |>
   count(pitcher, game_year, pitch_type) |>
@@ -533,6 +562,7 @@ velo_fade <- pitches |>
   select(pitcher, game_year, Velo_fade, Velo_max_gap)
 
 savant_features <- platoon |>
+  left_join(handedness, by = c("pitcher", "game_year")) |>
   left_join(opp_arsenal, by = c("pitcher", "game_year")) |>
   left_join(velo_fade, by = c("pitcher", "game_year")) |>
   rename(xMLBAMID = pitcher, rp_season = game_year)

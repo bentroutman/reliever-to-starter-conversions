@@ -12,7 +12,7 @@ library(glmnet)
 options(width = 200)
 ```
 
-## Traits of converts
+## How converts differ from other relievers
 
 The relief season of each conversion compared to every other qualifying relief season from 2016 to 2025.
 
@@ -20,163 +20,61 @@ The relief season of each conversion compared to every other qualifying relief s
 pitcher_seasons <- read_csv("../data/pitcher_seasons.csv", guess_max = 20000, show_col_types = FALSE)
 conversions <- read_csv("../data/conversions.csv", show_col_types = FALSE)
 
-# MLB starts are only counted from 2014, so starting history is measured better from 2016 on
+# I only pulled prior MLB starts starting in 2014, so earlier starts are missing and the measure is more complete from 2016 on
 relievers <- pitcher_seasons |>
   filter(QualifyingRelief, Season >= 2016) |>
   transmute(playerid, PlayerName, Season, Team = TeamNameAbb, Age, ThrowsL = as.numeric(Throws == "L"), TBF,
             TBF_per_G, GS_same_season = GS_total, SIERA_vs_lg, KBB = `K-BB%` * 100, SwStr = `SwStr%` * 100,
-            Zone = `Zone%` * 100, FStrike = `F-Strike%` * 100, GB = `GB%` * 100, HardHit = `HardHit%` * 100, gmLI,
+            Zone = `Zone%` * 100, FStrike = `F-Strike%` * 100, GB = `GB%` * 100, gmLI,
             FBVelo, NumPitches10, FourSeam = FourSeam * 100, Sinker = Sinker * 100, Cutter = Cutter * 100,
-            Slider = Slider * 100, Curve = Curve * 100, Changeup = Changeup * 100, StuffPlus = sp_stuff, FB_Stuff,
+            Slider = Slider * 100, Curve = Curve * 100, Changeup = Changeup * 100, StuffPlus = sp_stuff,
             LocPlus = sp_location, prior_MLB_GS, MiLB_G, MiLB_GS) |>
   left_join(conversions |> select(playerid, Season = rp_season, sp_season), by = c("playerid", "Season")) |>
   mutate(Converted = as.numeric(!is.na(sp_season)),
          MiLB_GS_share = ifelse(MiLB_G > 0, MiLB_GS / MiLB_G * 100, NA),
          log_prior_MLB_GS = log1p(prior_MLB_GS), log_MiLB_GS = log1p(MiLB_GS))
 
-# The 2026 relief seasons cannot be labeled yet, so the comparison stops at 2025
+# A relief season counts as converted if the pitcher starts the next season, which isn't known for 2026 yet
 # Teams did not choose the other relief seasons of pitchers who converted, so those are left out
 population <- relievers |>
   filter(Season <= 2025, Converted == 1 | !playerid %in% conversions$playerid)
-
-# Chance that a random convert scores higher than a random non-convert
-auc_rank <- function(score, outcome) {
-  keep <- !is.na(score)
-  score <- score[keep]
-  outcome <- outcome[keep]
-  n1 <- sum(outcome == 1)
-  n0 <- sum(outcome == 0)
-  (sum(rank(score)[outcome == 1]) - n1 * (n1 + 1) / 2) / (n1 * n0)
-}
-
-# The same 15 traits are used in every model below
-all_traits <- c("SIERA_vs_lg", "KBB", "SwStr", "FBVelo", "GB", "NumPitches10", "Changeup", "Sinker", "FourSeam",
-                "gmLI", "TBF_per_G", "Age", "ThrowsL", "log_prior_MLB_GS", "log_MiLB_GS")
 ```
 
 ```{r}
 features <- c("Age", "ThrowsL", "TBF", "TBF_per_G", "GS_same_season", "gmLI", "SIERA_vs_lg", "KBB", "SwStr", "Zone",
-              "FStrike", "GB", "HardHit", "FBVelo", "NumPitches10", "FourSeam", "Sinker", "Cutter", "Slider", "Curve",
-              "Changeup", "StuffPlus", "FB_Stuff", "LocPlus", "prior_MLB_GS", "MiLB_GS", "MiLB_GS_share")
+              "FStrike", "GB", "FBVelo", "NumPitches10", "FourSeam", "Sinker", "Cutter", "Slider", "Curve",
+              "Changeup", "StuffPlus", "LocPlus", "prior_MLB_GS", "MiLB_GS", "MiLB_GS_share")
 
 cat("Qualifying relief seasons 2016 to 2025 (100+ TBF, starts in 20% or less of games):", nrow(population), "\n")
-cat("Converted the next season:", sum(population$Converted), " (", round(mean(population$Converted) * 100, 1), "%)\n\n")
+cat("Converted the next season: ", sum(population$Converted), " (", round(mean(population$Converted) * 100, 1), "%)\n\n", sep = "")
 
-cat("1. Converts vs every other reliever season, one trait at a time\n")
-cat("diff_in_SD = (convert mean - other mean) / SD of others. AUC is the chance a random convert is higher than a random non-convert (0.5 = no difference)\n")
+cat("Converts vs. every other reliever season, one trait at a time\n")
+cat("diff_in_SD = (convert mean - other mean) / SD of other relievers\n")
+cat("AUC: chance a random convert is predicted higher than a random non-convert (0.5 = no difference)\n")
 univariate <- NULL
 for (f in features) {
   x <- population[[f]]
   convert_x <- x[population$Converted == 1]
   other_x <- x[population$Converted == 0]
+  # The p value tests whether the AUC differs from 0.5
+  trait_roc <- pROC::roc(population$Converted, x, levels = c(0, 1), direction = "<", quiet = TRUE)
+  trait_auc <- as.numeric(pROC::auc(trait_roc))
   univariate <- bind_rows(univariate, data.frame(
     trait = f, n_converts = sum(!is.na(convert_x)), convert_mean = mean(convert_x, na.rm = TRUE),
     other_mean = mean(other_x, na.rm = TRUE),
     diff_in_SD = (mean(convert_x, na.rm = TRUE) - mean(other_x, na.rm = TRUE)) / sd(other_x, na.rm = TRUE),
-    AUC = auc_rank(x, population$Converted),
-    p_value = wilcox.test(convert_x, other_x)$p.value))
+    AUC = trait_auc, p_value = 2 * pnorm(-abs(trait_auc - 0.5) / sqrt(pROC::var(trait_roc)))))
 }
+
 # Adjust for testing many traits (Benjamini-Hochberg)
-univariate$q <- p.adjust(univariate$p_value, method = "BH")
+univariate$q <- round(p.adjust(univariate$p_value, method = "BH"), 3)
+univariate$p_value <- round(univariate$p_value, 3)
 univariate <- univariate |> arrange(desc(abs(AUC - 0.5)))
 write_csv(univariate, "results/convert_vs_population.csv")
 print(univariate, digits = 3)
 ```
 
-Converts are not better pitchers. Their relief SIERA relative to the league (-0.05) is about the same as other relievers (-0.11), and the skill traits barely separate the two groups. What separates them is role and starting history. Converts face 6.3 batters per game versus 4.6, have more prior MLB starts (23 versus 6), and are younger (27.0 versus 29.1).
-
-```{r}
-# Logistic regression with every trait held at once
-cat("\n2. Logistic regression of being converted (traits in SD units, odds ratio per SD)\n")
-model_data <- population |>
-  filter(!is.na(FBVelo)) |>
-  mutate(across(all_of(setdiff(all_traits, "ThrowsL")), ~ as.numeric(scale(.x))))
-fit_all <- glm(as.formula(paste("Converted ~", paste(all_traits, collapse = " + "))), data = model_data,
-               family = binomial)
-coefs <- summary(fit_all)$coefficients
-print(data.frame(trait = rownames(coefs), odds_ratio_per_SD = round(exp(coefs[, 1]), 2), p = round(coefs[, 4], 3)),
-      row.names = FALSE)
-cat("n =", nrow(model_data), " converts =", sum(model_data$Converted), "\n")
-```
-
-With the traits held together, starting history and role matter most. Each standard deviation of prior MLB starts multiplies the odds of being converted by 2.2 (1.6 for minor league starts) and each standard deviation of batters per game by 1.5, while each standard deviation of age cuts the odds to 0.36. Relief SIERA has no clear effect once the other traits are included (an odds ratio of 0.62, p = 0.42), since it overlaps with K-BB% and SwStr%.
-
-```{r}
-# Cross validated AUC by type of trait
-cat("\n3. How well each group of traits picks out the converts (5 fold cross validated AUC)\n")
-# All of a pitcher's seasons go in the same fold since pitchers repeat across seasons
-set.seed(0)
-pitcher_ids <- unique(model_data$playerid)
-pitcher_folds <- sample(rep(1:5, length.out = length(pitcher_ids)))
-fold <- pitcher_folds[match(model_data$playerid, pitcher_ids)]
-
-formulas <- c(
-  "skills only (SIERA, K-BB%, SwStr%, velo, GB%)" = "Converted ~ SIERA_vs_lg + KBB + SwStr + FBVelo + GB",
-  "arsenal (pitches, changeup, sinker, four-seam usage)" = "Converted ~ NumPitches10 + Changeup + Sinker + FourSeam",
-  "role and context (leverage, batters per game, age, handedness)" = "Converted ~ gmLI + TBF_per_G + Age + ThrowsL",
-  "starting history (MLB and minor league starts)" = "Converted ~ log_prior_MLB_GS + log_MiLB_GS",
-  "skills + arsenal" = "Converted ~ SIERA_vs_lg + KBB + SwStr + FBVelo + GB + NumPitches10 + Changeup + Sinker + FourSeam",
-  "skills + role + history" = "Converted ~ SIERA_vs_lg + KBB + SwStr + FBVelo + GB + gmLI + TBF_per_G + Age + ThrowsL + log_prior_MLB_GS + log_MiLB_GS",
-  "everything" = paste("Converted ~", paste(all_traits, collapse = " + ")))
-cv_table <- NULL
-for (name in names(formulas)) {
-  predictions <- rep(NA, nrow(model_data))
-  for (k in 1:5) {
-    fit <- glm(as.formula(formulas[[name]]), data = model_data[fold != k, ], family = binomial)
-    predictions[fold == k] <- predict(fit, newdata = model_data[fold == k, ])
-  }
-  cv_table <- bind_rows(cv_table, data.frame(traits = name, cv_AUC = round(auc_rank(predictions, model_data$Converted), 3)))
-}
-print(cv_table, row.names = FALSE)
-```
-
-Role and starting history pick out the converts much better than skill does. Skills alone give a cross validated AUC of 0.58, close to chance, versus 0.79 for role and context and 0.78 for starting history. Adding arsenal to skills, role, and history does not help (0.872 versus 0.866 with everything).
-
-```{r}
-# Stuff+ starts in 2020, and with only 67 converts the model is smaller. It keeps the role and history traits and
-# swaps the skill and arsenal traits for the Stuff+ measures
-cat("\n4. 2020 and later, with Stuff+ (relief seasons 2020 to 2025)\n")
-stuff_traits <- c("SIERA_vs_lg", "StuffPlus", "FB_Stuff", "LocPlus", "FBVelo", "Age", "gmLI", "TBF_per_G",
-                  "log_prior_MLB_GS", "log_MiLB_GS")
-stuff_data <- population |>
-  filter(Season >= 2020, !is.na(StuffPlus), !is.na(FB_Stuff), !is.na(FBVelo)) |>
-  mutate(across(all_of(stuff_traits), ~ as.numeric(scale(.x))))
-fit_stuff <- glm(as.formula(paste("Converted ~", paste(stuff_traits, collapse = " + "))), data = stuff_data,
-                 family = binomial)
-coefs_stuff <- summary(fit_stuff)$coefficients
-print(data.frame(trait = rownames(coefs_stuff), odds_ratio_per_SD = round(exp(coefs_stuff[, 1]), 2),
-                 p = round(coefs_stuff[, 4], 3)), row.names = FALSE)
-cat("n =", nrow(stuff_data), " converts =", sum(stuff_data$Converted), "\n")
-```
-
-In the 2020 and later model Stuff+ has no effect (p = 0.95) and Location+ comes closest (an odds ratio of 1.36, p = 0.05). Role and starting history stay about as strong as before.
-
-```{r}
-# Teams and years
-cat("\n5. Do conversion rates differ by team (relief season team) more than chance? Chi-square test with a simulated p value\n")
-by_team <- population |> filter(!Team %in% c("2 Tms", "3 Tms"))
-set.seed(0)
-print(chisq.test(table(by_team$Team, by_team$Converted), simulate.p.value = TRUE, B = 10000))
-
-cat("\nBy relief season year\n")
-population |>
-  group_by(Season) |>
-  summarize(seasons = n(), converts = sum(Converted), per_100 = round(sum(Converted) / n() * 100, 1)) |>
-  as.data.frame() |> print()
-
-cat("\nShares, converts vs other relievers (percent)\n")
-converts <- population |> filter(Converted == 1)
-others <- population |> filter(Converted == 0)
-shares <- data.frame(
-  trait = c("Lefty", "Prior MLB start", "Minor league start", "Start in the relief season"),
-  converts = round(c(mean(converts$ThrowsL), mean(converts$prior_MLB_GS > 0), mean(converts$MiLB_GS > 0),
-                     mean(converts$GS_same_season > 0)) * 100),
-  others = round(c(mean(others$ThrowsL), mean(others$prior_MLB_GS > 0), mean(others$MiLB_GS > 0),
-                   mean(others$GS_same_season > 0)) * 100))
-print(shares, row.names = FALSE)
-```
-
-Conversion rates by team do not differ from chance (a chi-square test gives p = 0.23), so I would not read anything into them. By year the rate stays between 3.4 and 6.5 per 100 and is lowest in 2024 and 2025. Nearly all converts (98%) had made a minor league start (versus 89% of other relievers), 72% had a prior MLB start (versus 34%), and 53% made a start in the relief season itself (versus 17%).
+Converts are not better pitchers on average. Their relief SIERA relative to the league (-0.05) is about the same as other relievers (-0.11), and the skill traits barely separate the two groups. What separates them is role and starting history. Converts face 6.3 batters per game vs. 4.6, have more prior MLB starts (23 vs. 6), and are younger (27.0 vs. 29.1).
 
 ```{r, fig.width=8, fig.height=8}
 # How the converts differ from other relievers, in SD units
@@ -186,13 +84,109 @@ ggplot(plot_data, aes(diff_in_SD, trait)) +
   geom_vline(xintercept = 0, color = "gray") +
   geom_col(fill = "steelblue") +
   labs(title = "How the relief seasons of converted pitchers differ from other relievers",
-       subtitle = "Converts minus all other qualifying relief seasons 2016 to 2025, in SDs of the other relievers",
+       subtitle = "Converts minus all other qualifying relief seasons 2016 to 2025 (in SDs)",
        x = "Difference in SD", y = NULL) +
   theme_classic()
 ggsave("charts/convert_profile.png", width = 8, height = 8, dpi = 150)
 ```
 
-## Predicting conversions
+```{r}
+# Logistic regression with every trait held at once
+# The same 19 traits are used in every model below
+all_traits <- c("SIERA_vs_lg", "KBB", "SwStr", "FBVelo", "GB", "NumPitches10", "FourSeam", "Sinker", "Cutter", "Slider",
+                "Curve", "Changeup", "gmLI", "TBF_per_G", "Age", "ThrowsL", "GS_same_season", "log_prior_MLB_GS",
+                "log_MiLB_GS")
+cat("\nLogistic regression of being converted\n")
+model_data <- population |>
+  filter(!is.na(FBVelo)) |>
+  mutate(across(all_of(setdiff(all_traits, "ThrowsL")), ~ as.numeric(scale(.x))))
+fit_all <- glm(as.formula(paste("Converted ~", paste(all_traits, collapse = " + "))), data = model_data,
+               family = binomial)
+coefs <- summary(fit_all)$coefficients
+print(data.frame(trait = rownames(coefs), odds_ratio_per_SD = round(exp(coefs[, 1]), 2), p = round(coefs[, 4], 3)),
+      row.names = FALSE)
+cat("\nRelief seasons in the model:", nrow(model_data), "\n")
+cat("Converts:", sum(model_data$Converted), "\n")
+```
+
+With the traits held together, starting history and role matter most. Each standard deviation of prior MLB starts multiplies the odds of being converted by 2.0 (1.7 for minor league starts and 1.3 for starts in the relief season) and each standard deviation of batters per game by 1.4, while each standard deviation of age cuts the odds to 0.38. Relief SIERA has no clear effect, either on its own (AUC of 0.53) or once the other traits are included (odds ratio of 0.58, p = 0.38).
+
+```{r}
+# Cross validated AUC by type of trait
+cat("\nHow well each group of traits picks out the converts (5-fold cross validated AUC)\n")
+# All of a pitcher's seasons go in the same fold since pitchers repeat across seasons
+set.seed(0)
+pitcher_ids <- unique(model_data$playerid)
+pitcher_folds <- sample(rep(1:5, length.out = length(pitcher_ids)))
+fold <- pitcher_folds[match(model_data$playerid, pitcher_ids)]
+
+formulas <- c(
+  "skills only (SIERA, K-BB%, SwStr%, velo, GB%)" = "Converted ~ SIERA_vs_lg + KBB + SwStr + FBVelo + GB",
+  "arsenal (pitches and usage of each pitch)" = "Converted ~ NumPitches10 + FourSeam + Sinker + Cutter + Slider + Curve + Changeup",
+  "role and context (leverage, batters per game, age, handedness)" = "Converted ~ gmLI + TBF_per_G + Age + ThrowsL",
+  "starting history (starts this season, MLB, and minor league)" = "Converted ~ GS_same_season + log_prior_MLB_GS + log_MiLB_GS",
+  "skills + arsenal" = "Converted ~ SIERA_vs_lg + KBB + SwStr + FBVelo + GB + NumPitches10 + FourSeam + Sinker + Cutter + Slider + Curve + Changeup",
+  "skills + role + history" = "Converted ~ SIERA_vs_lg + KBB + SwStr + FBVelo + GB + gmLI + TBF_per_G + Age + ThrowsL + GS_same_season + log_prior_MLB_GS + log_MiLB_GS",
+  "role + history" = "Converted ~ gmLI + TBF_per_G + Age + ThrowsL + GS_same_season + log_prior_MLB_GS + log_MiLB_GS",
+  "arsenal + role + history" = "Converted ~ NumPitches10 + FourSeam + Sinker + Cutter + Slider + Curve + Changeup + gmLI + TBF_per_G + Age + ThrowsL + GS_same_season + log_prior_MLB_GS + log_MiLB_GS",
+  "everything" = paste("Converted ~", paste(all_traits, collapse = " + ")))
+cv_table <- NULL
+for (name in names(formulas)) {
+  predictions <- rep(NA, nrow(model_data))
+  for (k in 1:5) {
+    fit <- glm(as.formula(formulas[[name]]), data = model_data[fold != k, ], family = binomial)
+    predictions[fold == k] <- predict(fit, newdata = model_data[fold == k, ])
+  }
+  auc <- as.numeric(pROC::auc(model_data$Converted, predictions, levels = c(0, 1), direction = "<", quiet = TRUE))
+  cv_table <- bind_rows(cv_table, data.frame(traits = name, cv_AUC = round(auc, 3)))
+}
+print(cv_table, row.names = FALSE)
+```
+
+Role and starting history pick out the converts much better than skill does. Skills alone give a cross validated AUC of 0.58, close to chance, vs. 0.79 for role and context and 0.82 for starting history. Role and starting history together reach 0.879, and adding skills (0.878), arsenal (0.875), or both (0.871) does not help.
+
+```{r}
+# Stuff+ starts in 2020, and with only 67 converts the model is smaller
+# The model keeps the role and history traits and swaps the skill and arsenal traits for Stuff+ measures
+cat("\n2020 and later, with Stuff+\n")
+stuff_traits <- c("SIERA_vs_lg", "StuffPlus", "LocPlus", "FBVelo", "Age", "gmLI", "TBF_per_G",
+                  "GS_same_season", "log_prior_MLB_GS", "log_MiLB_GS")
+stuff_data <- population |>
+  filter(Season >= 2020, !is.na(StuffPlus), !is.na(FBVelo)) |>
+  mutate(across(all_of(stuff_traits), ~ as.numeric(scale(.x))))
+fit_stuff <- glm(as.formula(paste("Converted ~", paste(stuff_traits, collapse = " + "))), data = stuff_data,
+                 family = binomial)
+coefs_stuff <- summary(fit_stuff)$coefficients
+print(data.frame(trait = rownames(coefs_stuff), odds_ratio_per_SD = round(exp(coefs_stuff[, 1]), 2),
+                 p = round(coefs_stuff[, 4], 3)), row.names = FALSE)
+cat("\nRelief seasons in the model:", nrow(stuff_data), "\n")
+cat("Converts:", sum(stuff_data$Converted), "\n")
+```
+
+In the 2020 and later model, Stuff+ has no effect (p = 0.59) and Location+ comes closest (odds ratio of 1.36, p = 0.053). Role and starting history stay about as strong as before.
+
+```{r}
+cat("\nBy relief season year\n")
+population |>
+  group_by(Season) |>
+  summarize(seasons = n(), converts = sum(Converted), per_100 = round(sum(Converted) / n() * 100, 1)) |>
+  as.data.frame() |> print()
+
+cat("\nShares, converts vs. other relievers (percent)\n")
+converts <- population |> filter(Converted == 1)
+others <- population |> filter(Converted == 0)
+shares <- data.frame(
+  trait = c("Prior MLB start", "Minor league start", "Start in the relief season"),
+  converts = round(c(mean(converts$prior_MLB_GS > 0), mean(converts$MiLB_GS > 0),
+                     mean(converts$GS_same_season > 0)) * 100),
+  others = round(c(mean(others$prior_MLB_GS > 0), mean(others$MiLB_GS > 0),
+                   mean(others$GS_same_season > 0)) * 100))
+print(shares, row.names = FALSE)
+```
+
+By year, the conversion rate stays between 3.4 and 6.5 per 100 and is lowest in 2024 and 2025. Nearly all converts (98%) had made a minor league start (vs. 89% of other relievers), 72% had a prior MLB start (vs. 34%), and 53% made a start in the relief season itself (vs. 17%).
+
+## Predicting which relievers get converted
 
 Three models tested by rolling origin, then the 2026 relievers scored with ridge.
 
@@ -232,17 +226,13 @@ for (year in 2021:2025) {
   test$four_traits <- predict(four_model, newdata = test, type = "response")
   test$ridge <- as.numeric(predict(ridge_model, newx = x_test, s = "lambda.min", type = "response"))
   test$base_rate <- mean(train$Known)
-
-  # Unfitted score with equal weight on each standardized trait
-  test$simple_score <- as.numeric(scale(test$TBF_per_G)) + as.numeric(scale(test$log_prior_MLB_GS)) +
-    as.numeric(scale(test$log_MiLB_GS)) - as.numeric(scale(test$Age))
   test_rows <- bind_rows(test_rows, test)
 }
-cat("Test seasons 2021 to 2025:", nrow(test_rows), " converts:", sum(test_rows$Converted), "\n\n")
+cat("Test relief seasons 2021 to 2025:", nrow(test_rows), "\n")
+cat("Converts among them:", sum(test_rows$Converted), "\n\n")
 ```
 
 ```{r}
-# Calibration slope is the coefficient on the predicted log odds (1 is perfect, below 1 is overconfident)
 calibration <- NULL
 for (model in c("base_rate", "logistic", "ridge", "four_traits")) {
   test_rows$prob <- pmin(pmax(test_rows[[model]], 1e-6), 1 - 1e-6)
@@ -261,11 +251,11 @@ cat("Calibration\n")
 print(calibration, row.names = FALSE)
 ```
 
-All three models expect more converts than occurred (72 to 76 versus 64), and calibration slopes of 0.82 to 0.93 show they are somewhat overconfident, but all of them beat the base rate on log loss (0.152 to 0.153 versus 0.186).
+All three models expect more converts than occurred (71 to 75 vs. 64), and calibration slopes of 0.82 to 0.96 show they are somewhat overconfident, but all of them beat the base rate (giving every reliever the average conversion rate of the earlier seasons) on log loss (0.150 to 0.153 vs. 0.186).
 
 ```{r}
-# AUC averaged over the test years, and the converts found in each year's top k (k = that year's number of converts)
-scores <- c("logistic", "ridge", "four_traits", "simple_score", "TBF_per_G")
+# For each test year, the AUC and how many converts are among the top scored relievers (as many relievers as that year had converts), then the AUC averaged and the converts found added up over the years
+scores <- c("logistic", "ridge", "four_traits", "TBF_per_G")
 ranking <- NULL
 for (score in scores) {
   auc_by_year <- rep(NA, 5)
@@ -273,12 +263,13 @@ for (score in scores) {
   for (i in 1:5) {
     one_year <- test_rows |> filter(Season == 2020 + i)
     k <- sum(one_year$Converted)
-    auc_by_year[i] <- auc_rank(one_year[[score]], one_year$Converted)
+    auc_by_year[i] <- as.numeric(pROC::auc(one_year$Converted, one_year[[score]], levels = c(0, 1), direction = "<", quiet = TRUE))
     found <- found + sum(one_year$Converted[rank(-one_year[[score]]) <= k])
   }
   ranking <- bind_rows(ranking, data.frame(score = score, mean_AUC = round(mean(auc_by_year), 3),
-                                           worst_year_AUC = round(min(auc_by_year), 3), found_in_top_k = found))
+                                           worst_year_AUC = round(min(auc_by_year), 3), converts_found = found))
 }
+
 # Picking at random, a year's top k holds k * k / (relievers that year) converts
 year_totals <- test_rows |> group_by(Season) |> summarize(k = sum(Converted), n = n())
 random_found <- sum(year_totals$k^2 / year_totals$n)
@@ -297,7 +288,8 @@ for (b in 1:1000) {
     auc_by_year <- rep(NA, 5)
     for (i in 1:5) {
       in_year <- boot_rows$Season == 2020 + i
-      auc_by_year[i] <- auc_rank(boot_rows[[score]][in_year], boot_rows$Converted[in_year])
+      converted <- boot_rows$Converted[in_year]
+      auc_by_year[i] <- as.numeric(pROC::auc(converted, boot_rows[[score]][in_year], levels = c(0, 1), direction = "<", quiet = TRUE))
     }
     boot_auc[b, score] <- mean(auc_by_year, na.rm = TRUE)
   }
@@ -305,13 +297,16 @@ for (b in 1:1000) {
 ranking$lower <- round(apply(boot_auc, 2, quantile, 0.025), 3)
 ranking$upper <- round(apply(boot_auc, 2, quantile, 0.975), 3)
 cat("Ranking, with 95% pitcher bootstrap intervals on AUC\n")
+cat("converts_found: converts among the top scored relievers each year (as many relievers as that year had converts), out of",
+    sum(test_rows$Converted), "in total\n")
 print(ranking, row.names = FALSE)
-cat("Picking at random would find about", round(random_found, 1), "converts in the top k\n")
-cat("Ridge minus the simple score in AUC:", round(ranking$mean_AUC[2] - ranking$mean_AUC[4], 3),
-    " 95% interval", round(quantile(boot_auc[, "ridge"] - boot_auc[, "simple_score"], c(0.025, 0.975)), 3), "\n")
+cat("\nPicking relievers at random would find about", round(random_found, 1), "of the", sum(test_rows$Converted), "converts\n")
+auc_gap <- quantile(boot_auc[, "ridge"] - boot_auc[, "four_traits"], c(0.025, 0.975))
+cat("Ridge minus the four trait model in AUC = ", round(ranking$mean_AUC[2] - ranking$mean_AUC[3], 3),
+    " (95% interval ", round(auc_gap[1], 3), " to ", round(auc_gap[2], 3), ")\n", sep = "")
 ```
 
-The simple unfitted score (an equal weight sum of batters per game, prior MLB starts, minor league starts, and negative age) ranks relievers as well as any fitted model, with an AUC of 0.85 versus 0.84, so the fitted models add nothing measurable (the ridge minus simple difference is -0.01, with an interval of -0.029 to 0.007). Batters per game alone gets an AUC of 0.79. In each year's top k, where k is that year's number of converts, the models found 15 to 17 of the 64 converts, compared to about 3 from random picks.
+A logistic regression on just four traits (batters per game, prior MLB starts, minor league starts, and age) ranks relievers as well as the models with all 19, with an AUC of 0.844 vs. 0.847 for ridge, so the extra traits add nothing measurable. Batters per game alone gets an AUC of 0.79. Picking as many top scored relievers each year as there were converts, the models found 17 to 20 of the 64 converts, compared to about 3 from random picks.
 
 ```{r}
 # Final ridge model on every relief season through 2025
@@ -325,11 +320,13 @@ current$Prob <- as.numeric(predict(ridge_model, newx = as.matrix(current[, all_t
                                    type = "response"))
 likelihood <- current |>
   arrange(desc(Prob)) |>
-  transmute(PlayerName, Team, Age, TBF_per_G = round(TBF_per_G, 1), SIERA_vs_lg = round(SIERA_vs_lg, 2),
-            prior_MLB_GS, MiLB_GS, ProbPct = round(Prob * 100, 1))
+  transmute(PlayerName, Age, TBF_per_G = round(TBF_per_G, 1), SIERA_vs_lg = round(SIERA_vs_lg, 2),
+            GS_same_season, prior_MLB_GS, MiLB_GS, ProbPct = round(Prob * 100, 1))
 write_csv(likelihood, "results/conversion_likelihood_2026.csv")
-cat("2026 relievers scored:", nrow(current), " expected conversions:", round(sum(current$Prob), 1), "\n")
+cat("2026 relievers scored:", nrow(current), "\n")
+cat("Expected conversions:", round(sum(current$Prob), 1), "\n\n")
+cat("Top 20 by probability of being converted\n")
 print(as.data.frame(head(likelihood, 20)), row.names = FALSE)
 ```
 
-The 2026 list is dominated by relievers who already throw many batters per game or have starting history. Only 14 conversions are expected among the 274 scored relievers, and even the top candidate has about a 53% chance.
+The 2026 list is dominated by relievers who already face many batters per game and/or have starting history. Only 14 conversions are expected among the 274 scored relievers, and even the top candidate has only about a 47% chance.

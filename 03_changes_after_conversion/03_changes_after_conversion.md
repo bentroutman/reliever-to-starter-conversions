@@ -8,7 +8,7 @@ library(tidyr)
 library(ggplot2)
 ```
 
-## Results and pitch mix
+## Changes in results and pitch mix
 
 Each converted pitcher’s relief season is compared to his starter
 season, using the FanGraphs role lines (the reliever line and the
@@ -62,10 +62,10 @@ per_pitcher <- mix |>
   group_by(playerid, sp_season, PlayerName, sp_SIERA_vs_lg, WAR_gain, stuck, rp_SIERA_vs_lg) |>
   summarize(added_any = any(added), .groups = "drop")
 
-cat("Relief vs starter lines for", n_distinct(paste(changes$playerid, changes$sp_season)), "conversions\n\n")
+cat("Relief vs. starter lines for", n_distinct(paste(changes$playerid, changes$sp_season)), "conversions\n\n")
 ```
 
-    ## Relief vs starter lines for 145 conversions
+    ## Relief vs. starter lines for 145 conversions
 
 ``` r
 cat("Average change from relief to starter (usage in percentage points, velo in mph)\n")
@@ -157,15 +157,15 @@ throw fewer four-seamers (-5.7 percentage points) and more changeups
 falls 5.1 points while Location+ rises 2.1, which is consistent with
 starters giving up some stuff to throw more strikes. The 58 pitchers who
 added a pitch did slightly better as starters (SIERA 0.14 above league
-average versus 0.23, and 38% stuck in the rotation versus 30%).
+average vs. 0.23, and 38% stuck in the rotation vs. 30%).
 
 ``` r
 # Does a change in pitch mix relate to starter performance once relief SIERA is known?
-cat("\nPitch mix change vs starter SIERA: Spearman correlation and effect after controlling for relief SIERA\n")
+cat("\nPitch mix change vs. starter SIERA: Spearman correlation and effect after controlling for relief SIERA\n")
 ```
 
     ## 
-    ## Pitch mix change vs starter SIERA: Spearman correlation and effect after controlling for relief SIERA
+    ## Pitch mix change vs. starter SIERA: Spearman correlation and effect after controlling for relief SIERA
 
 ``` r
 effect_table <- NULL
@@ -197,7 +197,7 @@ performed better, but they are outcomes of the move, not choices made by
 the player or team.
 
 ``` r
-# Usage change by pitch group, comparing successes vs the rest
+# Usage change by pitch group, comparing successes vs. the rest
 usage_plot <- changes |>
   filter(measure %in% pitch_groups) |>
   group_by(measure, Success) |>
@@ -208,7 +208,7 @@ ggplot(usage_plot, aes(measure, change, fill = Success)) +
   geom_col(position = "dodge") +
   scale_fill_manual(values = c("league average or better" = "steelblue", "worse than average" = "red")) +
   labs(title = "Pitch mix change from the relief season to the starter season",
-       subtitle = "Conversion attempts, split by starter SIERA vs league.",
+       subtitle = "Conversion attempts, split by starter SIERA vs. league.",
        x = NULL, y = "Usage change (percentage points)", fill = "As a starter") +
   theme_classic()
 ```
@@ -225,20 +225,14 @@ well increased usage by 3.5 points while the others slightly dropped it
 by 0.7 points. Even still, with only 60 and 85 pitchers in the groups,
 that gap is not significant (p = 0.14).
 
-## Statcast changes
+## Platoon usage and times through the order
 
-Platoon results and times through the order.
+Platoon usage and times through the order.
 
 ``` r
 relief_pitches <- read_csv("../data/savant/relief_season_pitches.csv", guess_max = 50000, show_col_types = FALSE)
 starter_pitches <- read_csv("../data/savant/starter_season_pitches.csv", guess_max = 50000, show_col_types = FALSE)
 
-swing_types <- c("swinging_strike", "swinging_strike_blocked", "foul", "foul_tip", "hit_into_play",
-                 "foul_bunt", "missed_bunt")
-whiff_types <- c("swinging_strike", "swinging_strike_blocked")
-```
-
-``` r
 # Starter season pitches include any relief outings, so keep only starts
 starts <- starter_pitches |>
   filter(inning == 1) |>
@@ -250,14 +244,9 @@ starter_pitches$role <- "starter"
 pitches <- bind_rows(relief_pitches, starter_pitches) |>
   filter(!is.na(pitch_type)) |>
   mutate(OppHand = stand != p_throws,
-         Swing = description %in% swing_types,
-         Whiff = description %in% whiff_types,
          PA = !is.na(events) & events != "truncated_pa",
-         K = PA & events %in% c("strikeout", "strikeout_double_play"),
-         BB = PA & events %in% c("walk", "intent_walk"),
          Offspeed = pitch_type %in% c("CH", "FS", "FO", "SC"),
-         Breaking = pitch_type %in% c("SL", "ST", "SV", "CU", "KC", "CS"),
-         Fastball = pitch_type %in% c("FF", "SI"))
+         Breaking = pitch_type %in% c("SL", "ST", "SV", "CU", "KC", "CS"))
 ```
 
 ``` r
@@ -265,70 +254,56 @@ season_measures <- pitches |>
   group_by(pitcher, game_year, role) |>
   summarize(PitchesPerOuting = n() / n_distinct(game_pk),
             OppShare_PA = sum(PA & OppHand) / sum(PA),
-            Opp_KBB = (sum(K & OppHand) - sum(BB & OppHand)) / sum(PA & OppHand),
-            Same_KBB = (sum(K & !OppHand) - sum(BB & !OppHand)) / sum(PA & !OppHand),
-            Opp_Whiff = sum(Whiff & OppHand) / sum(Swing & OppHand),
             Opp_Offspeed = mean(Offspeed[OppHand]),
             Opp_Breaking = mean(Breaking[OppHand]),
-            Opp_Fastball = mean(Fastball[OppHand]),
-            .groups = "drop") |>
-  mutate(Platoon_KBB_gap = Same_KBB - Opp_KBB)
-```
+            .groups = "drop")
 
-``` r
 # Puts relief and starter side by side for each conversion
 relief_statcast <- season_measures |> filter(role == "relief") |> select(-role)
 starter_statcast <- season_measures |> filter(role == "starter") |> select(-role)
 names(relief_statcast)[-(1:2)] <- paste0("rp_", names(relief_statcast)[-(1:2)])
 names(starter_statcast)[-(1:2)] <- paste0("sp_", names(starter_statcast)[-(1:2)])
 
-statcast_changes <- conversions |>
+statcast_conversions <- conversions |>
   inner_join(relief_statcast, by = c("xMLBAMID" = "pitcher", "rp_season" = "game_year")) |>
   inner_join(starter_statcast, by = c("xMLBAMID" = "pitcher", "sp_season" = "game_year"))
-write_csv(statcast_changes, "../data/statcast_changes.csv")
 
-cat("Conversions with Statcast in both seasons:", nrow(statcast_changes), "\n\n")
+cat("Conversions with Statcast in both seasons:", nrow(statcast_conversions), "\n\n")
 ```
 
     ## Conversions with Statcast in both seasons: 136
 
 ``` r
-cat("Averages, relief season vs starter season (starts only)\n")
+cat("Averages, relief season vs. starter season (starts only)\n")
 ```
 
-    ## Averages, relief season vs starter season (starts only)
+    ## Averages, relief season vs. starter season (starts only)
 
 ``` r
-statcast_changes |>
+statcast_conversions |>
   summarize(rp_PitchesPerOuting = mean(rp_PitchesPerOuting), sp_PitchesPerOuting = mean(sp_PitchesPerOuting),
             rp_OppShare = mean(rp_OppShare_PA), sp_OppShare = mean(sp_OppShare_PA),
-            rp_Opp_KBB = mean(rp_Opp_KBB), sp_Opp_KBB = mean(sp_Opp_KBB),
-            rp_Same_KBB = mean(rp_Same_KBB), sp_Same_KBB = mean(sp_Same_KBB),
             rp_Opp_Offspeed = mean(rp_Opp_Offspeed), sp_Opp_Offspeed = mean(sp_Opp_Offspeed),
             rp_Opp_Breaking = mean(rp_Opp_Breaking), sp_Opp_Breaking = mean(sp_Opp_Breaking)) |>
   pivot_longer(everything()) |>
   as.data.frame() |> print(digits = 3)
 ```
 
-    ##                   name  value
-    ## 1  rp_PitchesPerOuting 26.131
-    ## 2  sp_PitchesPerOuting 81.441
-    ## 3          rp_OppShare  0.501
-    ## 4          sp_OppShare  0.585
-    ## 5           rp_Opp_KBB  0.113
-    ## 6           sp_Opp_KBB  0.111
-    ## 7          rp_Same_KBB  0.162
-    ## 8          sp_Same_KBB  0.148
-    ## 9      rp_Opp_Offspeed  0.166
-    ## 10     sp_Opp_Offspeed  0.188
-    ## 11     rp_Opp_Breaking  0.244
-    ## 12     sp_Opp_Breaking  0.246
+    ##                  name  value
+    ## 1 rp_PitchesPerOuting 26.131
+    ## 2 sp_PitchesPerOuting 81.441
+    ## 3         rp_OppShare  0.501
+    ## 4         sp_OppShare  0.585
+    ## 5     rp_Opp_Offspeed  0.166
+    ## 6     sp_Opp_Offspeed  0.188
+    ## 7     rp_Opp_Breaking  0.244
+    ## 8     sp_Opp_Breaking  0.246
 
 ``` r
 # wOBA by time through the order as a starter, pooling every plate appearance
 tto <- pitches |>
   filter(role == "starter", n_thruorder_pitcher %in% 1:3) |>
-  inner_join(statcast_changes |> select(xMLBAMID, sp_season, Success),
+  inner_join(statcast_conversions |> select(xMLBAMID, sp_season, Success),
              by = c("pitcher" = "xMLBAMID", "game_year" = "sp_season")) |>
   group_by(Success, time = n_thruorder_pitcher) |>
   summarize(PA = sum(woba_denom, na.rm = TRUE), wOBA = sum(woba_value, na.rm = TRUE) / sum(woba_denom, na.rm = TRUE),
@@ -352,13 +327,13 @@ print(as.data.frame(tto), digits = 3)
     ## 6       worse than average    3 3878 0.362
 
 Converted starters face more opposite-handed batters (58.5% of plate
-appearances vs 50.1% in relief) and throw 81 pitches per start versus 26
+appearances vs. 50.1% in relief) and throw 81 pitches per start vs. 26
 per relief outing. wOBA allowed rises from the first to the second time
 through the order for both groups (.298 to .332 for the converts who did
-well and .335 to .355 for the others). The third time looks different,
-with the converts who did well falling back (.317) while the others keep
-rising (.362), but those gaps are small for a sample of 58 and 78
-pitchers, so they may be noise.
+well and .335 to .355 for the others). The third time through, the
+converts who did well saw their wOBA fall to .317 while the others’ keep
+rising to .362, but since the sample of PAs is smaller, that particular
+change may be noise.
 
 ``` r
 # wOBA by time through the order as a starter, by outcome
@@ -368,12 +343,12 @@ ggplot(tto_plot, aes(time, wOBA, color = Success, group = Success)) +
   geom_point(size = 3) +
   scale_color_manual(values = c("league average or better" = "steelblue", "worse than average" = "red")) +
   labs(title = "wOBA allowed by time through the order in the starter season",
-       subtitle = "Converted relievers, starts only, split by starter SIERA vs league",
+       subtitle = "Converted relievers, starts only",
        x = "Time through the order", y = "wOBA allowed", color = "As a starter") +
   theme_classic()
 ```
 
-![](03_changes_after_conversion_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
+![](03_changes_after_conversion_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
 
 ``` r
 ggsave("charts/tto_by_outcome.png", width = 8, height = 5.5, dpi = 150)

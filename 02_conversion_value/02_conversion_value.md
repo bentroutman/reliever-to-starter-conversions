@@ -121,19 +121,31 @@ for (k in 1:10) {
   stayers$pred_linear[stayers$fold == k] <- predict(fit_lin, newdata = test)
   stayers$pred_flex[stayers$fold == k] <- predict(fit_flex, newdata = test)
 }
-cat("Cross-fitted RMSE of next season WAR: linear", round(sqrt(mean((stayers$next_WAR - stayers$pred_linear)^2)), 3),
-    " flexible", round(sqrt(mean((stayers$next_WAR - stayers$pred_flex)^2)), 3),
-    " no model", round(sd(stayers$next_WAR), 3), "\n")
+total_variation <- sum((stayers$next_WAR - mean(stayers$next_WAR))^2)
+baseline_fit <- data.frame(
+  model = c("no model (guess the average)", "linear", "flexible"),
+  RMSE = round(c(sd(stayers$next_WAR), sqrt(mean((stayers$next_WAR - stayers$pred_linear)^2)),
+                 sqrt(mean((stayers$next_WAR - stayers$pred_flex)^2))), 3),
+  R2 = round(c(0, 1 - sum((stayers$next_WAR - stayers$pred_linear)^2) / total_variation,
+               1 - sum((stayers$next_WAR - stayers$pred_flex)^2) / total_variation), 3))
+cat("\nCross-fitted error of the next season WAR predictions\n")
 ```
 
-    ## Cross-fitted RMSE of next season WAR: linear 0.692  flexible 0.688  no model 0.742
+    ## 
+    ## Cross-fitted error of the next season WAR predictions
 
 ``` r
-cat("Cross-fitted R^2: linear", round(1 - sum((stayers$next_WAR - stayers$pred_linear)^2) / sum((stayers$next_WAR - mean(stayers$next_WAR))^2), 3),
-    " flexible", round(1 - sum((stayers$next_WAR - stayers$pred_flex)^2) / sum((stayers$next_WAR - mean(stayers$next_WAR))^2), 3), "\n\n")
+print(baseline_fit, row.names = FALSE)
 ```
 
-    ## Cross-fitted R^2: linear 0.128  flexible 0.138
+    ##                         model  RMSE    R2
+    ##  no model (guess the average) 0.742 0.000
+    ##                        linear 0.692 0.128
+    ##                      flexible 0.688 0.138
+
+``` r
+cat("\n")
+```
 
 ``` r
 cat("Actual minus predicted next season WAR by tenth of the linear prediction (a calibrated baseline is near 0 in every tenth, and the top tenth is where the elite relievers sit)\n")
@@ -184,10 +196,10 @@ print(as.data.frame(stayers |>
     ##  cushion under 0.5 707       0.021     0.003 0.024
 
 The flexible model predicts only slightly better than the linear one
-(cross-fitted R^2 of 0.14 versus 0.13), and both explain little because
+(cross-fitted R^2 of 0.14 vs. 0.13), and both explain little because
 most of a reliever’s next season WAR is luck and playing time.
 
-### Conversion gains
+### Conversion gains and archetypes
 
 ``` r
 # Expected next season value if the pitcher had stayed in the pen
@@ -230,11 +242,17 @@ cat("Stay-in-pen models fit on", nrow(stayers), "reliever seasons followed by an
     ## Stay-in-pen models fit on 1775 reliever seasons followed by another relief season (20+ IP)
 
 ``` r
-cat("WAR model R^2:", round(summary(war_model)$r.squared, 3),
-    " WPA model R^2:", round(summary(wpa_model)$r.squared, 3), "\n\n")
+print(data.frame(model = c("WAR", "WPA"),
+                 R2 = round(c(summary(war_model)$r.squared, summary(wpa_model)$r.squared), 3)), row.names = FALSE)
 ```
 
-    ## WAR model R^2: 0.136  WPA model R^2: 0.08
+    ##  model    R2
+    ##    WAR 0.136
+    ##    WPA 0.080
+
+``` r
+cat("\n")
+```
 
 ``` r
 cat("Stayers, average change from season N to N+1\n")
@@ -253,11 +271,11 @@ stayers |>
     ## 1 1775 53.9    50.9 0.596    0.472 0.533    0.403
 
 ``` r
-cat("\nAttempts, actual next season vs expected if they had stayed in the pen\n")
+cat("\nAttempts, actual next season vs. expected if they had stayed in the pen\n")
 ```
 
     ## 
-    ## Attempts, actual next season vs expected if they had stayed in the pen
+    ## Attempts, actual next season vs. expected if they had stayed in the pen
 
 ``` r
 bind_rows(attempts, attempts |> mutate(attempt = "all attempts")) |>
@@ -280,7 +298,7 @@ bind_rows(attempts, attempts |> mutate(attempt = "all attempts")) |>
 
 Relievers who stayed in the pen lost value from one year to the next
 (0.60 to 0.47 WAR), so the baseline expects a drop. The attempts threw
-about 34 more innings as starters (89.8 versus 56.2), which is why their
+about 34 more innings as starters (89.8 vs. 56.2), which is why their
 WAR rises. The 23 attempts with 2 to 4 starts threw only 38 innings and
 lost 0.46 WAR against the baseline.
 
@@ -350,16 +368,16 @@ print(as.data.frame(archetype_table))
     ## 19     PlusPitches      2+ pitches with Stuff+ 100+  41          0.951 60.106 113.138    1.589   0.557          0.854    1.032       0.184          0.585    0.160       0.150
 
 Stuff+ and leverage separate the groups most. Attempts with a Stuff+ of
-100 or more gained 1.22 WAR on average versus 0.19 for the rest, and
-relievers who entered at above average leverage gained 0.78 versus 0.20.
+100 or more gained 1.22 WAR on average vs. 0.19 for the rest, and
+relievers who entered at above average leverage gained 0.78 vs. 0.20.
 The Stuff+ 100+ attempts also stuck as starters more often (95% had 5 or
-more starts versus 83%), so part of that gap is durability. Each group
-has 25 to 115 attempts and standard errors of 0.1 to 0.2 WAR, so smaller
+more starts vs. 83%), so part of that gap is durability. Each group has
+25 to 115 attempts and standard errors of 0.1 to 0.2 WAR, so smaller
 differences are noise, and the starting history groups move a lot when
 the cutoffs change.
 
 ``` r
-# Actual next season WAR vs expected WAR in the pen
+# Actual next season WAR vs. expected WAR in the pen
 # Labels the biggest gains, biggest failures, and high expectation conversions
 outliers <- attempts |>
   filter(abs(WAR_gain - mean(WAR_gain)) > 1.75 * sd(WAR_gain) | (pen_WAR >= 0.8))
@@ -371,7 +389,7 @@ ggplot(attempts, aes(pen_WAR, next_WAR, color = attempt)) +
                   size = 2.6, seed = 1, min.segment.length = 0.2, show.legend = FALSE) +
   scale_x_continuous(expand = expansion(mult = c(0.02, 0.1))) +
   scale_color_manual(values = c("5+ starts" = "steelblue", "2 to 4 starts" = "red")) +
-  labs(title = "Next season WAR after a move to the rotation vs expected WAR in the pen",
+  labs(title = "Next season WAR after a move to the rotation vs. expected WAR in the pen",
        subtitle = "Expected WAR comes from relievers who stayed relievers. Points above the line gained value",
        x = "Expected WAR if he stayed in the pen", y = "Actual WAR the next season (all roles)",
        color = "Attempt") +
@@ -409,7 +427,7 @@ and 2+ pitches with Stuff+ 100+) gain WPA. Leverage shows up in WPA too,
 as relievers who entered at above average leverage roughly break even
 (-0.01), while those at below average leverage lose 0.45.
 
-## WAA
+## Value against an average pitcher (WAA)
 
 WAR compares to replacement level, so I also checked measures that
 compare to an average pitcher. WAA_fg is FanGraphs WAR minus the average
